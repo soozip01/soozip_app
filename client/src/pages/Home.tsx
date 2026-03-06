@@ -110,35 +110,52 @@ function useDragSlide(total: number) {
   return { current, setCurrent, handlers };
 }
 
+/* ─── 카테고리 원형 탭 컴포넌트 (독립 영역) ─── */
+const CATEGORY_TABS = [
+  { id: 1, label: "공동구매", short: "공동" },
+  { id: 2, label: "신상품", short: "신상" },
+  { id: 3, label: "세일", short: "세일" },
+  { id: 4, label: "패키지", short: "패키" },
+  { id: 5, label: "브랜드", short: "브랜" },
+  { id: 6, label: "이벤트", short: "이벤" },
+];
+
+function CategoryTabs() {
+  const [active, setActive] = useState(0);
+  return (
+    <div className="w-full bg-background border-b border-border">
+      <div className="flex gap-3 px-4 pt-3 pb-3 overflow-x-auto scrollbar-hide">
+        {CATEGORY_TABS.map((tab, idx) => (
+          <button
+            key={tab.id}
+            onClick={() => setActive(idx)}
+            className="flex flex-col items-center gap-1 shrink-0 transition-opacity"
+            style={{ opacity: idx === active ? 1 : 0.45 }}
+          >
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+              style={
+                idx === active
+                  ? { background: TERRACOTTA, color: "white", border: `2px solid ${TERRACOTTA}` }
+                  : { background: "oklch(0.94 0 0)", color: "oklch(0.08 0 0)", border: "2px solid transparent" }
+              }
+            >
+              {tab.short}
+            </div>
+            <span className="text-[10px] font-medium text-foreground whitespace-nowrap">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── 뉴스 슬라이더 컴포넌트 (드래그 슬라이드) ─── */
 function NewsDragSlider() {
   const { current, setCurrent, handlers } = useDragSlide(NEWS_ITEMS.length);
 
   return (
     <div className="w-full bg-background border-b border-border overflow-hidden">
-      {/* 카테고리 원형 탭 */}
-      <div className="flex gap-3 px-4 pt-3 pb-2 overflow-x-auto scrollbar-hide">
-        {NEWS_ITEMS.map((item, idx) => (
-          <button
-            key={item.id}
-            onClick={() => setCurrent(idx)}
-            className="flex flex-col items-center gap-1 shrink-0 transition-opacity"
-            style={{ opacity: idx === current ? 1 : 0.45 }}
-          >
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-              style={
-                idx === current
-                  ? { background: TERRACOTTA, color: "white", border: `2px solid ${TERRACOTTA}` }
-                  : { background: "oklch(0.94 0 0)", color: "oklch(0.08 0 0)", border: "2px solid transparent" }
-              }
-            >
-              {item.label.slice(0, 2)}
-            </div>
-          </button>
-        ))}
-      </div>
-
       {/* 뉴스 카드 슬라이드 (드래그) */}
       <div
         className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 pt-3 pb-3"
@@ -267,6 +284,9 @@ export default function Home() {
 
 
       </header>
+
+      {/* ── 카테고리 원형 탭 (독립 영역) ── */}
+      <CategoryTabs />
 
       {/* ── 뉴스 드래그 슬라이더 ── */}
       <NewsDragSlider />
