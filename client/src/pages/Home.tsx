@@ -41,14 +41,10 @@ const BANNER_IMAGES = [
   },
 ];
 
-/* ─── 뉴스 슬라이더 데이터 (드래그 슬라이드) ─── */
-const NEWS_ITEMS = [
-  { id: 1, label: "공동구매", title: "공동구매 최신 소식", desc: "지금 바로 확인해보세요 →" },
-  { id: 2, label: "신상품", title: "신상품 업데이트", desc: "새로운 컬렉션이 도착했어요 →" },
-  { id: 3, label: "세일", title: "오늘의 세일 아이템", desc: "최대 50% 할인 중 →" },
-  { id: 4, label: "패키지", title: "패키지 최신 소식", desc: "합리적인 패키지 구성 →" },
-  { id: 5, label: "브랜드", title: "신규 브랜드 입점", desc: "새로운 브랜드를 만나보세요 →" },
-  { id: 6, label: "이벤트", title: "이벤트 진행 중", desc: "놓치지 마세요 →" },
+/* ─── 뉴스 배너 데이터 (관리자 등록 시 자동 슬라이드) ─── */
+// 관리자가 등록한 핵심 뉴스만 표시됩니다. 비어있으면 영역이 숨겨집니다.
+const NEWS_BANNERS: { id: number; title: string; desc: string; bg: string }[] = [
+  // 예시: { id: 1, title: "공동구매 최신 소식", desc: "지금 바로 확인해보세요", bg: TERRACOTTA },
 ];
 
 /* ─── 스타일링샷 데이터 (소비자/판매자 업로드 공간) ─── */
@@ -150,56 +146,55 @@ function CategoryTabs() {
   );
 }
 
-/* ─── 뉴스 슬라이더 컴포넌트 (드래그 슬라이드) ─── */
-function NewsDragSlider() {
-  const { current, setCurrent, handlers } = useDragSlide(NEWS_ITEMS.length);
+/* ─── 뉴스 배너 컴포넌트 (관리자 등록 시 3초 자동 슬라이드) ─── */
+function NewsBanner() {
+  const [current, setCurrent] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (NEWS_BANNERS.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setCurrent((p) => (p + 1) % NEWS_BANNERS.length);
+    }, 3000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  if (NEWS_BANNERS.length === 0) return null;
 
   return (
-    <div className="w-full bg-background border-b border-border overflow-hidden">
-      {/* 뉴스 카드 슬라이드 (드래그) */}
+    <div className="w-full overflow-hidden" style={{ background: TERRACOTTA }}>
       <div
-        className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 pt-3 pb-3"
-        {...handlers}
-        style={{ touchAction: "pan-y" }}
+        className="flex transition-transform duration-500 ease-out"
+        style={{ transform: `translateX(-${current * 100}%)` }}
       >
-        <div
-          className="flex transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${current * 100}%)` }}
-        >
-          {NEWS_ITEMS.map((item) => (
-            <div key={item.id} className="w-full shrink-0">
-              <div className="bg-secondary rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                    style={{ background: TERRACOTTA }}
-                  >
-                    S
-                  </div>
-                  <span className="text-xs font-semibold text-foreground">SOOZIP</span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">방금 전</span>
-                </div>
-                <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+        {NEWS_BANNERS.map((item) => (
+          <div key={item.id} className="w-full shrink-0 px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-[9px] font-bold text-white shrink-0">
+                S
+              </div>
+              <div>
+                <span className="text-xs font-bold text-white">{item.title}</span>
+                {item.desc && <span className="text-[11px] text-white/80 ml-1.5">{item.desc}</span>}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 도트 인디케이터 */}
-      <div className="flex justify-center gap-1.5 pb-2">
-        {NEWS_ITEMS.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrent(idx)}
-            className="rounded-full transition-all"
-            style={{
-              width: idx === current ? "16px" : "5px",
-              height: "5px",
-              background: idx === current ? TERRACOTTA : "oklch(0.8 0 0)",
-            }}
-          />
+            {NEWS_BANNERS.length > 1 && (
+              <div className="flex gap-1 shrink-0">
+                {NEWS_BANNERS.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrent(idx)}
+                    className="rounded-full transition-all"
+                    style={{
+                      width: idx === current ? "14px" : "4px",
+                      height: "4px",
+                      background: idx === current ? "white" : "rgba(255,255,255,0.4)",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </div>
@@ -288,8 +283,8 @@ export default function Home() {
       {/* ── 카테고리 원형 탭 (독립 영역) ── */}
       <CategoryTabs />
 
-      {/* ── 뉴스 드래그 슬라이더 ── */}
-      <NewsDragSlider />
+      {/* ── 뉴스 배너 (관리자 등록 시만 표시) ── */}
+      <NewsBanner />
 
       {/* ── 히어로 배너 (드래그 슬라이드) ── */}
       <div
