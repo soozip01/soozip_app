@@ -5,8 +5,6 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import StylingRequest from "./pages/StylingRequest";
-import AIStyling from "./pages/AIStyling";
 import ProductList from "./pages/ProductList";
 import ProductDetail from "./pages/ProductDetail";
 import BrandEntry from "./pages/BrandEntry";
@@ -14,13 +12,14 @@ import MyPage from "./pages/MyPage";
 import CartPage from "./pages/CartPage";
 import SearchPage from "./pages/SearchPage";
 import InquiryPage from "./pages/InquiryPage";
+import StylingRequest from "./pages/StylingRequest";
+import AIStyling from "./pages/AIStyling";
+import StylingShop from "./pages/StylingShop";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/styling-request" component={StylingRequest} />
-      <Route path="/ai-styling" component={AIStyling} />
       <Route path="/products" component={ProductList} />
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/brand-entry" component={BrandEntry} />
@@ -28,6 +27,10 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/inquiry" component={InquiryPage} />
+      <Route path="/styling-request" component={StylingRequest} />
+      <Route path="/ai-styling" component={AIStyling} />
+      <Route path="/styling-shop" component={StylingShop} />
+      <Route path="/styling-shop/:id" component={StylingShop} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
