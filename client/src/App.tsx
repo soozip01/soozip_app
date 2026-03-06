@@ -15,6 +15,8 @@ import InquiryPage from "./pages/InquiryPage";
 import StylingRequest from "./pages/StylingRequest";
 import AIStyling from "./pages/AIStyling";
 import StylingShop from "./pages/StylingShop";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 
 function Router() {
   return (
@@ -31,6 +33,8 @@ function Router() {
       <Route path="/ai-styling" component={AIStyling} />
       <Route path="/styling-shop" component={StylingShop} />
       <Route path="/styling-shop/:id" component={StylingShop} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

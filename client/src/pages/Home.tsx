@@ -79,8 +79,6 @@ const STYLING_PRODUCTS = [
   { id: 5, brand: "브랜드명", name: "상품명", discount: "할인%", price: "10,000" },
 ];
 
-const CATEGORIES = ["공동구매", "인기차트", "오늘의세일", "패키지", "신상품"];
-
 /* ─── 드래그 슬라이드 훅 ─── */
 function useDragSlide(total: number) {
   const [current, setCurrent] = useState(0);
@@ -195,7 +193,6 @@ function NewsDragSlider() {
 /* ─── 메인 홈 컴포넌트 ─── */
 export default function Home() {
   const [, navigate] = useLocation();
-  const [activeCategory, setActiveCategory] = useState("공동구매");
   const [searchQuery, setSearchQuery] = useState("");
   const [showStylingModal, setShowStylingModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -254,7 +251,7 @@ export default function Home() {
             />
           </form>
           <div className="flex gap-0.5 shrink-0">
-            <button onClick={() => navigate("/mypage")} className="p-1.5 hover:bg-secondary rounded-md transition-colors">
+            <button onClick={() => navigate("/login")} className="p-1.5 hover:bg-secondary rounded-md transition-colors">
               <User size={19} />
             </button>
             <button onClick={() => navigate("/cart")} className="p-1.5 hover:bg-secondary rounded-md transition-colors relative">
@@ -269,26 +266,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 카테고리 탭 */}
-        <div className="px-2 py-1.5 flex gap-0.5 overflow-x-auto scrollbar-hide border-t border-border">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                setActiveCategory(cat);
-                navigate(`/products?category=${encodeURIComponent(cat)}`);
-              }}
-              className="px-3.5 py-1.5 rounded text-sm whitespace-nowrap transition-colors font-medium"
-              style={
-                activeCategory === cat
-                  ? { background: "oklch(0.08 0 0)", color: "white" }
-                  : {}
-              }
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+
       </header>
 
       {/* ── 뉴스 드래그 슬라이더 ── */}
