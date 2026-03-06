@@ -135,14 +135,13 @@ function NewsDragSlider() {
             >
               {item.label.slice(0, 2)}
             </div>
-            <span className="text-[10px] font-medium text-foreground whitespace-nowrap">{item.label}</span>
           </button>
         ))}
       </div>
 
       {/* 뉴스 카드 슬라이드 (드래그) */}
       <div
-        className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 pb-3"
+        className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 pt-3 pb-3"
         {...handlers}
         style={{ touchAction: "pan-y" }}
       >
