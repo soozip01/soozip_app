@@ -10,7 +10,7 @@
  *   - AI 스타일링: iframe 모달로 자연스럽게 연결
  */
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, User, ShoppingCart } from "lucide-react";
+import { Search, User, ShoppingCart, Home as HomeIcon, Sparkles, Map } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
@@ -107,13 +107,63 @@ function useDragSlide(total: number) {
 }
 
 /* ─── 카테고리 원형 탭 컴포넌트 (독립 영역) ─── */
+// 각 카테고리에 어울리는 lucide 아이콘 SVG path
 const CATEGORY_TABS = [
-  { id: 1, label: "공동구매", short: "공동" },
-  { id: 2, label: "신상품", short: "신상" },
-  { id: 3, label: "세일", short: "세일" },
-  { id: 4, label: "패키지", short: "패키" },
-  { id: 5, label: "브랜드", short: "브랜" },
-  { id: 6, label: "이벤트", short: "이벤" },
+  {
+    id: 1, label: "공동구매",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    ),
+  },
+  {
+    id: 2, label: "신상품",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+    ),
+  },
+  {
+    id: 3, label: "세일",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    ),
+  },
+  {
+    id: 4, label: "패키지",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    ),
+  },
+  {
+    id: 5, label: "브랜드",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="7"/>
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+      </svg>
+    ),
+  },
+  {
+    id: 6, label: "이벤트",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    ),
+  },
 ];
 
 function CategoryTabs() {
@@ -129,14 +179,14 @@ function CategoryTabs() {
             style={{ opacity: idx === active ? 1 : 0.45 }}
           >
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+              className="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
               style={
                 idx === active
                   ? { background: TERRACOTTA, color: "white", border: `2px solid ${TERRACOTTA}` }
-                  : { background: "oklch(0.94 0 0)", color: "oklch(0.08 0 0)", border: "2px solid transparent" }
+                  : { background: "oklch(0.94 0 0)", color: "oklch(0.35 0 0)", border: "2px solid transparent" }
               }
             >
-              {tab.short}
+              {tab.icon}
             </div>
             <span className="text-[10px] font-medium text-foreground whitespace-nowrap">{tab.label}</span>
           </button>
@@ -286,65 +336,103 @@ export default function Home() {
       {/* ── 뉴스 배너 (관리자 등록 시만 표시) ── */}
       <NewsBanner />
 
-      {/* ── 히어로 배너 (드래그 슬라이드) ── */}
-      <div
-        className="relative w-full overflow-hidden select-none"
-        style={{ height: "240px", cursor: "grab", touchAction: "pan-y" }}
-        onMouseDown={(e) => { bannerHandlers.onMouseDown(e); if (autoSlideRef.current) clearInterval(autoSlideRef.current); }}
-        onMouseUp={(e) => { bannerHandlers.onMouseUp(e); startAutoSlide(); }}
-        onTouchStart={(e) => { bannerHandlers.onTouchStart(e); if (autoSlideRef.current) clearInterval(autoSlideRef.current); }}
-        onTouchEnd={(e) => { bannerHandlers.onTouchEnd(e); startAutoSlide(); }}
-      >
-        <div
-          className="flex h-full transition-transform duration-400 ease-out"
-          style={{
-            transform: `translateX(-${currentBanner * 100}%)`,
-            width: `${BANNER_IMAGES.length * 100}%`,
-          }}
-        >
-          {BANNER_IMAGES.map((banner, idx) => (
-            <div key={idx} className="relative h-full" style={{ width: `${100 / BANNER_IMAGES.length}%` }}>
-              <img src={banner.url} alt={banner.title} className="w-full h-full object-cover" draggable={false} />
-              <div className="absolute inset-0 bg-black/30" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                <h2 className="text-2xl font-black tracking-tight">{banner.title}</h2>
-                <p className="text-sm opacity-80 mt-1">{banner.subtitle}</p>
+      {/* ── 서비스 버튼 카드 (3개 그리드) ── */}
+      <div className="px-4 pt-4 pb-3 border-b border-border">
+        <div className="grid gap-2.5" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto" }}>
+          {/* 홈 스타일링 신청 - 왼쪽 큰 카드 (세로 2칸 차지) */}
+          <button
+            onClick={() => setShowStylingModal(true)}
+            className="relative overflow-hidden rounded-xl text-left transition-opacity hover:opacity-90 active:scale-[0.98]"
+            style={{ background: TERRACOTTA, gridRow: "1 / 3", minHeight: "140px" }}
+          >
+            <div className="p-4 h-full flex flex-col justify-between">
+              <div>
+                <p className="text-white font-bold text-base leading-snug">홈 스타일링<br />신청하기</p>
+              </div>
+              <div className="flex justify-end">
+                <HomeIcon size={40} className="text-white/30" strokeWidth={1.2} />
               </div>
             </div>
-          ))}
-        </div>
-        {/* 도트 인디케이터 */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {BANNER_IMAGES.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setBanner(idx)}
-              className="h-1.5 rounded-full transition-all"
-              style={{
-                width: idx === currentBanner ? "20px" : "6px",
-                background: idx === currentBanner ? "white" : "rgba(255,255,255,0.4)",
-              }}
-            />
-          ))}
+          </button>
+          {/* AI 스타일링 - 오른쪽 위 */}
+          <button
+            onClick={() => setShowAIModal(true)}
+            className="relative overflow-hidden rounded-xl text-left transition-opacity hover:opacity-90 active:scale-[0.98]"
+            style={{ background: "oklch(0.13 0 0)", minHeight: "65px" }}
+          >
+            <div className="p-3.5 h-full flex flex-col justify-between">
+              <p className="text-white font-bold text-sm">AI 스타일링</p>
+              <div className="flex justify-end">
+                <Sparkles size={28} className="text-white/25" strokeWidth={1.2} />
+              </div>
+            </div>
+          </button>
+          {/* 내 집 도면찾기 - 오른쪽 아래 */}
+          <button
+            onClick={() => toast.info("내 집 도면찾기 기능이 준비 중입니다.")}
+            className="relative overflow-hidden rounded-xl text-left transition-opacity hover:opacity-90 active:scale-[0.98]"
+            style={{ background: "oklch(0.13 0 0)", minHeight: "65px" }}
+          >
+            <div className="p-3.5 h-full flex flex-col justify-between">
+              <p className="text-white font-bold text-sm">내 집 도면찾기</p>
+              <div className="flex justify-end">
+                <Map size={28} className="text-white/25" strokeWidth={1.2} />
+              </div>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* ── 스타일링 서비스 버튼 ── */}
-      <div className="px-4 py-4 flex gap-3 border-b border-border">
-        <button
-          onClick={() => setShowStylingModal(true)}
-          className="flex-1 py-3 rounded-lg font-semibold text-center transition-opacity hover:opacity-90 text-sm"
-          style={btnStyle}
+      {/* ── 히어로 배너 (좌우 여백 + 축소 크기) ── */}
+      <div className="px-4 py-4">
+        <div
+          className="relative w-full overflow-hidden select-none rounded-xl"
+          style={{ height: "180px", cursor: "grab", touchAction: "pan-y" }}
+          onMouseDown={(e) => { bannerHandlers.onMouseDown(e); if (autoSlideRef.current) clearInterval(autoSlideRef.current); }}
+          onMouseUp={(e) => { bannerHandlers.onMouseUp(e); startAutoSlide(); }}
+          onTouchStart={(e) => { bannerHandlers.onTouchStart(e); if (autoSlideRef.current) clearInterval(autoSlideRef.current); }}
+          onTouchEnd={(e) => { bannerHandlers.onTouchEnd(e); startAutoSlide(); }}
         >
-          홈 스타일링 신청
-        </button>
-        <button
-          onClick={() => setShowAIModal(true)}
-          className="flex-1 py-3 rounded-lg font-semibold text-center transition-opacity hover:opacity-90 text-sm"
-          style={btnStyle}
-        >
-          AI 스타일링
-        </button>
+          <div
+            className="flex h-full transition-transform duration-400 ease-out"
+            style={{
+              transform: `translateX(-${currentBanner * 100}%)`,
+              width: `${BANNER_IMAGES.length * 100}%`,
+            }}
+          >
+            {BANNER_IMAGES.map((banner, idx) => (
+              <div key={idx} className="relative h-full" style={{ width: `${100 / BANNER_IMAGES.length}%` }}>
+                <img src={banner.url} alt={banner.title} className="w-full h-full object-cover" draggable={false} />
+                <div className="absolute inset-0 bg-black/35 rounded-xl" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                  <h2 className="text-xl font-black tracking-tight">{banner.title}</h2>
+                  <p className="text-xs opacity-75 mt-0.5">{banner.subtitle}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* 슬라이드 카운터 (우측 하단) */}
+          <div
+            className="absolute bottom-2.5 right-3 px-2 py-0.5 rounded-full text-white text-[10px] font-semibold z-10"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+          >
+            {currentBanner + 1}/{BANNER_IMAGES.length}
+          </div>
+          {/* 도트 인디케이터 */}
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {BANNER_IMAGES.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setBanner(idx)}
+                className="h-1 rounded-full transition-all"
+                style={{
+                  width: idx === currentBanner ? "16px" : "4px",
+                  background: idx === currentBanner ? "white" : "rgba(255,255,255,0.4)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── 오늘의 베스트 스타일링샷 ── */}
