@@ -15,7 +15,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
-const TERRACOTTA = "oklch(0.58 0.16 38)";
+const TERRACOTTA = "oklch(0.55 0.22 32)"; // 선명한 오렌지-레드 (#E84B1A 계열)
 
 /* ─── 배너 데이터 ─── */
 const BANNER_IMAGES = [
@@ -169,7 +169,7 @@ const CATEGORY_TABS = [
 function CategoryTabs() {
   const [active, setActive] = useState(0);
   return (
-    <div className="w-full bg-background border-b border-border">
+    <div className="w-full bg-background">
       <div className="flex gap-3 px-4 pt-3 pb-3 overflow-x-auto scrollbar-hide">
         {CATEGORY_TABS.map((tab, idx) => (
           <button
@@ -336,58 +336,78 @@ export default function Home() {
       {/* ── 뉴스 배너 (관리자 등록 시만 표시) ── */}
       <NewsBanner />
 
+
       {/* ── 서비스 버튼 카드 (3개 그리드) ── */}
-      <div className="px-4 pt-4 pb-3 border-b border-border">
+      <div className="px-4 pt-4 pb-3">
         <div className="grid gap-2.5" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto" }}>
           {/* 홈 스타일링 신청 - 왼쪽 큰 카드 (세로 2칸 차지) */}
           <button
             onClick={() => setShowStylingModal(true)}
-            className="relative overflow-hidden rounded-xl text-left transition-opacity hover:opacity-90 active:scale-[0.98]"
-            style={{ background: TERRACOTTA, gridRow: "1 / 3", minHeight: "140px" }}
+            className="relative overflow-hidden rounded-2xl text-left transition-all hover:brightness-95 active:scale-[0.97]"
+            style={{ background: "oklch(0.93 0 0)", gridRow: "1 / 3", minHeight: "150px" }}
           >
             <div className="p-4 h-full flex flex-col justify-between">
-              <div>
-                <p className="text-white font-bold text-base leading-snug">홈 스타일링<br />신청하기</p>
-              </div>
+              <p className="text-foreground font-bold text-base leading-snug">홈 스타일링<br />신청하기</p>
               <div className="flex justify-end">
-                <HomeIcon size={40} className="text-white/30" strokeWidth={1.2} />
+                {/* 집 + 스파클 역동적 아이콘 */}
+                <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+                  <rect x="8" y="22" width="28" height="22" rx="2" fill="oklch(0.75 0 0)" />
+                  <polygon points="4,24 22,8 40,24" fill="oklch(0.55 0 0)" />
+                  <rect x="17" y="30" width="10" height="14" rx="1" fill="white" />
+                  <circle cx="40" cy="14" r="5" fill={TERRACOTTA} opacity="0.85" />
+                  <path d="M40 10v8M36 14h8" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
               </div>
             </div>
           </button>
           {/* AI 스타일링 - 오른쪽 위 */}
           <button
             onClick={() => setShowAIModal(true)}
-            className="relative overflow-hidden rounded-xl text-left transition-opacity hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "oklch(0.13 0 0)", minHeight: "65px" }}
+            className="relative overflow-hidden rounded-2xl text-left transition-all hover:brightness-95 active:scale-[0.97]"
+            style={{ background: "oklch(0.93 0 0)", minHeight: "70px" }}
           >
             <div className="p-3.5 h-full flex flex-col justify-between">
-              <p className="text-white font-bold text-sm">AI 스타일링</p>
+              <p className="text-foreground font-bold text-sm">AI 스타일링</p>
               <div className="flex justify-end">
-                <Sparkles size={28} className="text-white/25" strokeWidth={1.2} />
+                {/* 뇌+번개 역동적 아이콘 */}
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                  <ellipse cx="17" cy="15" rx="10" ry="9" fill="oklch(0.78 0 0)" />
+                  <path d="M13 24l2-5h4l-2 5h3l-5 9 1-6h-3z" fill={TERRACOTTA} />
+                  <circle cx="13" cy="13" r="2" fill="white" opacity="0.7" />
+                  <circle cx="20" cy="12" r="1.5" fill="white" opacity="0.5" />
+                </svg>
               </div>
             </div>
           </button>
           {/* 내 집 도면찾기 - 오른쪽 아래 */}
           <button
             onClick={() => toast.info("내 집 도면찾기 기능이 준비 중입니다.")}
-            className="relative overflow-hidden rounded-xl text-left transition-opacity hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "oklch(0.13 0 0)", minHeight: "65px" }}
+            className="relative overflow-hidden rounded-2xl text-left transition-all hover:brightness-95 active:scale-[0.97]"
+            style={{ background: "oklch(0.93 0 0)", minHeight: "70px" }}
           >
             <div className="p-3.5 h-full flex flex-col justify-between">
-              <p className="text-white font-bold text-sm">내 집 도면찾기</p>
+              <p className="text-foreground font-bold text-sm">내 집 도면찾기</p>
               <div className="flex justify-end">
-                <Map size={28} className="text-white/25" strokeWidth={1.2} />
+                {/* 도면+핀 역동적 아이콘 */}
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                  <rect x="4" y="6" width="22" height="18" rx="2" fill="oklch(0.78 0 0)" />
+                  <rect x="7" y="9" width="8" height="6" rx="1" fill="white" opacity="0.8" />
+                  <rect x="17" y="9" width="6" height="3" rx="0.5" fill="white" opacity="0.5" />
+                  <rect x="7" y="17" width="16" height="2" rx="0.5" fill="white" opacity="0.4" />
+                  <circle cx="26" cy="22" r="6" fill={TERRACOTTA} />
+                  <path d="M26 18v5M26 25v1" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
               </div>
             </div>
           </button>
         </div>
       </div>
 
-      {/* ── 히어로 배너 (좌우 여백 + 축소 크기) ── */}
-      <div className="px-4 py-4">
+      {/* ── 히어로 배너 (좌우 여백 + 더 축소) ── */}
+      <div className="px-4 pb-4 pt-1">
         <div
           className="relative w-full overflow-hidden select-none rounded-xl"
-          style={{ height: "180px", cursor: "grab", touchAction: "pan-y" }}
+          style={{ height: "130px", cursor: "grab", touchAction: "pan-y" }}
           onMouseDown={(e) => { bannerHandlers.onMouseDown(e); if (autoSlideRef.current) clearInterval(autoSlideRef.current); }}
           onMouseUp={(e) => { bannerHandlers.onMouseUp(e); startAutoSlide(); }}
           onTouchStart={(e) => { bannerHandlers.onTouchStart(e); if (autoSlideRef.current) clearInterval(autoSlideRef.current); }}
