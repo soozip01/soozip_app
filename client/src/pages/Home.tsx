@@ -10,10 +10,11 @@
  *   - AI 스타일링: iframe 모달로 자연스럽게 연결
  */
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, User, ShoppingCart, Home as HomeIcon, Sparkles, Map } from "lucide-react";
+import { Search, User, ShoppingCart, Home as HomeIcon, Sparkles, Map, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
+import { useApprovedProducts } from "@/hooks/useProducts";
 
 const TERRACOTTA = "oklch(0.55 0.22 32)"; // 선명한 오렌지-레드 (#E84B1A 계열)
 
@@ -66,14 +67,7 @@ const STYLING_SHOTS = [
   },
 ];
 
-/* ─── 샘플 상품 (스타일링샷 연동 예정) ─── */
-const STYLING_PRODUCTS = [
-  { id: 1, brand: "브랜드명", name: "상품명", discount: "할인%", price: "10,000" },
-  { id: 2, brand: "브랜드명", name: "상품명", discount: "할인%", price: "10,000" },
-  { id: 3, brand: "브랜드명", name: "상품명", discount: "할인%", price: "10,000" },
-  { id: 4, brand: "브랜드명", name: "상품명", discount: "할인%", price: "10,000" },
-  { id: 5, brand: "브랜드명", name: "상품명", discount: "할인%", price: "10,000" },
-];
+/* STYLING_PRODUCTS: Supabase 실제 데이터로 교체됨 (useApprovedProducts 훅 사용) */
 
 /* ─── 드래그 슬라이드 훅 ─── */
 function useDragSlide(total: number) {
@@ -281,6 +275,9 @@ export default function Home() {
     e.preventDefault();
     if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
+
+  /* Supabase 승인 상품 데이터 */
+  const { products: approvedProducts, loading: productsLoading } = useApprovedProducts();
 
   /* 버튼 공통 스타일 - 포인트 컬러 배경 */
   const btnStyle = {
@@ -499,37 +496,69 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 스타일링샷 연동 제품 리스트 (별도 가로 슬라이드) */}
+        {/* 스타일링샷 연동 제품 리스트 - Supabase 실제 데이터 */}
         <div className="mt-3 overflow-x-auto scrollbar-hide" style={{ touchAction: "pan-x" }}>
           <div className="flex gap-px pl-4" style={{ width: "max-content" }}>
-            {STYLING_PRODUCTS.map((product) => (
-              <div
-                key={product.id}
-                className="bg-background cursor-pointer hover:bg-secondary transition-colors"
-                style={{ width: "130px" }}
-                onClick={() => navigate(`/products/${product.id}`)}
-              >
-                {/* 상품 이미지 플레이스홀더 (실제 입점 상품 연동 예정) */}
-                <div
-                  className="bg-secondary flex items-center justify-center overflow-hidden"
-                  style={{ width: "130px", height: "130px" }}
-                >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-muted-foreground">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                  </svg>
-                </div>
-                <div className="p-2">
-                  <p className="text-[10px] text-muted-foreground leading-none">{product.brand}</p>
-                  <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">{product.name}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-[10px] font-semibold" style={{ color: TERRACOTTA }}>
-                      {product.discount}
-                    </span>
-                    <span className="text-xs font-bold text-foreground">{product.price}</span>
+            {productsLoading ? (
+              /* 로딩 스켈레톤 */
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={{ width: "130px" }}>
+                  <div className="bg-secondary animate-pulse" style={{ width: "130px", height: "130px" }} />
+                  <div className="p-2 space-y-1">
+                    <div className="bg-secondary animate-pulse h-2 w-16 rounded" />
+                    <div className="bg-secondary animate-pulse h-3 w-20 rounded" />
+                    <div className="bg-secondary animate-pulse h-3 w-14 rounded" />
                   </div>
                 </div>
+              ))
+            ) : approvedProducts.length === 0 ? (
+              /* 상품 없음 */
+              <div className="pl-2 py-4 text-sm text-muted-foreground">
+                등록된 상품이 없습니다.
               </div>
-            ))}
+            ) : (
+              approvedProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-background cursor-pointer hover:bg-secondary transition-colors"
+                  style={{ width: "130px" }}
+                  onClick={() => navigate(`/products/${product.id}`)}
+                >
+                  {/* 상품 대표 이미지 */}
+                  <div
+                    className="bg-secondary flex items-center justify-center overflow-hidden"
+                    style={{ width: "130px", height: "130px" }}
+                  >
+                    {product.main_image_url ? (
+                      <img
+                        src={product.main_image_url}
+                        alt={product.product_name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-muted-foreground">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                      </svg>
+                    )}
+                  </div>
+                  <div className="p-2">
+                    <p className="text-[10px] text-muted-foreground leading-none">{product.brand_name}</p>
+                    <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">{product.product_name}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      {product.discount_rate > 0 && (
+                        <span className="text-[10px] font-semibold" style={{ color: TERRACOTTA }}>
+                          {product.discount_rate}%
+                        </span>
+                      )}
+                      <span className="text-xs font-bold text-foreground">
+                        {product.sale_price.toLocaleString()}원
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
             {/* 오른쪽 여백 */}
             <div style={{ width: "16px", flexShrink: 0 }} />
           </div>

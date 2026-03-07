@@ -204,4 +204,46 @@
   .border-terracotta {
     border-color: oklch(0.55 0.22 32);
   }
+  /* 상품 상세 HTML 콘텐츠 스타일 */
+  .product-detail-html {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--foreground);
+    padding: 1rem;
+  }
+  .product-detail-html img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.5rem 0;
+  }
+  .product-detail-html h1,
+  .product-detail-html h2,
+  .product-detail-html h3 {
+    font-weight: 700;
+    margin: 1rem 0 0.5rem;
+  }
+  .product-detail-html p {
+    margin: 0.5rem 0;
+  }
+  .product-detail-html ul,
+  .product-detail-html ol {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0;
+  }
+  .product-detail-html table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    font-size: 0.8rem;
+  }
+  .product-detail-html th,
+  .product-detail-html td {
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.6rem;
+  }
+  .product-detail-html th {
+    background: var(--secondary);
+    font-weight: 600;
+  }
 }
