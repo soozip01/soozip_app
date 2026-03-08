@@ -1,11 +1,14 @@
 /**
  * OAuth 콜백 페이지
  * 카카오/네이버 OAuth 인증 후 리다이렉트되는 페이지
- * URL 파라미터에서 code와 provider를 읽어 백엔드로 전달
- * 기존 회원 로그인 시 AuthContext에 사용자 정보 저장
+ *
+ * 지원 경로:
+ *   /auth/callback/kakao  (카카오 - 쿼리파라미터 없는 URI 필요)
+ *   /auth/callback/naver  (네이버 - 쿼리파라미터 없는 URI 필요)
+ *   /auth/callback?provider=kakao|naver  (레거시 호환)
  */
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
 
@@ -13,6 +16,10 @@ export default function OAuthCallback() {
   const [, navigate] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const { login } = useSoozipAuth();
+
+  // 경로 기반 매칭 (/auth/callback/kakao 또는 /auth/callback/naver)
+  const [matchKakao] = useRoute("/auth/callback/kakao");
+  const [matchNaver] = useRoute("/auth/callback/naver");
 
   const socialAuthMutation = trpc.auth.socialLogin.useMutation({
     onSuccess: (data) => {
@@ -39,18 +46,31 @@ export default function OAuthCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    const provider = params.get("provider") as "kakao" | "naver" | null;
     const state = params.get("state");
 
+    // provider 결정: 경로 기반 우선, 없으면 쿼리파라미터 폴백
+    let provider: "kakao" | "naver" | null = null;
+    if (matchKakao) {
+      provider = "kakao";
+    } else if (matchNaver) {
+      provider = "naver";
+    } else {
+      const qProvider = params.get("provider");
+      if (qProvider === "kakao" || qProvider === "naver") {
+        provider = qProvider;
+      }
+    }
+
     if (!code || !provider) {
-      setError("인증 정보가 올바르지 않습니다.");
+      setError("인증 정보가 올바르지 않습니다. (code 또는 provider 누락)");
       return;
     }
 
-    const redirectUri = `${window.location.origin}/auth/callback?provider=${provider}`;
+    // 백엔드로 전달할 redirectUri: 실제 카카오/네이버 개발자 콘솔에 등록된 URI와 동일해야 함
+    const redirectUri = `${window.location.origin}/auth/callback/${provider}`;
     socialAuthMutation.mutate({ code, provider, redirectUri, state: state ?? undefined });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [matchKakao, matchNaver]);
 
   if (error) {
     return (

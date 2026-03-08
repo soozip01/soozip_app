@@ -15,16 +15,18 @@ const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY ?? "";
 const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID ?? "";
 
 function getKakaoLoginUrl() {
+  // 카카오는 쿼리파라미터 없는 URI만 허용 → /auth/callback/kakao 경로 사용
   const redirectUri = encodeURIComponent(
-    `${window.location.origin}/auth/callback?provider=kakao`
+    `${window.location.origin}/auth/callback/kakao`
   );
   return `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${redirectUri}&response_type=code`;
 }
 
 function getNaverLoginUrl() {
   const state = Math.random().toString(36).substring(2, 15);
+  // 네이버도 동일하게 경로 기반 URI 사용
   const redirectUri = encodeURIComponent(
-    `${window.location.origin}/auth/callback?provider=naver`
+    `${window.location.origin}/auth/callback/naver`
   );
   return `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
 }

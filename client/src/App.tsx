@@ -44,6 +44,8 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/auth/callback" component={OAuthCallback} />
+      <Route path="/auth/callback/kakao" component={OAuthCallback} />
+      <Route path="/auth/callback/naver" component={OAuthCallback} />
       <Route path="/auth/social-consent" component={SocialConsent} />
       <Route path="/auth/social-profile" component={SocialProfile} />
       <Route path="/auth/email-signup" component={EmailSignup} />

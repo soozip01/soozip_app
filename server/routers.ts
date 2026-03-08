@@ -83,6 +83,7 @@ export const appRouter = router({
               client_id: ENV.kakaoRestApiKey,
               redirect_uri: redirectUri,
               code,
+              ...(ENV.kakaoClientSecret ? { client_secret: ENV.kakaoClientSecret } : {}),
             }),
           });
           if (!tokenRes.ok) throw new Error("카카오 토큰 교환 실패");

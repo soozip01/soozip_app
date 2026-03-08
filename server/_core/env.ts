@@ -9,6 +9,7 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   // 소셜 로그인
   kakaoRestApiKey: process.env.KAKAO_REST_API_KEY ?? "",
+  kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET ?? "",
   naverClientId: process.env.NAVER_CLIENT_ID ?? "",
   naverClientSecret: process.env.NAVER_CLIENT_SECRET ?? "",
   // Supabase
