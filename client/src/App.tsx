@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
+import { useState, useCallback } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import SplashScreen from "./components/SplashScreen";
 import Home from "./pages/Home";
 import ProductList from "./pages/ProductList";
 import ProductDetail from "./pages/ProductDetail";
@@ -17,7 +19,11 @@ import AIStyling from "./pages/AIStyling";
 import StylingShop from "./pages/StylingShop";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-
+import OAuthCallback from "./pages/OAuthCallback";
+import SocialConsent from "./pages/SocialConsent";
+import SocialProfile from "./pages/SocialProfile";
+import EmailSignup from "./pages/EmailSignup";
+import EmailLogin from "./pages/EmailLogin";
 function Router() {
   return (
     <Switch>
@@ -35,6 +41,11 @@ function Router() {
       <Route path="/styling-shop/:id" component={StylingShop} />
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/auth/callback" component={OAuthCallback} />
+      <Route path="/auth/social-consent" component={SocialConsent} />
+      <Route path="/auth/social-profile" component={SocialProfile} />
+      <Route path="/auth/email-signup" component={EmailSignup} />
+      <Route path="/auth/email-login" component={EmailLogin} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -42,11 +53,15 @@ function Router() {
 }
 
 function App() {
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashFinish = useCallback(() => setSplashDone(true), []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
           <Router />
         </TooltipProvider>
       </ThemeProvider>
