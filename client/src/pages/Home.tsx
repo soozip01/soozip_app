@@ -15,6 +15,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 import { useApprovedProducts } from "@/hooks/useProducts";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 const TERRACOTTA = "oklch(0.55 0.22 32)"; // 선명한 오렌지-레드 (#E84B1A 계열)
 
@@ -251,6 +252,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showStylingModal, setShowStylingModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const { user: soozipUser, isLoggedIn } = useSoozipAuth();
 
   /* 배너 자동 슬라이드 */
   const { current: currentBanner, setCurrent: setBanner, handlers: bannerHandlers } = useDragSlide(BANNER_IMAGES.length);
@@ -309,9 +311,24 @@ export default function Home() {
             />
           </form>
           <div className="flex gap-0.5 shrink-0">
-            <button onClick={() => navigate("/login")} className="p-1.5 hover:bg-secondary rounded-md transition-colors">
-              <User size={19} />
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => navigate("/my")}
+                className="flex items-center gap-1 px-2 py-1 hover:bg-secondary rounded-md transition-colors text-xs font-semibold text-foreground"
+              >
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                  style={{ background: TERRACOTTA }}
+                >
+                  {soozipUser?.nickname?.slice(0, 1) ?? "U"}
+                </div>
+                <span className="max-w-[60px] truncate">{soozipUser?.nickname}</span>
+              </button>
+            ) : (
+              <button onClick={() => navigate("/login")} className="p-1.5 hover:bg-secondary rounded-md transition-colors">
+                <User size={19} />
+              </button>
+            )}
             <button onClick={() => navigate("/cart")} className="p-1.5 hover:bg-secondary rounded-md transition-colors relative">
               <ShoppingCart size={19} />
               <span

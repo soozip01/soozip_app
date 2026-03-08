@@ -5,9 +5,11 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 export default function EmailLogin() {
   const [, navigate] = useLocation();
+  const { login } = useSoozipAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +17,14 @@ export default function EmailLogin() {
   const loginMutation = trpc.auth.emailLogin.useMutation({
     onSuccess: (data) => {
       toast.success(`${data.nickname}님, 환영합니다!`);
+      // AuthContext에 로그인 상태 저장
+      login({
+        id: data.userId,
+        nickname: data.nickname,
+        email,
+        provider: "email",
+        profileImageUrl: null,
+      });
       navigate("/");
     },
     onError: (err) => {

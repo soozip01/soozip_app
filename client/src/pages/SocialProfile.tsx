@@ -7,9 +7,11 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 export default function SocialProfile() {
   const [, navigate] = useLocation();
+  const { login } = useSoozipAuth();
 
   // URL 쿼리 파라미터에서 데이터 읽기
   const params = new URLSearchParams(window.location.search);
@@ -29,7 +31,15 @@ export default function SocialProfile() {
   );
 
   const signupMutation = trpc.auth.socialSignup.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // 회원가입 완료 후 AuthContext에 사용자 정보 저장
+      login({
+        id: data.userId,
+        nickname,
+        email: data.email ?? null,
+        provider,
+        profileImageUrl: data.profileImageUrl ?? null,
+      });
       toast.success("회원가입이 완료되었습니다! 환영합니다 🎉");
       navigate("/");
     },

@@ -89,3 +89,19 @@ export const emailUsers = mysqlTable("email_users", {
 
 export type EmailUser = typeof emailUsers.$inferSelect;
 export type InsertEmailUser = typeof emailUsers.$inferInsert;
+
+/**
+ * 이메일 인증 코드 테이블
+ * 회원가입 시 이메일 인증에 사용되는 6자리 코드를 임시 저장합니다.
+ */
+export const emailVerificationCodes = mysqlTable("email_verification_codes", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  code: varchar("code", { length: 10 }).notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailVerificationCode = typeof emailVerificationCodes.$inferSelect;
+export type InsertEmailVerificationCode = typeof emailVerificationCodes.$inferInsert;

@@ -5,7 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers, emailUsers } from "../drizzle/schema";
+import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes } from "../drizzle/schema";
 import { eq, or } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
@@ -229,7 +229,12 @@ export const appRouter = router({
           throw new Error("지원하지 않는 소셜 로그인 방식입니다.");
         }
 
-        return { success: true };
+        return {
+          success: true,
+          userId: provider === "kakao" ? (payload.kakaoId as string) : (payload.naverId as string),
+          email: (payload.email as string | null) ?? null,
+          profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
+        };
       }),
 
     /**
@@ -240,6 +245,97 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const taken = await isNicknameTaken(input.nickname);
         return { available: !taken };
+      }),
+
+    /**
+     * 이메일 인증 코드 발송
+     * 6자리 랜덤 코드를 생성하여 DB에 저장하고 Supabase Edge Function을 통해 이메일 발송
+     */
+    sendEmailVerification: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        // 이미 가입된 이메일인지 확인
+        const existingUser = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
+        if (existingUser.length > 0) throw new Error("이미 가입된 이메일입니다.");
+
+        // 6자리 인증 코드 생성
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10분 유효
+
+        // 기존 미사용 코드 무효화 (같은 이메일)
+        await db.delete(emailVerificationCodes).where(eq(emailVerificationCodes.email, input.email));
+
+        // 새 코드 저장
+        await db.insert(emailVerificationCodes).values({
+          email: input.email,
+          code,
+          expiresAt,
+        });
+
+        // Supabase를 통한 이메일 발송 (REST API)
+        const supabaseUrl = ENV.supabaseUrl;
+        const supabaseKey = ENV.supabaseAnonKey;
+
+        if (supabaseUrl && supabaseKey) {
+          try {
+            // Supabase Auth OTP 방식으로 이메일 발송
+            const emailRes = await fetch(`${supabaseUrl}/auth/v1/otp`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": supabaseKey,
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                email: input.email,
+                create_user: false,
+                data: { verification_code: code },
+              }),
+            });
+            // OTP 방식이 실패해도 코드는 DB에 저장되어 있으므로 계속 진행
+            if (!emailRes.ok) {
+              console.warn("[Email] Supabase OTP 발송 실패, 코드는 DB에 저장됨");
+            }
+          } catch (e) {
+            console.warn("[Email] 이메일 발송 오류:", e);
+          }
+        }
+
+        // 개발 환경에서는 콘솔에 코드 출력
+        if (!ENV.isProduction) {
+          console.log(`[Dev] 이메일 인증 코드 (${input.email}): ${code}`);
+        }
+
+        return { success: true, message: "인증 코드가 발송되었습니다. (10분 유효)" };
+      }),
+
+    /**
+     * 이메일 인증 코드 검증
+     */
+    verifyEmailCode: publicProcedure
+      .input(z.object({ email: z.string().email(), code: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const record = await db.select().from(emailVerificationCodes)
+          .where(eq(emailVerificationCodes.email, input.email))
+          .orderBy(emailVerificationCodes.createdAt)
+          .limit(1);
+
+        if (record.length === 0) throw new Error("인증 코드를 먼저 요청해주세요.");
+        const latest = record[0];
+        if (latest.used) throw new Error("이미 사용된 인증 코드입니다.");
+        if (new Date() > latest.expiresAt) throw new Error("인증 코드가 만료되었습니다. 다시 요청해주세요.");
+        if (latest.code !== input.code) throw new Error("인증 코드가 올바르지 않습니다.");
+
+        // 코드 사용 처리
+        await db.update(emailVerificationCodes).set({ used: true }).where(eq(emailVerificationCodes.id, latest.id));
+
+        return { success: true, verified: true };
       }),
 
     /**
@@ -272,7 +368,7 @@ export const appRouter = router({
         if (taken) throw new Error("이미 사용 중인 닉네임입니다.");
 
         const passwordHash = hashPassword(input.password);
-        await db.insert(emailUsers).values({
+        const [insertResult] = await db.insert(emailUsers).values({
           email: input.email,
           passwordHash,
           nickname: input.nickname,
@@ -281,8 +377,9 @@ export const appRouter = router({
           marketingAgreed: input.marketingAgreed,
           ageAgreed: input.ageAgreed,
         });
-
-        return { success: true };
+        // 삽입된 사용자 ID 조회
+        const newUser = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
+        return { success: true, userId: newUser[0]?.id ?? 0 };;
       }),
 
     /**
