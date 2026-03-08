@@ -313,7 +313,7 @@ export default function Home() {
           <div className="flex gap-0.5 shrink-0">
             {isLoggedIn ? (
               <button
-                onClick={() => navigate("/my")}
+                onClick={() => navigate("/mypage")}
                 className="flex items-center gap-1 px-2 py-1 hover:bg-secondary rounded-md transition-colors text-xs font-semibold text-foreground"
               >
                 <div

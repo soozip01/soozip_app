@@ -49,7 +49,7 @@ const navItems = [
   { Icon: HomeIcon, label: "홈", path: "/" },
   { Icon: CategoryIcon, label: "제품", path: "/products" },
   { Icon: StylingShopIcon, label: "스타일링", path: "/styling-shop" },
-  { Icon: MyPageIcon, label: "마이", path: "/login" },
+  { Icon: MyPageIcon, label: "마이", path: "/mypage" },
   { Icon: CartIcon, label: "장바구니", path: "/cart", badge: 0 },
 ];
 

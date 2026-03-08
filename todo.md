@@ -20,3 +20,10 @@
 - [x] 로그인 상태 헤더 반영 (닉네임 표시, 마이페이지 연결)
 - [x] 이메일 인증 발송 기능 (이메일 인증 코드 발송/검증 라우터 구현)
 - [x] 카카오/네이버 소셜 로그인 실제 작동 설정 안내
+
+## 추가 작업
+- [x] 이메일 인증 실제 발송 연동 (Nodemailer SMTP - SMTP_HOST/SMTP_USER/SMTP_PASS 환경 변수 필요)
+- [x] 로그인 세션 localStorage 유지 (새로고침 후 복원 - SoozipAuthProvider)
+- [x] 소셜 로그인 기존 회원 AuthContext 저장 및 헤더 반영 (OAuthCallback 수정)
+- [x] BottomNav 마이 탭 경로 /login → /mypage 수정
+- [x] verifyEmailCode orderBy desc 수정 (최신 코드 우선 조회)

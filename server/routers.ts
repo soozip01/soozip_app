@@ -6,9 +6,10 @@ import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
 import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes } from "../drizzle/schema";
-import { eq, or } from "drizzle-orm";
+import { eq, or, desc } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
+import { sendVerificationEmail } from "./mailer";
 
 // JWT 시크릿 (세션용)
 const JWT_SECRET = new TextEncoder().encode(ENV.cookieSecret || "soozip-secret-key-2024");
@@ -107,7 +108,14 @@ export const appRouter = router({
           if (existing.length > 0) {
             // 기존 회원 - 마지막 로그인 시간 업데이트
             await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
-            return { isNewUser: false, provider: "kakao", userId: existing[0].id };
+            return {
+              isNewUser: false,
+              provider: "kakao" as const,
+              userId: existing[0].id,
+              nickname: existing[0].nickname,
+              email: existing[0].email ?? null,
+              profileImageUrl: existing[0].profileImageUrl ?? null,
+            };
           }
 
           // 신규 회원 - 임시 토큰 발급 (약관 동의 화면으로)
@@ -156,7 +164,14 @@ export const appRouter = router({
           const existing = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
           if (existing.length > 0) {
             await db.update(naverUsers).set({ lastSignedIn: new Date() }).where(eq(naverUsers.naverId, naverId));
-            return { isNewUser: false, provider: "naver", userId: existing[0].id };
+            return {
+              isNewUser: false,
+              provider: "naver" as const,
+              userId: existing[0].id,
+              nickname: existing[0].nickname,
+              email: existing[0].email ?? null,
+              profileImageUrl: existing[0].profileImageUrl ?? null,
+            };
           }
 
           const tempToken = await createTempToken({
@@ -275,38 +290,16 @@ export const appRouter = router({
           expiresAt,
         });
 
-        // Supabase를 통한 이메일 발송 (REST API)
-        const supabaseUrl = ENV.supabaseUrl;
-        const supabaseKey = ENV.supabaseAnonKey;
-
-        if (supabaseUrl && supabaseKey) {
-          try {
-            // Supabase Auth OTP 방식으로 이메일 발송
-            const emailRes = await fetch(`${supabaseUrl}/auth/v1/otp`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "apikey": supabaseKey,
-                "Authorization": `Bearer ${supabaseKey}`,
-              },
-              body: JSON.stringify({
-                email: input.email,
-                create_user: false,
-                data: { verification_code: code },
-              }),
-            });
-            // OTP 방식이 실패해도 코드는 DB에 저장되어 있으므로 계속 진행
-            if (!emailRes.ok) {
-              console.warn("[Email] Supabase OTP 발송 실패, 코드는 DB에 저장됨");
-            }
-          } catch (e) {
-            console.warn("[Email] 이메일 발송 오류:", e);
-          }
-        }
+        // Nodemailer를 통한 이메일 발송
+        const emailSent = await sendVerificationEmail(input.email, code);
 
         // 개발 환경에서는 콘솔에 코드 출력
         if (!ENV.isProduction) {
           console.log(`[Dev] 이메일 인증 코드 (${input.email}): ${code}`);
+        }
+
+        if (!emailSent) {
+          console.warn(`[Email] 이메일 발송 실패 - 코드는 DB에 저장됨: ${input.email}`);
         }
 
         return { success: true, message: "인증 코드가 발송되었습니다. (10분 유효)" };
@@ -323,7 +316,7 @@ export const appRouter = router({
 
         const record = await db.select().from(emailVerificationCodes)
           .where(eq(emailVerificationCodes.email, input.email))
-          .orderBy(emailVerificationCodes.createdAt)
+          .orderBy(desc(emailVerificationCodes.createdAt))
           .limit(1);
 
         if (record.length === 0) throw new Error("인증 코드를 먼저 요청해주세요.");

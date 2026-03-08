@@ -2,23 +2,32 @@
  * OAuth 콜백 페이지
  * 카카오/네이버 OAuth 인증 후 리다이렉트되는 페이지
  * URL 파라미터에서 code와 provider를 읽어 백엔드로 전달
+ * 기존 회원 로그인 시 AuthContext에 사용자 정보 저장
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 export default function OAuthCallback() {
   const [, navigate] = useLocation();
   const [error, setError] = useState<string | null>(null);
+  const { login } = useSoozipAuth();
 
   const socialAuthMutation = trpc.auth.socialLogin.useMutation({
     onSuccess: (data) => {
       if (data.isNewUser) {
-        // 신규 회원 → 약관 동의 화면으로
         // 신규 회원 → 약관 동의 화면으로 (tempToken 전달)
-        navigate(`/auth/social-consent?provider=${data.provider}&tempToken=${data.tempToken}`);
+        navigate(`/auth/social-consent?provider=${data.provider}&tempToken=${(data as any).tempToken}`);
       } else {
-        // 기존 회원 → 홈으로
+        // 기존 회원 → AuthContext에 사용자 정보 저장 후 홈으로
+        login({
+          id: data.userId ?? 0,
+          nickname: (data as any).nickname ?? "",
+          email: (data as any).email ?? null,
+          provider: data.provider as "kakao" | "naver",
+          profileImageUrl: (data as any).profileImageUrl ?? null,
+        });
         navigate("/");
       }
     },

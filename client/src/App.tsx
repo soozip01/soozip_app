@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import { useState, useCallback } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { SoozipAuthProvider } from "./contexts/AuthContext";
 import SplashScreen from "./components/SplashScreen";
 import Home from "./pages/Home";
 import ProductList from "./pages/ProductList";
@@ -24,6 +25,7 @@ import SocialConsent from "./pages/SocialConsent";
 import SocialProfile from "./pages/SocialProfile";
 import EmailSignup from "./pages/EmailSignup";
 import EmailLogin from "./pages/EmailLogin";
+
 function Router() {
   return (
     <Switch>
@@ -59,11 +61,13 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
-          <Router />
-        </TooltipProvider>
+        <SoozipAuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
+            <Router />
+          </TooltipProvider>
+        </SoozipAuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
