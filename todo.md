@@ -27,3 +27,11 @@
 - [x] 소셜 로그인 기존 회원 AuthContext 저장 및 헤더 반영 (OAuthCallback 수정)
 - [x] BottomNav 마이 탭 경로 /login → /mypage 수정
 - [x] verifyEmailCode orderBy desc 수정 (최신 코드 우선 조회)
+
+## 2차 작업 (이메일/소셜 로그인 완성)
+- [x] Resend API 설치 및 mailer.ts 교체 (네이버/구글 등 실제 이메일 발송)
+- [x] RESEND_API_KEY 환경변수 설정
+- [x] 이메일 인증 → 회원가입 전체 흐름 검증
+- [x] VITE_NAVER_CLIENT_ID 환경변수 추가 및 LoginPage.tsx 하드코딩 제거
+- [x] 소셜 로그인 리다이렉트 URL 세팅 (카카오/네이버 개발자 콘솔 안내 준비)
+- [x] 소셜 로그인 백엔드 state 파라미터 검증 수정

@@ -12,6 +12,7 @@ const LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/soozip-splash-logo_ddc8f7c4.png";
 
 const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY ?? "";
+const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID ?? "";
 
 function getKakaoLoginUrl() {
   const redirectUri = encodeURIComponent(
@@ -25,7 +26,7 @@ function getNaverLoginUrl() {
   const redirectUri = encodeURIComponent(
     `${window.location.origin}/auth/callback?provider=naver`
   );
-  return `https://nid.naver.com/oauth2.0/authorize?client_id=xYFZohmti5BUBHldnHny&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
+  return `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
 }
 
 export default function LoginPage() {
