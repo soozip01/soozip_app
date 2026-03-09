@@ -2,12 +2,14 @@
  * 서버사이드 소셜 OAuth 콜백 라우트
  *
  * 카카오/네이버 OAuth 인증 후 리다이렉트되는 콜백을 서버에서 직접 처리합니다.
+ * - 경로: /api/auth/callback/kakao, /api/auth/callback/naver
+ * - /api/* 경로는 배포 환경(Cloudflare)에서 Express 서버로 직접 프록시됨
  * - iOS Safari, 모바일 브라우저 등에서 SPA 라우터가 code 파라미터를 놓치는 문제 해결
  * - 서버에서 토큰 교환 → 임시 토큰 발급 → 프론트엔드로 리다이렉트
  */
 
 import type { Express, Request, Response } from "express";
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT } from "jose";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
 import { kakaoUsers, naverUsers } from "../drizzle/schema";
@@ -32,22 +34,18 @@ async function createSessionToken(userId: number, provider: string) {
 }
 
 // 앱 베이스 URL 가져오기
-function getAppBaseUrl(req: Request): string {
-  // 환경변수 우선
+function getAppBaseUrl(): string {
   const envBase = process.env.VITE_APP_BASE_URL;
   if (envBase) return envBase.replace(/\/$/, "");
-  // 요청 헤더에서 추출
-  const proto = req.headers["x-forwarded-proto"] || req.protocol;
-  const host = req.headers["x-forwarded-host"] || req.headers.host || req.hostname;
-  return `${proto}://${host}`;
+  return "";
 }
 
 export function registerSocialOAuthRoutes(app: Express) {
   /**
    * 카카오 OAuth 콜백
-   * GET /auth/callback/kakao?code=...&state=...
+   * GET /api/auth/callback/kakao?code=...&state=...
    */
-  app.get("/auth/callback/kakao", async (req: Request, res: Response) => {
+  app.get("/api/auth/callback/kakao", async (req: Request, res: Response) => {
     const code = req.query.code as string | undefined;
     const errorParam = req.query.error as string | undefined;
 
@@ -65,8 +63,8 @@ export function registerSocialOAuthRoutes(app: Express) {
     }
 
     try {
-      const baseUrl = getAppBaseUrl(req);
-      const redirectUri = `${baseUrl}/auth/callback/kakao`;
+      const baseUrl = getAppBaseUrl();
+      const redirectUri = `${baseUrl}/api/auth/callback/kakao`;
 
       // 1. 카카오 액세스 토큰 교환
       const tokenRes = await fetch("https://kauth.kakao.com/oauth/token", {
@@ -137,7 +135,6 @@ export function registerSocialOAuthRoutes(app: Express) {
         // 기존 회원 - 세션 토큰 발급 후 홈으로
         await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
         const sessionToken = await createSessionToken(existing[0].id, "kakao");
-        // 세션 정보를 쿼리 파라미터로 전달 (프론트엔드에서 처리)
         const userPayload = encodeURIComponent(JSON.stringify({
           id: existing[0].id,
           nickname: existing[0].nickname,
@@ -165,9 +162,9 @@ export function registerSocialOAuthRoutes(app: Express) {
 
   /**
    * 네이버 OAuth 콜백
-   * GET /auth/callback/naver?code=...&state=...
+   * GET /api/auth/callback/naver?code=...&state=...
    */
-  app.get("/auth/callback/naver", async (req: Request, res: Response) => {
+  app.get("/api/auth/callback/naver", async (req: Request, res: Response) => {
     const code = req.query.code as string | undefined;
     const errorParam = req.query.error as string | undefined;
 
@@ -184,8 +181,8 @@ export function registerSocialOAuthRoutes(app: Express) {
     }
 
     try {
-      const baseUrl = getAppBaseUrl(req);
-      const redirectUri = `${baseUrl}/auth/callback/naver`;
+      const baseUrl = getAppBaseUrl();
+      const redirectUri = `${baseUrl}/api/auth/callback/naver`;
 
       // 1. 네이버 액세스 토큰 교환
       const tokenRes = await fetch("https://nid.naver.com/oauth2.0/token", {

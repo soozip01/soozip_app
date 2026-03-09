@@ -33,7 +33,7 @@ describe("소셜 OAuth 서버사이드 콜백", () => {
   describe("카카오 콜백 (/auth/callback/kakao)", () => {
     it("code 파라미터 없으면 /login?error=... 로 리다이렉트", async () => {
       const app = createTestApp();
-      const res = await request(app).get("/auth/callback/kakao");
+      const res = await request(app).get("/api/auth/callback/kakao");
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("/login?error=");
       expect(decodeURIComponent(res.headers.location)).toContain("인증 코드가 없습니다");
@@ -41,7 +41,7 @@ describe("소셜 OAuth 서버사이드 콜백", () => {
 
     it("error 파라미터 있으면 /login?error=... 로 리다이렉트", async () => {
       const app = createTestApp();
-      const res = await request(app).get("/auth/callback/kakao?error=access_denied");
+      const res = await request(app).get("/api/auth/callback/kakao?error=access_denied");
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("/login?error=");
       expect(decodeURIComponent(res.headers.location)).toContain("카카오 로그인이 취소");
@@ -55,7 +55,7 @@ describe("소셜 OAuth 서버사이드 콜백", () => {
       });
 
       const app = createTestApp();
-      const res = await request(app).get("/auth/callback/kakao?code=invalid_code");
+      const res = await request(app).get("/api/auth/callback/kakao?code=invalid_code");
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("/login?error=");
     });
@@ -64,7 +64,7 @@ describe("소셜 OAuth 서버사이드 콜백", () => {
   describe("네이버 콜백 (/auth/callback/naver)", () => {
     it("code 파라미터 없으면 /login?error=... 로 리다이렉트", async () => {
       const app = createTestApp();
-      const res = await request(app).get("/auth/callback/naver");
+      const res = await request(app).get("/api/auth/callback/naver");
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("/login?error=");
       expect(decodeURIComponent(res.headers.location)).toContain("인증 코드가 없습니다");
@@ -72,7 +72,7 @@ describe("소셜 OAuth 서버사이드 콜백", () => {
 
     it("error 파라미터 있으면 /login?error=... 로 리다이렉트", async () => {
       const app = createTestApp();
-      const res = await request(app).get("/auth/callback/naver?error=access_denied");
+      const res = await request(app).get("/api/auth/callback/naver?error=access_denied");
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("/login?error=");
       expect(decodeURIComponent(res.headers.location)).toContain("네이버 로그인이 취소");
@@ -86,7 +86,7 @@ describe("소셜 OAuth 서버사이드 콜백", () => {
       });
 
       const app = createTestApp();
-      const res = await request(app).get("/auth/callback/naver?code=invalid_code");
+      const res = await request(app).get("/api/auth/callback/naver?code=invalid_code");
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("/login?error=");
     });

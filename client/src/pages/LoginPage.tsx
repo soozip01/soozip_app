@@ -61,7 +61,7 @@ function detectInAppBrowser(): { isKakao: boolean; isNaver: boolean; isInApp: bo
 
 function getKakaoLoginUrl(): string {
   const baseUrl = getAppBaseUrl();
-  const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback/kakao`);
+  const redirectUri = encodeURIComponent(`${baseUrl}/api/auth/callback/kakao`);
   const ua = navigator.userAgent;
   // 카카오톡 인앱 브라우저에서는 prompt=none으로 자동 로그인 시도
   const isKakaoInApp = /KAKAOTALK/i.test(ua);
@@ -72,7 +72,7 @@ function getKakaoLoginUrl(): string {
 function getNaverLoginUrl(): string {
   const state = Math.random().toString(36).substring(2, 15);
   const baseUrl = getAppBaseUrl();
-  const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback/naver`);
+  const redirectUri = encodeURIComponent(`${baseUrl}/api/auth/callback/naver`);
   return `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
 }
 
