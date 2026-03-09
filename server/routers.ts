@@ -86,8 +86,16 @@ export const appRouter = router({
               ...(ENV.kakaoClientSecret ? { client_secret: ENV.kakaoClientSecret } : {}),
             }),
           });
-          if (!tokenRes.ok) throw new Error("카카오 토큰 교환 실패");
-          const tokenData = await tokenRes.json() as { access_token: string };
+          if (!tokenRes.ok) {
+            const errBody = await tokenRes.text().catch(() => "unknown");
+            console.error(`[카카오] 토큰 교환 실패: ${tokenRes.status} ${errBody}`);
+            throw new Error(`카카오 토큰 교환 실패 (${tokenRes.status})`);
+          }
+          const tokenData = await tokenRes.json() as { access_token: string; error?: string; error_description?: string };
+          if (tokenData.error) {
+            console.error(`[카카오] 토큰 에러: ${tokenData.error} - ${tokenData.error_description}`);
+            throw new Error(`카카오 인증 오류: ${tokenData.error_description || tokenData.error}`);
+          }
 
           // 2. 카카오 사용자 정보 조회
           const userRes = await fetch("https://kapi.kakao.com/v2/user/me", {
@@ -144,8 +152,16 @@ export const appRouter = router({
               state: input.state ?? "",
             }),
           });
-          if (!tokenRes.ok) throw new Error("네이버 토큰 교환 실패");
-          const tokenData = await tokenRes.json() as { access_token: string };
+          if (!tokenRes.ok) {
+            const errBody = await tokenRes.text().catch(() => "unknown");
+            console.error(`[네이버] 토큰 교환 실패: ${tokenRes.status} ${errBody}`);
+            throw new Error(`네이버 토큰 교환 실패 (${tokenRes.status})`);
+          }
+          const tokenData = await tokenRes.json() as { access_token: string; error?: string; error_description?: string };
+          if (tokenData.error) {
+            console.error(`[네이버] 토큰 에러: ${tokenData.error} - ${tokenData.error_description}`);
+            throw new Error(`네이버 인증 오류: ${tokenData.error_description || tokenData.error}`);
+          }
 
           // 2. 네이버 사용자 정보 조회
           const userRes = await fetch("https://openapi.naver.com/v1/nid/me", {

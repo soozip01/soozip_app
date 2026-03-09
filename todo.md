@@ -28,6 +28,7 @@
 - [x] BottomNav 마이 탭 경로 /login → /mypage 수정
 - [x] verifyEmailCode orderBy desc 수정 (최신 코드 우선 조회)
 - [x] OAuthCallback useRoute → window.location.pathname 직접 파싱으로 수정 (배포 환경 provider 누락 버그 수정)
+- [ ] 네이버 로그인 리다이렉트 URI 등록 및 모바일/PC 검증
 
 ## 2차 작업 (이메일/소셜 로그인 완성)
 - [x] Resend API 설치 및 mailer.ts 교체 (네이버/구글 등 실제 이메일 발송)
@@ -39,7 +40,13 @@
 
 ## 3차 작업 (소셜 로그인 오류 수정 및 이메일 회원가입 검증)
 - [x] 카카오 KOE004 오류 수정 (리다이렉트 URI 불일치)
-- [ ] 카카오 KOE006 오류 수정 (배포 버전 코드 불일치 - 구버전 redirect_uri 사용 중)
+- [x] 카카오 KOE006 오류 수정 (배포 버전 코드 불일치 - 구버전 redirect_uri 사용 중)
 - [ ] 이메일 회원가입 전체 흐름 브라우저 직접 검증
-- [ ] 네이버 개발 중 상태 해결 (테스터 계정 등록 안내)
-- [ ] OAuthCallback 소셜 로그인 콜백 처리 로직 검증
+- [x] 네이버 개발 중 상태 해결 (테스터 계정 등록 안내)
+- [x] OAuthCallback 소셜 로그인 콜백 처리 로직 검증
+
+## 4차 작업 (모바일 웹 OAuth 로그인 수정)
+- [x] 모바일 웹에서 카카오/네이버 OAuth 로그인 "code 또는 provider 누락" 오류 수정
+- [x] 모바일 인앱 브라우저(카카오톡, 네이버 앱) 대응 처리
+- [x] 모바일 환경 OAuth 콜백 URL 파싱 안정화
+- [ ] 모바일 시뮬레이션 테스트 검증

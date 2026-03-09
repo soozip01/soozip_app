@@ -4,6 +4,12 @@
  * - 카카오 1초 로그인/회원가입
  * - 네이버 1초 로그인/회원가입
  * - 이메일로 로그인 / 이메일로 회원가입
+ *
+ * [모바일 대응]
+ * - redirectUri를 window.location.origin 대신 VITE_APP_BASE_URL 환경변수 또는
+ *   현재 origin을 사용하되, 인앱 브라우저 감지 시 외부 브라우저로 유도
+ * - 카카오톡 인앱 브라우저: UserAgent에 'KAKAOTALK' 포함
+ * - 네이버 앱 인앱 브라우저: UserAgent에 'NAVER' 포함
  */
 import { useLocation } from "wouter";
 import { Home } from "lucide-react";
@@ -14,32 +20,112 @@ const LOGO_URL =
 const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY ?? "";
 const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID ?? "";
 
-function getKakaoLoginUrl() {
-  // 카카오는 쿼리파라미터 없는 URI만 허용 → /auth/callback/kakao 경로 사용
-  const redirectUri = encodeURIComponent(
-    `${window.location.origin}/auth/callback/kakao`
-  );
-  return `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${redirectUri}&response_type=code`;
+/**
+ * 앱 베이스 URL 결정
+ * - VITE_APP_BASE_URL 환경변수가 있으면 그것을 사용 (배포 환경에서 안정적)
+ * - 없으면 window.location.origin 사용 (개발 환경)
+ * - 인앱 브라우저에서 origin이 null/about:blank인 경우 대비
+ */
+function getAppBaseUrl(): string {
+  // 환경변수에 베이스 URL이 설정되어 있으면 사용
+  const envBaseUrl = import.meta.env.VITE_APP_BASE_URL;
+  if (envBaseUrl) return envBaseUrl.replace(/\/$/, "");
+
+  // window.location.origin이 유효한지 확인
+  const origin = window.location.origin;
+  if (origin && origin !== "null" && !origin.startsWith("file:")) {
+    return origin;
+  }
+
+  // 폴백: href에서 origin 추출
+  try {
+    const url = new URL(window.location.href);
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return "";
+  }
 }
 
-function getNaverLoginUrl() {
+/**
+ * 인앱 브라우저 감지
+ */
+function detectInAppBrowser(): { isKakao: boolean; isNaver: boolean; isInApp: boolean } {
+  const ua = navigator.userAgent;
+  const isKakao = /KAKAOTALK/i.test(ua);
+  const isNaver = /NAVER/i.test(ua) && !/NaverBot/i.test(ua);
+  const isInApp = isKakao || isNaver || /Instagram|FBAN|FBAV|Line|Twitter/i.test(ua);
+  return { isKakao, isNaver, isInApp };
+}
+
+function getKakaoLoginUrl(): string {
+  const baseUrl = getAppBaseUrl();
+  const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback/kakao`);
+  const ua = navigator.userAgent;
+  // 카카오톡 인앱 브라우저에서는 prompt=none으로 자동 로그인 시도
+  const isKakaoInApp = /KAKAOTALK/i.test(ua);
+  const promptParam = isKakaoInApp ? "&prompt=none" : "";
+  return `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${redirectUri}&response_type=code${promptParam}`;
+}
+
+function getNaverLoginUrl(): string {
   const state = Math.random().toString(36).substring(2, 15);
-  // 네이버도 동일하게 경로 기반 URI 사용
-  const redirectUri = encodeURIComponent(
-    `${window.location.origin}/auth/callback/naver`
-  );
+  const baseUrl = getAppBaseUrl();
+  const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback/naver`);
   return `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
+}
+
+/**
+ * 인앱 브라우저에서 외부 브라우저로 열기 위한 URL 생성
+ * Android: intent:// 스킴 사용
+ * iOS: 직접 Safari로 열기 불가 → 사용자에게 안내
+ */
+function openInExternalBrowser(url: string): void {
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+  if (isAndroid) {
+    // Android: intent 스킴으로 Chrome 강제 실행
+    const intentUrl = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
+    window.location.href = intentUrl;
+    // 폴백: 일반 URL로 시도
+    setTimeout(() => {
+      window.location.href = url;
+    }, 500);
+  } else if (isIOS) {
+    // iOS: 직접 외부 브라우저 강제 불가 → 그냥 이동 (Safari가 처리)
+    window.location.href = url;
+  } else {
+    window.location.href = url;
+  }
 }
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
 
   const handleKakao = () => {
-    window.location.href = getKakaoLoginUrl();
+    const { isKakao } = detectInAppBrowser();
+    const url = getKakaoLoginUrl();
+
+    if (isKakao) {
+      // 카카오톡 인앱 브라우저에서는 prompt=none으로 자동 로그인 (이미 URL에 포함됨)
+      // 자동 로그인이 실패하면 일반 로그인 화면이 표시됨
+      window.location.href = url;
+    } else {
+      window.location.href = url;
+    }
   };
 
   const handleNaver = () => {
-    window.location.href = getNaverLoginUrl();
+    const { isNaver } = detectInAppBrowser();
+    const url = getNaverLoginUrl();
+
+    if (isNaver) {
+      // 네이버 앱 인앱 브라우저에서는 외부 브라우저로 유도
+      openInExternalBrowser(url);
+    } else {
+      window.location.href = url;
+    }
   };
 
   return (
