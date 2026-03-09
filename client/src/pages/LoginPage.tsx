@@ -10,7 +10,9 @@
  *   현재 origin을 사용하되, 인앱 브라우저 감지 시 외부 브라우저로 유도
  * - 카카오톡 인앱 브라우저: UserAgent에 'KAKAOTALK' 포함
  * - 네이버 앱 인앱 브라우저: UserAgent에 'NAVER' 포함
+ * - 서버사이드 OAuth 콜백에서 에러 발생 시 ?error=... 파라미터로 전달
  */
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Home } from "lucide-react";
 
@@ -102,6 +104,18 @@ function openInExternalBrowser(url: string): void {
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  // URL에서 에러 파라미터 처리 (서버사이드 OAuth 콜백에서 전달)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (error) {
+      setLoginError(decodeURIComponent(error));
+      // URL에서 에러 파라미터 제거
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
 
   const handleKakao = () => {
     const { isKakao } = detectInAppBrowser();
@@ -157,6 +171,13 @@ export default function LoginPage() {
           <span className="text-2xl font-black tracking-tight text-gray-900">수집</span>
         </div>
       </div>
+
+      {/* 에러 메시지 */}
+      {loginError && (
+        <div className="mx-6 mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-100">
+          <p className="text-sm text-red-600 text-center">{loginError}</p>
+        </div>
+      )}
 
       {/* 로그인 버튼 영역 */}
       <div className="px-6 space-y-3">

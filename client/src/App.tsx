@@ -21,6 +21,7 @@ import StylingShop from "./pages/StylingShop";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import OAuthCallback from "./pages/OAuthCallback";
+import SocialComplete from "./pages/SocialComplete";
 import SocialConsent from "./pages/SocialConsent";
 import SocialProfile from "./pages/SocialProfile";
 import EmailSignup from "./pages/EmailSignup";
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/auth/callback" component={OAuthCallback} />
       <Route path="/auth/callback/kakao" component={OAuthCallback} />
       <Route path="/auth/callback/naver" component={OAuthCallback} />
+      <Route path="/auth/social-complete" component={SocialComplete} />
       <Route path="/auth/social-consent" component={SocialConsent} />
       <Route path="/auth/social-profile" component={SocialProfile} />
       <Route path="/auth/email-signup" component={EmailSignup} />
