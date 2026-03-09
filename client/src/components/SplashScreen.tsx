@@ -1,12 +1,12 @@
 /**
  * SOOZIP 스플래시 화면
  * 앱 최초 진입 시 1.8초 동안 표시되는 로딩 화면
- * 디자인: 순수 검정 배경 + 중앙 SOOZIP 로고
+ * 디자인: 흰 배경 + 전체 스플래시 이미지 (로고 + 곰 캐릭터)
  */
 import { useEffect, useState } from "react";
 
-const LOGO_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/soozip-splash-logo_ddc8f7c4.png";
+const SPLASH_IMAGE_URL =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/soozip-splash-new_49b3819e.png";
 
 const SPLASH_DURATION_MS = 1800;
 
@@ -31,42 +31,36 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-[9999]"
       style={{
-        background: "#000000",
+        background: "#ffffff",
         transition: "opacity 0.5s ease-out",
         opacity: fadeOut ? 0 : 1,
         pointerEvents: fadeOut ? "none" : "auto",
       }}
     >
-      {/* 로고 - 부드러운 등장 애니메이션 */}
-      <div
+      {/* 스플래시 이미지 - 화면 전체에 꽉 차게 표시 */}
+      <img
+        src={SPLASH_IMAGE_URL}
+        alt="SOOZIP"
         style={{
-          animation: "splashLogoIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          animation: "splashFadeIn 0.4s ease-out forwards",
           opacity: 0,
         }}
-      >
-        <img
-          src={LOGO_URL}
-          alt="SOOZIP"
-          style={{
-            width: "80px",
-            height: "80px",
-            objectFit: "contain",
-          }}
-          draggable={false}
-        />
-      </div>
+        draggable={false}
+      />
 
       <style>{`
-        @keyframes splashLogoIn {
+        @keyframes splashFadeIn {
           from {
             opacity: 0;
-            transform: scale(0.75);
           }
           to {
             opacity: 1;
-            transform: scale(1);
           }
         }
       `}</style>
