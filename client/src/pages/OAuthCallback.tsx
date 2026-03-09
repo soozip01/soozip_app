@@ -8,7 +8,7 @@
  *   /auth/callback?provider=kakao|naver  (레거시 호환)
  */
 import { useEffect, useState } from "react";
-import { useLocation, useRoute } from "wouter";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
 
@@ -16,10 +16,6 @@ export default function OAuthCallback() {
   const [, navigate] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const { login } = useSoozipAuth();
-
-  // 경로 기반 매칭 (/auth/callback/kakao 또는 /auth/callback/naver)
-  const [matchKakao] = useRoute("/auth/callback/kakao");
-  const [matchNaver] = useRoute("/auth/callback/naver");
 
   const socialAuthMutation = trpc.auth.socialLogin.useMutation({
     onSuccess: (data) => {
@@ -48,13 +44,16 @@ export default function OAuthCallback() {
     const code = params.get("code");
     const state = params.get("state");
 
-    // provider 결정: 경로 기반 우선, 없으면 쿼리파라미터 폴백
+    // provider 결정: window.location.pathname 직접 파싱 (wouter useRoute 대신)
     let provider: "kakao" | "naver" | null = null;
-    if (matchKakao) {
+    const pathname = window.location.pathname;
+
+    if (pathname.endsWith("/kakao") || pathname.includes("/kakao")) {
       provider = "kakao";
-    } else if (matchNaver) {
+    } else if (pathname.endsWith("/naver") || pathname.includes("/naver")) {
       provider = "naver";
     } else {
+      // 레거시 쿼리파라미터 폴백
       const qProvider = params.get("provider");
       if (qProvider === "kakao" || qProvider === "naver") {
         provider = qProvider;
@@ -70,7 +69,7 @@ export default function OAuthCallback() {
     const redirectUri = `${window.location.origin}/auth/callback/${provider}`;
     socialAuthMutation.mutate({ code, provider, redirectUri, state: state ?? undefined });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchKakao, matchNaver]);
+  }, []);
 
   if (error) {
     return (

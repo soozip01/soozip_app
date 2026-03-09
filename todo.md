@@ -27,6 +27,7 @@
 - [x] 소셜 로그인 기존 회원 AuthContext 저장 및 헤더 반영 (OAuthCallback 수정)
 - [x] BottomNav 마이 탭 경로 /login → /mypage 수정
 - [x] verifyEmailCode orderBy desc 수정 (최신 코드 우선 조회)
+- [x] OAuthCallback useRoute → window.location.pathname 직접 파싱으로 수정 (배포 환경 provider 누락 버그 수정)
 
 ## 2차 작업 (이메일/소셜 로그인 완성)
 - [x] Resend API 설치 및 mailer.ts 교체 (네이버/구글 등 실제 이메일 발송)
