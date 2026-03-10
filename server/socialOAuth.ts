@@ -233,6 +233,9 @@ export function registerSocialOAuthRoutes(app: Express) {
           email?: string;
           nickname?: string;
           profile_image?: string;
+          gender?: string;    // M/F
+          birthday?: string;  // MM-DD
+          age?: string;       // 연령대 (예: "20-29")
         };
       };
 
@@ -240,6 +243,9 @@ export function registerSocialOAuthRoutes(app: Express) {
       const email = userData.response.email ?? null;
       const profileImageUrl = userData.response.profile_image ?? null;
       const naverNickname = userData.response.nickname ?? null;
+      const gender = userData.response.gender ?? null;
+      const birthday = userData.response.birthday ?? null;
+      const age = userData.response.age ?? null;
 
       // 3. DB에서 기존 회원 확인
       const db = await getDb();
@@ -270,6 +276,9 @@ export function registerSocialOAuthRoutes(app: Express) {
           email,
           profileImageUrl,
           suggestedNickname: naverNickname,
+          gender,
+          birthday,
+          age,
         });
         res.redirect(302, `/auth/social-consent?provider=naver&tempToken=${tempToken}`);
       }

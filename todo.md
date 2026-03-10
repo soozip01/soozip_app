@@ -72,3 +72,8 @@
   - [x] 상단 소개 섹션 (도면 이미지 2장, 설명 텍스트)
   - [x] 펼치기/접기 박스 기능 (5단계 목록, 클릭 시 해당 STEP으로 스크롤)
   - [x] STEP 01~05 각 단계 상세 내용
+
+## 7차 작업 (네이버 OAuth scope 변경)
+- [x] 네이버 OAuth scope 수정: 필수(id, email), 선택(nickname, profile_image, gender, birthday, age)
+- [x] 이름(name) 항목 제거, 휴대전화번호(mobile) 항목 제거
+- [x] 사용자 프로필 처리 코드에서 추가 선택 항목 반영

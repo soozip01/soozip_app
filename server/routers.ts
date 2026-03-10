@@ -169,13 +169,24 @@ export const appRouter = router({
           });
           if (!userRes.ok) throw new Error("네이버 사용자 정보 조회 실패");
           const userData = await userRes.json() as {
-            response: { id: string; email?: string; nickname?: string; profile_image?: string };
+            response: {
+              id: string;
+              email?: string;
+              nickname?: string;
+              profile_image?: string;
+              gender?: string;    // M/F
+              birthday?: string;  // MM-DD
+              age?: string;       // 연령대 (예: "20-29")
+            };
           };
 
           const naverId = userData.response.id;
           const email = userData.response.email ?? null;
           const profileImageUrl = userData.response.profile_image ?? null;
           const naverNickname = userData.response.nickname ?? null;
+          const gender = userData.response.gender ?? null;
+          const birthday = userData.response.birthday ?? null;
+          const age = userData.response.age ?? null;
 
           // 3. 기존 회원 확인
           const existing = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
@@ -197,6 +208,9 @@ export const appRouter = router({
             email,
             profileImageUrl,
             suggestedNickname: naverNickname,
+            gender,
+            birthday,
+            age,
           });
           return { isNewUser: true, provider: "naver", tempToken };
         }

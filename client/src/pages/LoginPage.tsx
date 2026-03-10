@@ -73,7 +73,10 @@ function getNaverLoginUrl(): string {
   const state = Math.random().toString(36).substring(2, 15);
   const baseUrl = getAppBaseUrl();
   const redirectUri = encodeURIComponent(`${baseUrl}/api/auth/callback/naver`);
-  return `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
+  // 필수: id(이용자 식별자), email(이메일 주소)
+  // 선택: nickname(별명), profile_image(프로필사진), gender(성별), birthday(생일), age(연령대)
+  const scope = encodeURIComponent("id email nickname profile_image gender birthday age");
+  return `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&state=${state}&scope=${scope}`;
 }
 
 /**
