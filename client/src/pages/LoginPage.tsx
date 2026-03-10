@@ -17,7 +17,7 @@ import { useLocation } from "wouter";
 import { Home } from "lucide-react";
 
 const LOGO_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/soozip-splash-logo_ddc8f7c4.png";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/SOOZIP_52085536.png";
 
 const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY ?? "";
 const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID ?? "";
@@ -170,7 +170,7 @@ export default function LoginPage() {
       {/* 로고 */}
       <div className="flex flex-col items-center pt-10 pb-12">
         <div className="flex items-center gap-2">
-          <img src={LOGO_URL} alt="SOOZIP" className="w-10 h-10 object-contain" />
+          <img src={LOGO_URL} alt="SOOZIP" className="w-14 h-14 object-contain rounded-xl" />
           <span className="text-2xl font-black tracking-tight text-gray-900">수집</span>
         </div>
       </div>

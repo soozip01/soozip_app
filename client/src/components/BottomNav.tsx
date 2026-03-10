@@ -3,6 +3,7 @@
  * Active state: terracotta accent color
  */
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 /* ── 아이콘 컴포넌트 ── */
 const HomeIcon = ({ active }: { active: boolean }) => (
@@ -55,6 +56,16 @@ const navItems = [
 
 export default function BottomNav() {
   const [location, navigate] = useLocation();
+  const { isAuthenticated, loading } = useAuth();
+
+  const handleNavClick = (path: string) => {
+    // 마이 탭: 비로그인 상태면 로그인 페이지로 바로 이동
+    if (path === "/mypage" && !loading && !isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    navigate(path);
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
@@ -68,7 +79,7 @@ export default function BottomNav() {
           return (
             <button
               key={path}
-              onClick={() => navigate(path)}
+              onClick={() => handleNavClick(path)}
               className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors relative"
               style={{ color: isActive ? "oklch(0.58 0.16 38)" : "oklch(0.5 0 0)" }}
             >

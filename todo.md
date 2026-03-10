@@ -77,3 +77,7 @@
 - [x] 네이버 OAuth scope 수정: 필수(id, email), 선택(nickname, profile_image, gender, birthday, age)
 - [x] 이름(name) 항목 제거, 휴대전화번호(mobile) 항목 제거
 - [x] 사용자 프로필 처리 코드에서 추가 선택 항목 반영
+
+## 8차 작업 (마이 탭 동작 변경 + 로그인 페이지 로고 교체)
+- [x] 하단바 마이 탭 클릭 시 비로그인 상태면 로그인 페이지로 직접 이동
+- [x] 로그인 페이지 로고 이미지를 SOOZIP.png로 교체 (크게)
