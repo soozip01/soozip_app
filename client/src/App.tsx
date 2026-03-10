@@ -16,6 +16,12 @@ import CartPage from "./pages/CartPage";
 import SearchPage from "./pages/SearchPage";
 import InquiryPage from "./pages/InquiryPage";
 import StylingRequest from "./pages/StylingRequest";
+import StylingMain from "./pages/StylingMain";
+import StylingTypes from "./pages/StylingTypes";
+import StylingTypeFurniture from "./pages/StylingTypeFurniture";
+import StylingTypeFullOnline from "./pages/StylingTypeFullOnline";
+import StylingTypeFullOffline from "./pages/StylingTypeFullOffline";
+import StylingFAQ from "./pages/StylingFAQ";
 import AIStyling from "./pages/AIStyling";
 import StylingShop from "./pages/StylingShop";
 import LoginPage from "./pages/LoginPage";
@@ -39,6 +45,12 @@ function Router() {
       <Route path="/search" component={SearchPage} />
       <Route path="/inquiry" component={InquiryPage} />
       <Route path="/styling-request" component={StylingRequest} />
+      <Route path="/styling" component={StylingMain} />
+      <Route path="/styling/types" component={StylingTypes} />
+      <Route path="/styling/types/furniture" component={StylingTypeFurniture} />
+      <Route path="/styling/types/full-online" component={StylingTypeFullOnline} />
+      <Route path="/styling/types/full-offline" component={StylingTypeFullOffline} />
+      <Route path="/styling/faq" component={StylingFAQ} />
       <Route path="/ai-styling" component={AIStyling} />
       <Route path="/styling-shop" component={StylingShop} />
       <Route path="/styling-shop/:id" component={StylingShop} />

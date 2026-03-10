@@ -356,7 +356,7 @@ export default function Home() {
         <div className="grid gap-2.5" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto" }}>
           {/* 홈 스타일링 신청 - 왼쪽 큰 카드 (세로 2칸 차지) */}
           <button
-            onClick={() => setShowStylingModal(true)}
+            onClick={() => navigate("/styling")}
             className="relative overflow-hidden rounded-2xl text-left transition-all hover:brightness-95 active:scale-[0.97]"
             style={{ background: "oklch(0.93 0 0)", gridRow: "1 / 3", minHeight: "150px" }}
           >
