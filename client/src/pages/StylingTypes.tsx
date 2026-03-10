@@ -1,7 +1,7 @@
 /* 수집 홈 스타일링 타입 페이지
- * 레퍼런스: 세 번째 사진 (수집 홈 스타일링 타입)
  * - 안내 배너: "원하시는 타입을 누르면 진행 과정을 볼 수 있어요"
  * - 가구 배치만 / 풀 스타일링(온라인) / 풀 스타일링(오프라인) / 자주 묻는 질문 카드
+ * - 글씨 크기 비율 통일, 추천 텍스트 한 줄, FAQ 이모티콘 우측 하단
  */
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
@@ -42,33 +42,31 @@ export default function StylingTypes() {
           {/* 가구 배치만 받아보고 싶어요 */}
           <button
             onClick={() => navigate("/styling/types/furniture")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[180px] hover:bg-gray-200 active:scale-[0.97] transition-all"
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col min-h-[200px] hover:bg-gray-200 active:scale-[0.97] transition-all"
           >
-            <div>
-              <p className="text-gray-900 font-bold text-[14px] leading-snug mb-3">
-                가구 배치만<br />받아보고 싶어요
-              </p>
-              <p className="text-gray-500 text-[11px] font-semibold mb-1.5">이런 분께 추천해요!</p>
-              <ul className="space-y-1">
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>기존가구를 주로 활용하실 분</span>
-                </li>
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>새로 산 가구들을 배치만 해보고 싶으신 분</span>
-                </li>
-              </ul>
-            </div>
+            <p className="text-gray-900 font-bold text-[15px] leading-snug mb-3">
+              가구 배치만<br />받아보고 싶어요
+            </p>
+            <p className="text-gray-500 text-[11px] font-semibold mb-2">이런 분께 추천해요!</p>
+            <ul className="space-y-1.5">
+              <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                <span className="shrink-0 mt-0.5">•</span>
+                <span className="whitespace-nowrap">기존가구를 주로 활용하실 분</span>
+              </li>
+              <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                <span className="shrink-0 mt-0.5">•</span>
+                <span>새로 산 가구들을<br />배치만 해보고 싶으신 분</span>
+              </li>
+            </ul>
           </button>
 
           {/* 풀 스타일링 (온라인) - 인기 뱃지 */}
           <button
             onClick={() => navigate("/styling/types/full-online")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[180px] hover:bg-gray-200 active:scale-[0.97] transition-all relative"
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col min-h-[200px] hover:bg-gray-200 active:scale-[0.97] transition-all relative"
           >
             {/* 인기 뱃지 */}
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 left-3">
               <span
                 className="text-white text-[11px] font-bold px-2.5 py-1 rounded-full"
                 style={{ background: "#E84B1A" }}
@@ -76,20 +74,20 @@ export default function StylingTypes() {
                 인기
               </span>
             </div>
-            <div>
-              <p className="text-gray-900 font-bold text-[14px] leading-snug mb-1">
+            <div className="mt-7">
+              <p className="text-gray-900 font-bold text-[15px] leading-snug mb-1">
                 풀 스타일링을<br />받아보고 싶어요
               </p>
               <p className="text-gray-500 text-[12px] mb-3">(온라인 전용)</p>
-              <p className="text-gray-500 text-[11px] font-semibold mb-1.5">이런 분께 추천해요!</p>
-              <ul className="space-y-1">
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>곧 입주 또는 입주 직후이신 분</span>
+              <p className="text-gray-500 text-[11px] font-semibold mb-2">이런 분께 추천해요!</p>
+              <ul className="space-y-1.5">
+                <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                  <span className="shrink-0 mt-0.5">•</span>
+                  <span className="whitespace-nowrap">곧 입주 또는 입주 직후이신 분</span>
                 </li>
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>빠르게 결과를 보고 싶으신 분</span>
+                <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                  <span className="shrink-0 mt-0.5">•</span>
+                  <span className="whitespace-nowrap">빠르게 결과를 보고 싶으신 분</span>
                 </li>
               </ul>
             </div>
@@ -98,43 +96,40 @@ export default function StylingTypes() {
           {/* 풀 스타일링 (오프라인) */}
           <button
             onClick={() => navigate("/styling/types/full-offline")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[180px] hover:bg-gray-200 active:scale-[0.97] transition-all"
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col min-h-[200px] hover:bg-gray-200 active:scale-[0.97] transition-all"
           >
-            <div>
-              <p className="text-gray-900 font-bold text-[14px] leading-snug mb-1">
-                풀 스타일링을<br />받아보고 싶어요
-              </p>
-              <p className="text-gray-500 text-[12px] mb-3">(오프라인 전용)</p>
-              <p className="text-gray-500 text-[11px] font-semibold mb-1.5">이런 분께 추천해요!</p>
-              <ul className="space-y-1">
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>곧 입주 또는 입주 직후이신 분</span>
-                </li>
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>대면 상담이 필요하신 분</span>
-                </li>
-                <li className="text-gray-600 text-[11px] leading-snug flex items-start gap-1">
-                  <span className="mt-0.5 shrink-0">•</span>
-                  <span>공간 세팅까지 희망하시는 분</span>
-                </li>
-              </ul>
-            </div>
+            <p className="text-gray-900 font-bold text-[15px] leading-snug mb-1">
+              풀 스타일링을<br />받아보고 싶어요
+            </p>
+            <p className="text-gray-500 text-[12px] mb-3">(오프라인 전용)</p>
+            <p className="text-gray-500 text-[11px] font-semibold mb-2">이런 분께 추천해요!</p>
+            <ul className="space-y-1.5">
+              <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                <span className="shrink-0 mt-0.5">•</span>
+                <span className="whitespace-nowrap">곧 입주 또는 입주 직후이신 분</span>
+              </li>
+              <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                <span className="shrink-0 mt-0.5">•</span>
+                <span className="whitespace-nowrap">대면 상담이 필요하신 분</span>
+              </li>
+              <li className="text-gray-600 text-[11px] flex items-start gap-1">
+                <span className="shrink-0 mt-0.5">•</span>
+                <span className="whitespace-nowrap">공간 세팅까지 희망하시는 분</span>
+              </li>
+            </ul>
           </button>
 
-          {/* 자주 묻는 질문 */}
+          {/* 자주 묻는 질문 - 이모티콘 우측 하단 */}
           <button
             onClick={() => navigate("/styling/faq")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[180px] hover:bg-gray-200 active:scale-[0.97] transition-all"
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col min-h-[200px] hover:bg-gray-200 active:scale-[0.97] transition-all relative"
           >
-            <div>
-              <p className="text-gray-900 font-bold text-[14px] leading-snug mb-3">
-                자주 묻는 질문
-              </p>
-              <div className="flex justify-center items-center flex-1 mt-6">
-                <span className="text-4xl">❓</span>
-              </div>
+            <p className="text-gray-900 font-bold text-[15px] leading-snug">
+              자주 묻는 질문
+            </p>
+            {/* 이모티콘 우측 하단 */}
+            <div className="absolute bottom-4 right-4">
+              <span className="text-4xl">💬</span>
             </div>
           </button>
         </div>

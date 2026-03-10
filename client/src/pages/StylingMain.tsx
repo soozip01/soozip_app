@@ -12,8 +12,7 @@ export default function StylingMain() {
   const [, navigate] = useLocation();
 
   const handleSurvey = () => {
-    // 기존 스타일링 신청 페이지(iframe)로 연결
-    navigate("/styling-request");
+    window.open("https://soozipland-j3tut3mq.manus.space/", "_blank");
   };
 
   const handleKakaoChat = () => {

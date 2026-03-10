@@ -63,3 +63,12 @@
 - [x] 자주 묻는 질문 페이지 구현 (/styling/faq)
 - [x] 홈 화면 '홈 스타일링 신청하기' 버튼 → /styling 라우트 연결
 - [x] App.tsx 라우트 등록
+
+## 6차 작업 (스타일링 페이지 수정 및 배치솔루션 페이지 구현)
+- [x] StylingMain "빠른 상담 설문" 버튼 → https://soozipland-j3tut3mq.manus.space/ 링크 변경
+- [x] StylingTypes 글씨 크기 비율 통일 및 추천 대상 텍스트 한 줄 표시
+- [x] StylingTypes FAQ 카드 이모티콘 추가 (도형 우측 하단)
+- [x] 수집 배치솔루션 페이지 (/styling/types/furniture) 전면 재구현
+  - [x] 상단 소개 섹션 (도면 이미지 2장, 설명 텍스트)
+  - [x] 펼치기/접기 박스 기능 (5단계 목록, 클릭 시 해당 STEP으로 스크롤)
+  - [x] STEP 01~05 각 단계 상세 내용
