@@ -8,7 +8,7 @@ import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 
-const TERRACOTTA = "#E84B1A";
+const TERRACOTTA = "#d31400";
 const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH";
 
 const IMGS = {
@@ -48,8 +48,8 @@ export default function StylingTypeFurniture() {
     setTimeout(() => {
       const el = stepTitleRefs.current[index];
       if (el) {
-        // 헤더 높이(약 57px) + 여유 8px = 65px 오프셋
-        const top = el.getBoundingClientRect().top + window.scrollY - 65;
+        // 헤더 높이(약 57px) + STEP 위 여백 24px = 81px 오프셋
+        const top = el.getBoundingClientRect().top + window.scrollY - 81;
         window.scrollTo({ top, behavior: "smooth" });
       }
     }, 150);
@@ -75,33 +75,35 @@ export default function StylingTypeFurniture() {
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-6 pb-6">
-          {/* 실제 도면 이미지 2장 - 동일 크기 */}
-          <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="bg-gray-100 rounded-xl overflow-hidden flex flex-col">
-              <div className="aspect-square overflow-hidden">
+          {/* 누끼 이미지 2장 - 배경 없이 크게 */}
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div className="flex flex-col items-center">
+              <div className="w-full">
                 <img
                   src={IMGS.restType}
                   alt="휴식중심형 배치 도면"
-                  className="w-full h-full object-cover"
+                  className="w-full object-contain"
+                  style={{ maxHeight: "180px" }}
                 />
               </div>
-              <p className="text-gray-500 text-[11px] text-center py-1.5">휴식중심형</p>
+              <p className="text-gray-500 text-[12px] text-center mt-1">휴식중심형</p>
             </div>
-            <div className="bg-gray-100 rounded-xl overflow-hidden flex flex-col">
-              <div className="aspect-square overflow-hidden">
+            <div className="flex flex-col items-center">
+              <div className="w-full">
                 <img
                   src={IMGS.zoneType}
                   alt="공간분리형 배치 도면"
-                  className="w-full h-full object-cover"
+                  className="w-full object-contain"
+                  style={{ maxHeight: "180px" }}
                 />
               </div>
-              <p className="text-gray-500 text-[11px] text-center py-1.5">공간분리형</p>
+              <p className="text-gray-500 text-[12px] text-center mt-1">공간분리형</p>
             </div>
           </div>
 
-          {/* 소개 텍스트 - 두 줄 */}
+          {/* 소개 텍스트 - 정확히 두 줄 */}
           <h2 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
-            실제 공간과 가구의 사이즈를<br />그대로 반영하여 최적의 배치를<br />잡아드려요
+            실제 공간과 가구의 사이즈를 반영하여<br />최적의 배치를 잡아드려요
           </h2>
           <p className="text-gray-500 text-[13px] leading-relaxed">
             거주 하실/거주하시고 계신 공간과 기존 가구들을 실제 사이즈로 반영하여
@@ -361,7 +363,7 @@ function StepBadge({ num }: { num: string }) {
       <div className="flex-1 h-px bg-gray-200" />
       <div
         className="text-white font-bold text-[13px] px-4 py-1.5 rounded-full shrink-0"
-        style={{ background: "#E84B1A" }}
+        style={{ background: "#d31400" }}
       >
         STEP {num}
       </div>
