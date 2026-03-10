@@ -81,3 +81,10 @@
 ## 8차 작업 (마이 탭 동작 변경 + 로그인 페이지 로고 교체)
 - [x] 하단바 마이 탭 클릭 시 비로그인 상태면 로그인 페이지로 직접 이동
 - [x] 로그인 페이지 로고 이미지를 SOOZIP.png로 교체 (크게)
+
+## 9차 작업 (스타일링 페이지 대규모 수정)
+- [x] StylingMain: 빠른진행 텍스트 삭제, 카드 세로 길이 증가
+- [x] StylingTypes: 두 도형 내부 간격 통일, 세부항목 행간 좁히기
+- [x] StylingTypeFurniture: 이미지 22장 교체 및 텍스트/레이아웃 수정
+- [x] StylingTypeFurniture: 앵커 이동 시 STEP 제목부터 보이도록 수정
+- [x] StylingTypeFurniture: 최하단 상담 버튼 추가

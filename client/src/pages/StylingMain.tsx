@@ -50,7 +50,7 @@ export default function StylingMain() {
           {/* 홈 스타일링 타입이 궁금해요 */}
           <button
             onClick={() => navigate("/styling/types")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[160px] hover:bg-gray-150 active:scale-[0.97] transition-all"
+            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[200px] hover:bg-gray-150 active:scale-[0.97] transition-all"
           >
             <p className="text-gray-900 font-bold text-[15px] leading-snug">
               홈 스타일링<br />타입이 궁금해요
@@ -63,17 +63,8 @@ export default function StylingMain() {
           {/* 홈 스타일링 예약하기 */}
           <button
             onClick={handleReservation}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[160px] hover:bg-gray-150 active:scale-[0.97] transition-all relative"
+            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col justify-between min-h-[200px] hover:bg-gray-150 active:scale-[0.97] transition-all"
           >
-            {/* 빠른진행 뱃지 */}
-            <div className="absolute top-3 right-3">
-              <span
-                className="text-white text-[11px] font-bold px-2.5 py-1 rounded-full"
-                style={{ background: "#E84B1A" }}
-              >
-                빠른진행
-              </span>
-            </div>
             <p className="text-gray-900 font-bold text-[15px] leading-snug">
               홈 스타일링<br />예약하기
             </p>
