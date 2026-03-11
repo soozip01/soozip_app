@@ -8,6 +8,9 @@ import { ArrowLeft } from "lucide-react";
 export default function StylingTypes() {
   const [, navigate] = useLocation();
 
+  // 인기 뱃지 높이(약 24px) + gap(12px) = 36px 고정 상단 여백으로 모든 카드 제목 위치 통일
+  const TITLE_TOP = "pt-9"; // ~36px, 인기 뱃지 카드 기준
+
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-lg mx-auto">
       {/* 헤더 */}
@@ -41,8 +44,10 @@ export default function StylingTypes() {
             className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all"
             style={{ minHeight: "210px" }}
           >
+            {/* 인기 뱃지 자리 (투명 spacer) */}
+            <div className="h-6 mb-1" />
             <div className="mb-auto">
-              <p className="text-gray-900 font-bold text-[18px] leading-snug mt-2">
+              <p className="text-gray-900 font-bold text-[18px] leading-snug">
                 배치 솔루션
               </p>
             </div>
@@ -62,11 +67,11 @@ export default function StylingTypes() {
           {/* 풀 스타일링 (온라인 전용) - 인기 뱃지 포함 */}
           <button
             onClick={() => navigate("/styling/types/full-online")}
-            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all relative"
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all"
             style={{ minHeight: "210px" }}
           >
             {/* 인기 뱃지 */}
-            <div className="absolute top-3 left-4">
+            <div className="h-6 mb-1 flex items-center">
               <span
                 className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: "#d31400" }}
@@ -74,7 +79,7 @@ export default function StylingTypes() {
                 인기
               </span>
             </div>
-            <div className="mb-auto mt-7">
+            <div className="mb-auto">
               <p className="text-gray-900 font-bold text-[18px] leading-snug">
                 풀 스타일링
               </p>
@@ -99,7 +104,9 @@ export default function StylingTypes() {
             className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all"
             style={{ minHeight: "210px" }}
           >
-            <div className="mb-auto mt-2">
+            {/* 인기 뱃지 자리 (투명 spacer) */}
+            <div className="h-6 mb-1" />
+            <div className="mb-auto">
               <p className="text-gray-900 font-bold text-[18px] leading-snug">
                 풀 스타일링
               </p>
@@ -127,7 +134,9 @@ export default function StylingTypes() {
             className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all relative overflow-hidden"
             style={{ minHeight: "210px" }}
           >
-            <p className="text-gray-900 font-bold text-[18px] leading-snug mt-2">
+            {/* 인기 뱃지 자리 (투명 spacer) */}
+            <div className="h-6 mb-1" />
+            <p className="text-gray-900 font-bold text-[18px] leading-snug">
               자주 묻는 질문
             </p>
             {/* 이모티콘 우측 하단 */}
