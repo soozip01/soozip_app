@@ -1,7 +1,8 @@
-/* 수집 배치솔루션 페이지 (가구 배치만 받아보고 싶어요)
- * - 상단 소개 섹션 (도면 예시 이미지 2장, 설명 텍스트)
- * - 펼치기/접기 박스 (5단계 목록, 클릭 시 해당 STEP 제목으로 스크롤)
- * - STEP 01~05 각 단계 상세 내용 (코드로 직접 구현)
+/* 수집 풀 스타일링(오프라인) 페이지
+ * - 배치솔루션과 동일한 레이아웃 구조
+ * - 상단 이미지: 오프라인 방문 스타일링 사진 2장
+ * - STEP 01: 방문 상담 및 실측 (패키지 발송 없음)
+ * - STEP 02~05: 배치솔루션과 동일한 구조
  */
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -11,33 +12,32 @@ const TERRACOTTA = "#d31400";
 const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH";
 
 const IMGS = {
-  // 소개 섹션 - 도면 예시 이미지 + 곰 캐릭터
-  floorPlan1: `${CDN}/floor_plan_example_de7d5391.png`,
-  floorPlan2: `${CDN}/bear_character_100aff40.png`,
-  // STEP 01
-  packageImg: `${CDN}/step01-package_d51c76d9.png`,
+  // 소개 섹션
+  offlineRoom1: `${CDN}/offline_room1_4e830ebb.png`,
+  offlineRoom2: `${CDN}/offline_room2_499e376e.png`,
+  // STEP 01 (방문 상담 - 곰 캐릭터)
+  bearVisit: `${CDN}/bear_character_494e086e.png`,
   // STEP 02 (실제 사진)
   furniturePhoto: `${CDN}/step02-furniture-photo_1fe0b617.png`,
   roomPhoto: `${CDN}/step02-room-photo_743991b0.png`,
   // STEP 03 (배치안 이미지)
-  plan1: `${CDN}/step03-plan1_29c86efd.jpg`,
-  plan2: `${CDN}/step03-plan2_9f700db9.jpg`,
+  plan1: `${CDN}/step03-plan1_d49cbf7c.jpg`,
+  plan2: `${CDN}/step03-plan2_06f2dfaf.jpg`,
   // STEP 04 (곰 캐릭터)
-  bearCharacter: `${CDN}/step04-feedback_ec3d0cab.png`,
-  // STEP 05 (3D 배치 + 제품)
-  finalPlan: `${CDN}/step05-final_9c5b236e.png`,
+  bearCharacter: `${CDN}/step04-bear-character_d1ab78c1.png`,
+  // STEP 05
   product1: `${CDN}/step05-product1_db1c2d26.png`,
 };
 
 const STEP_LABELS = [
-  "1. 실측 패키지 발송 및 공간 실측",
+  "1. 방문 상담 및 실측",
   "2. 기존가구 정보 입력하기",
-  "3. 니즈에 맞는 최적의 배치 받아보기",
-  "4. 피드백 및 수정",
-  "5. 최종 시안 확인 및 제품 링크 전달 받기",
+  "3. 공간에 맞는 배치 받아보기",
+  "4. 수시 신청하기",
+  "5. 최종 제품받기",
 ];
 
-export default function StylingTypeFurniture() {
+export default function StylingTypeOffline() {
   const [, navigate] = useLocation();
   const [isBoxOpen, setIsBoxOpen] = useState(false);
   const stepTitleRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -65,39 +65,42 @@ export default function StylingTypeFurniture() {
           <ArrowLeft size={22} className="text-gray-800" />
         </button>
         <h1 className="flex-1 text-center text-base font-bold text-gray-900 pr-8">
-          수집 배치솔루션
+          수집 풀 스타일링(오프라인)
         </h1>
       </header>
 
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-6 pb-6">
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.floorPlan1}
-                alt="배치 도면 예시 1"
-                className="w-full object-cover"
-                style={{ aspectRatio: "1/1" }}
-              />
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div className="flex flex-col items-center">
+              <div className="w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }}>
+                <img
+                  src={IMGS.offlineRoom1}
+                  alt="오프라인 스타일링 사례 1"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className="text-gray-500 text-[11px] text-center mt-1.5">수 님 스타일링</p>
             </div>
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.floorPlan2}
-                alt="배치 도면 예시 2"
-                className="w-full object-cover"
-                style={{ aspectRatio: "1/1" }}
-              />
+            <div className="flex flex-col items-center">
+              <div className="w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }}>
+                <img
+                  src={IMGS.offlineRoom2}
+                  alt="오프라인 스타일링 사례 2"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className="text-gray-500 text-[11px] text-center mt-1.5">스타일링 사례</p>
             </div>
           </div>
 
           <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-3">
-            실제 공간과 가구의 사이즈를 반영하여<br />최적의 배치를 잡아드려요
+            공간 실측부터, 홈 스타일링, 가구 세팅까지<br />진행되는 타입이에요
           </h2>
           <p className="text-gray-500 text-[13px] leading-relaxed">
-            거주하실/거주하시고 계신 공간과 기존 가구들을 실제 사이즈로 반영하여
-            라이프 스타일에 맞는 최적의 배치를 잡아드리는 서비스에요.{" "}
-            추가로 필요하신 가구가 있다면, 완성될 배치에 함께 반영해드리고 있어요
+            하루 한 공간 기준 공간 실측 상담부터 가구 선정과 배치까지
+            진행되는 오프라인 방문 서비스에요.
           </p>
         </section>
 
@@ -111,7 +114,7 @@ export default function StylingTypeFurniture() {
               <div className="flex items-center gap-2">
                 <span className="text-gray-400 text-[18px] font-serif leading-none">&ldquo;</span>
                 <span className="text-gray-900 font-semibold text-[14px]">
-                  배치솔루션, 어떻게 진행되나요?
+                  풀 스타일링(오프라인), 어떻게 진행되나요?
                 </span>
               </div>
               <div className="flex items-center gap-1" style={{ color: TERRACOTTA }}>
@@ -149,29 +152,20 @@ export default function StylingTypeFurniture() {
             <StepBadge num="01" />
           </div>
           <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-2 mt-6">
-            배치솔루션 예약이 완료되면<br />실측 패키지가 발송돼요!
+            풀 스타일링 예약이 완료되면<br />방문 상담 및 실측을 위한 일정을 조율해요!
           </h3>
-          <p className="text-gray-400 text-[11px] mb-5">
-            자료가 있으신 경우 빠른 진행을 위해 패키지 발송이 생략됩니다
+          <p className="text-gray-500 text-[13px] leading-relaxed mb-5">
+            조율한 일정에 맞춰 담당자가 실측을 진행해요
           </p>
 
-          {/* 도면 초안 카드 */}
-          <div className="flex flex-col items-center gap-2 mb-5">
-            <div className="bg-gray-50 rounded-xl p-4 flex flex-col items-center gap-2 w-full max-w-[200px]">
-              <img
-                src={IMGS.floorPlan1}
-                alt="도면 초안"
-                className="w-full rounded-lg object-contain"
-                style={{ maxHeight: 160 }}
-              />
-              <span className="text-gray-700 text-[13px] font-medium text-center">도면 초안</span>
-              <span className="text-gray-400 text-[11px] text-center">(온라인 전송)</span>
-            </div>
+          {/* 방문 상담 곰 캐릭터 이미지 */}
+          <div className="flex justify-center">
+            <img
+              src={IMGS.bearVisit}
+              alt="방문 상담 안내 캐릭터"
+              className="w-full max-w-xs object-contain"
+            />
           </div>
-
-          <h3 className="text-gray-900 font-bold text-[16px] leading-snug mb-3">
-            발송드린 온라인 도면에<br />실측값을 작성해주세요
-          </h3>
         </section>
 
         {/* ── STEP 02 ── */}
@@ -180,7 +174,6 @@ export default function StylingTypeFurniture() {
             <StepBadge num="02" />
           </div>
 
-          {/* 섹션 헤더 */}
           <div className="mt-6 mb-6">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
               기존가구 정보 전달
@@ -223,7 +216,6 @@ export default function StylingTypeFurniture() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                {/* 가구 사진 */}
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
                   <img
                     src={IMGS.furniturePhoto}
@@ -232,7 +224,6 @@ export default function StylingTypeFurniture() {
                     style={{ minHeight: "112px" }}
                   />
                 </div>
-                {/* 사이즈 정보 */}
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-2">사이즈 정보</p>
                   <div className="space-y-1.5">
@@ -258,7 +249,6 @@ export default function StylingTypeFurniture() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                {/* 공간 사진 */}
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
                   <img
                     src={IMGS.roomPhoto}
@@ -267,7 +257,6 @@ export default function StylingTypeFurniture() {
                     style={{ minHeight: "128px" }}
                   />
                 </div>
-                {/* 불릿 리스트 */}
                 <ul className="flex-1 space-y-2.5 pt-1">
                   {[
                     "제품이 제대로 보이지 않는 사진",
@@ -292,18 +281,16 @@ export default function StylingTypeFurniture() {
             <StepBadge num="03" />
           </div>
 
-          {/* 제목 + 설명 + 알림박스 */}
           <div className="mt-6 mb-5">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
               입력해주신 정보들로<br />최적의 배치를 잡아드려요!
             </h3>
             <p className="text-gray-500 text-[14px] mb-3">
-              라이프 스타일에 맞춘 최적의 배치를 제안드려요
+              라이프 스타일에 맞춘 최적의 배치와 제품을 제안드려요
             </p>
             <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 1~3가지로 달라질 수 있어요" />
           </div>
 
-          {/* 배치안 이미지 2장 */}
           <div className="flex flex-col gap-3">
             <div className="bg-gray-100 rounded-xl overflow-hidden">
               <img src={IMGS.plan1} alt="배치안 예시 1" className="w-full object-cover" />
@@ -327,7 +314,6 @@ export default function StylingTypeFurniture() {
             <NoticeBox text="최대 2회 수정이 가능하기 때문에 자세하게 말씀 주실수록 좋아요" />
           </div>
 
-          {/* 곰 캐릭터 이미지 */}
           <div className="flex justify-center mt-4">
             <img
               src={IMGS.bearCharacter}
@@ -349,12 +335,10 @@ export default function StylingTypeFurniture() {
             </h3>
           </div>
 
-          {/* 3D 배치 도면 이미지 */}
           <div className="bg-gray-100 rounded-xl overflow-hidden mb-4">
-            <img src={IMGS.finalPlan} alt="최종 배치안 3D 도면" className="w-full object-cover" />
+            <img src={IMGS.plan1} alt="최종 배치안" className="w-full object-cover" />
           </div>
 
-          {/* 추천 제품 1개 */}
           <div className="flex gap-3 items-start">
             <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
               <img
@@ -380,7 +364,7 @@ export default function StylingTypeFurniture() {
             className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all mb-3"
             style={{ background: "#111111" }}
           >
-            배치솔루션 신청하기
+            풀 스타일링(오프라인) 신청하기
           </button>
           <button
             onClick={() => window.open("http://pf.kakao.com/_VNxiLn/chat", "_blank")}
