@@ -25,52 +25,68 @@ export default function StylingTypes() {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <main className="flex-1 px-4 pt-6 pb-10 flex flex-col gap-4">
+      <main className="flex-1 px-4 pt-5 pb-10 flex flex-col gap-3">
+        {/* 안내 배너 */}
+        <div className="bg-gray-900 rounded-xl px-4 py-3 flex items-center justify-center">
+          <p className="text-white text-[12px] font-medium whitespace-nowrap">
+            원하시는 타입을 누르면 진행 과정을 볼 수 있어요
+          </p>
+        </div>
+
         {/* 타입 카드 2x2 그리드 */}
         <div className="grid grid-cols-2 gap-3">
           {/* 배치 솔루션 */}
           <button
             onClick={() => navigate("/styling/types/furniture")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col active:scale-[0.97] transition-all"
-            style={{ minHeight: "220px" }}
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all"
+            style={{ minHeight: "210px" }}
           >
-            <div className="mb-4">
-              <p className="text-gray-900 font-bold text-[18px] leading-snug">
+            <div className="mb-auto">
+              <p className="text-gray-900 font-bold text-[18px] leading-snug mt-2">
                 배치 솔루션
               </p>
             </div>
-            <div className="mt-auto">
-              <p className="text-gray-400 text-[11px] font-semibold mb-2">이런 분께 추천해요!</p>
+            <div className="mt-4">
+              <p className="text-gray-400 text-[11px] font-semibold mb-1.5">이런 분께 추천해요!</p>
               <ul className="flex flex-col gap-1">
-                <li className="text-gray-600 text-[12px] leading-snug">
+                <li className="text-gray-600 text-[8px] leading-snug whitespace-nowrap">
                   • 기존가구를 주로 활용하실 분
                 </li>
-                <li className="text-gray-600 text-[12px] leading-snug">
-                  • 새로 산 가구들을<br />배치만 해보고 싶으신 분
+                <li className="text-gray-600 text-[8px] leading-snug">
+                  • 새로 산 가구들을 배치만<br />해보고 싶으신 분
                 </li>
               </ul>
             </div>
           </button>
 
-          {/* 풀 스타일링 (온라인 전용) */}
+          {/* 풀 스타일링 (온라인 전용) - 인기 뱃지 포함 */}
           <button
             onClick={() => navigate("/styling/types/full-online")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col active:scale-[0.97] transition-all"
-            style={{ minHeight: "220px" }}
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all relative"
+            style={{ minHeight: "210px" }}
           >
-            <div className="mb-4">
+            {/* 인기 뱃지 */}
+            <div className="absolute top-3 left-4">
+              <span
+                className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#d31400" }}
+              >
+                인기
+              </span>
+            </div>
+            <div className="mb-auto mt-7">
               <p className="text-gray-900 font-bold text-[18px] leading-snug">
                 풀 스타일링
               </p>
-              <p className="text-gray-400 text-[13px] mt-1">(온라인 전용)</p>
+              <p className="text-black text-[11px] mt-0.5">(온라인 전용)</p>
             </div>
-            <div className="mt-auto">
-              <p className="text-gray-400 text-[11px] font-semibold mb-2">이런 분께 추천해요!</p>
+            <div className="mt-4">
+              <p className="text-gray-400 text-[11px] font-semibold mb-1.5">이런 분께 추천해요!</p>
               <ul className="flex flex-col gap-1">
-                <li className="text-gray-600 text-[12px] leading-snug">
+                <li className="text-gray-600 text-[8px] leading-snug whitespace-nowrap">
                   • 곧 입주 또는 입주 직후이신 분
                 </li>
-                <li className="text-gray-600 text-[12px] leading-snug">
+                <li className="text-gray-600 text-[8px] leading-snug whitespace-nowrap">
                   • 빠르게 결과를 보고 싶으신 분
                 </li>
               </ul>
@@ -80,25 +96,25 @@ export default function StylingTypes() {
           {/* 풀 스타일링 (오프라인 전용) */}
           <button
             onClick={() => navigate("/styling/types/full-offline")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col active:scale-[0.97] transition-all"
-            style={{ minHeight: "220px" }}
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all"
+            style={{ minHeight: "210px" }}
           >
-            <div className="mb-4">
+            <div className="mb-auto mt-2">
               <p className="text-gray-900 font-bold text-[18px] leading-snug">
                 풀 스타일링
               </p>
-              <p className="text-gray-400 text-[13px] mt-1">(오프라인 전용)</p>
+              <p className="text-black text-[11px] mt-0.5">(오프라인 전용)</p>
             </div>
-            <div className="mt-auto">
-              <p className="text-gray-400 text-[11px] font-semibold mb-2">이런 분께 추천해요!</p>
+            <div className="mt-4">
+              <p className="text-gray-400 text-[11px] font-semibold mb-1.5">이런 분께 추천해요!</p>
               <ul className="flex flex-col gap-1">
-                <li className="text-gray-600 text-[12px] leading-snug">
+                <li className="text-gray-600 text-[8px] leading-snug whitespace-nowrap">
                   • 곧 입주 또는 입주 직후이신 분
                 </li>
-                <li className="text-gray-600 text-[12px] leading-snug">
+                <li className="text-gray-600 text-[8px] leading-snug whitespace-nowrap">
                   • 대면 상담이 필요하신 분
                 </li>
-                <li className="text-gray-600 text-[12px] leading-snug">
+                <li className="text-gray-600 text-[8px] leading-snug whitespace-nowrap">
                   • 공간 세팅까지 희망하시는 분
                 </li>
               </ul>
@@ -108,10 +124,10 @@ export default function StylingTypes() {
           {/* 자주 묻는 질문 */}
           <button
             onClick={() => navigate("/styling/faq")}
-            className="bg-gray-100 rounded-2xl p-5 text-left flex flex-col active:scale-[0.97] transition-all relative overflow-hidden"
-            style={{ minHeight: "220px" }}
+            className="bg-gray-100 rounded-2xl p-4 text-left flex flex-col active:scale-[0.97] transition-all relative overflow-hidden"
+            style={{ minHeight: "210px" }}
           >
-            <p className="text-gray-900 font-bold text-[18px] leading-snug">
+            <p className="text-gray-900 font-bold text-[18px] leading-snug mt-2">
               자주 묻는 질문
             </p>
             {/* 이모티콘 우측 하단 */}
