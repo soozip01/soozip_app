@@ -32,7 +32,7 @@ const IMGS = {
 };
 
 const STEP_LABELS = [
-  "1. 배치솔루션, 어떻게 진행되나요?",
+  "1. 실측 패키지 발송 및 공간 실측",
   "2. 기존가구 정보 입력하기",
   "3. 니즈에 맞는 최적의 배치 받아보기",
   "4. 피드백 및 수정",
@@ -112,9 +112,12 @@ export default function StylingTypeFurniture() {
               onClick={() => setIsBoxOpen(!isBoxOpen)}
               className="w-full flex items-center justify-between py-4 text-left"
             >
-              <span className="text-gray-900 font-semibold text-[14px]">
-                1. 배치솔루션, 어떻게 진행되나요?
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-[18px] font-serif leading-none">&ldquo;</span>
+                <span className="text-gray-900 font-semibold text-[14px]">
+                  배치솔루션, 어떻게 진행되나요?
+                </span>
+              </div>
               <div className="flex items-center gap-1" style={{ color: TERRACOTTA }}>
                 <span className="text-[13px] font-semibold">
                   {isBoxOpen ? "접기" : "펼치기"}
