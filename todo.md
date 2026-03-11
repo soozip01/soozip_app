@@ -94,3 +94,12 @@
 - [x] 소개 섹션 이미지 누끼 크게 표시 (배경 없이 크게)
 - [x] 포인트 컬러 #E84B1A → #d31400으로 전체 변경
 - [x] 앵커 이동 시 STEP 위 여백 추가 (STEP 뱃지 위 약 24px 여백)
+
+## 11차 작업 (스타일링 타입 + 배치솔루션 대규모 수정)
+- [x] StylingTypes: 배치 솔루션/풀 스타일링(온라인)/풀 스타일링(오프라인)/자주 묻는 질문 카드 1번 사진 기준 레이아웃 재구성
+- [x] StylingTypeFurniture: 소개 텍스트 수정 (이미지보다 작게, 17px)
+- [x] StylingTypeFurniture: STEP 01 패키지 구성품 → step01-package 이미지 하나로 교체
+- [x] StylingTypeFurniture: STEP 02 → 3장 이미지로 교체 (product-link, size-info, hard-check)
+- [x] StylingTypeFurniture: STEP 03 텍스트 → step03-title-img 이미지로 교체 + 배치안 이미지 2장 업데이트
+- [x] StylingTypeFurniture: STEP 04 → step04-feedback 단일 이미지로 교체
+- [x] StylingTypeFurniture: STEP 05 → step05-final 단일 이미지로 교체
