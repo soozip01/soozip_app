@@ -103,3 +103,10 @@
 - [x] StylingTypeFurniture: STEP 03 텍스트 → step03-title-img 이미지로 교체 + 배치안 이미지 2장 업데이트
 - [x] StylingTypeFurniture: STEP 04 → step04-feedback 단일 이미지로 교체
 - [x] StylingTypeFurniture: STEP 05 → step05-final 단일 이미지로 교체
+
+## 12차 작업 (배치솔루션 이미지 → 코드 구현으로 화질 개선)
+- [x] STEP 02 코드 구현: 기존가구 정보 전달 (제품링크 입력 UI, 사이즈+정보 전달 UI, 이런건 확인이 어려워요 UI)
+- [x] STEP 03 코드 구현: 최적 배치 안내 텍스트+알림박스 + 배치안 이미지 2장
+- [x] STEP 04 코드 구현: 피드백 안내 텍스트+알림박스+곰 캐릭터 이미지
+- [x] STEP 05 코드 구현: 최종안 안내 텍스트+3D 배치 이미지+추천 제품
+- [x] 기존 이미지 기반 STEP 섹션 제거 (step02-product-link.png, step02-size-info.png, step02-hard-check.png, step03-title-img.png, step04-feedback.png, step05-final.png)
