@@ -38,7 +38,7 @@ const STYLING_STEPS = [
     desc: "스타일링 신청이 완료되었습니다.",
     detail: "담당 스타일리스트가 배정될 예정입니다. 잠시만 기다려 주세요.",
     icon: "✅",
-    status: "done", // done | active | pending
+    status: "done",
   },
   {
     id: 2,
@@ -271,78 +271,100 @@ export default function MyPage() {
       </header>
 
       <main>
-        {/* 프로필 섹션 */}
-        <div className="px-4 py-6 border-b border-border">
-          {isLoggedIn && user ? (
-            <div className="flex items-center gap-4">
-              {user.profileImageUrl ? (
-                <img
-                  src={user.profileImageUrl}
-                  alt={user.nickname}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-              ) : (
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0"
-                  style={{ background: TERRACOTTA }}
-                >
-                  {user.nickname.slice(0, 1)}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-foreground text-base truncate">{user.nickname}</p>
-                  <span
-                    className="px-2 py-0.5 rounded-full text-[10px] font-bold text-foreground shrink-0"
-                    style={{ background: PROVIDER_COLOR[user.provider] ?? "#888" }}
+        {isLoggedIn && user ? (
+          /* ── 로그인 상태 ── */
+          <>
+            {/* 프로필 섹션 */}
+            <div className="px-4 py-6 border-b border-border">
+              <div className="flex items-center gap-4">
+                {user.profileImageUrl ? (
+                  <img
+                    src={user.profileImageUrl}
+                    alt={user.nickname}
+                    className="w-16 h-16 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0"
+                    style={{ background: TERRACOTTA }}
                   >
-                    {PROVIDER_LABEL[user.provider] ?? user.provider}
-                  </span>
-                </div>
-                {user.email && (
-                  <p className="text-sm text-muted-foreground mt-0.5 truncate">{user.email}</p>
+                    {user.nickname.slice(0, 1)}
+                  </div>
                 )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-foreground text-base truncate">{user.nickname}</p>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold text-foreground shrink-0"
+                      style={{ background: PROVIDER_COLOR[user.provider] ?? "#888" }}
+                    >
+                      {PROVIDER_LABEL[user.provider] ?? user.provider}
+                    </span>
+                  </div>
+                  {user.email && (
+                    <p className="text-sm text-muted-foreground mt-0.5 truncate">{user.email}</p>
+                  )}
+                </div>
               </div>
             </div>
-          ) : (
-            <div>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center shrink-0">
-                  <User size={32} className="text-muted-foreground" strokeWidth={1.5} />
+
+            {/* 주문 현황 */}
+            <div className="px-4 py-5 border-b border-border">
+              <p className="text-xs font-semibold text-foreground mb-4">주문 현황</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                {["결제완료", "배송준비", "배송중", "배송완료"].map((status) => (
+                  <div key={status} className="py-3 bg-secondary rounded-xl">
+                    <p className="text-lg font-bold text-foreground">0</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{status}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 스타일링 진행 현황 슬라이더 (로그인 시에만) */}
+            <StylingProgressSlider />
+          </>
+        ) : (
+          /* ── 비로그인 상태: 스타일링 슬라이더 + 로그인 유도 ── */
+          <>
+            {/* 스타일링 진행 현황 (로그인 유도 메시지 포함) */}
+            <div className="px-4 py-6 border-b border-border">
+              {/* 로그인 유도 배너 */}
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center shrink-0">
+                  <User size={28} className="text-muted-foreground" strokeWidth={1.5} />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-foreground">로그인이 필요합니다</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">로그인하고 더 많은 혜택을 받아보세요</p>
+                  <p className="font-semibold text-foreground text-sm">로그인 후 이용해 주세요</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">스타일링 진행 현황을 확인할 수 있어요</p>
                 </div>
               </div>
               <button
                 onClick={() => navigate("/login")}
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-xl font-medium hover:opacity-90 transition-opacity text-sm"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-sm text-white transition-opacity hover:opacity-90"
+                style={{ background: TERRACOTTA }}
               >
-                <LogIn size={18} />
+                <LogIn size={16} />
                 로그인 / 회원가입
               </button>
             </div>
-          )}
-        </div>
 
-        {/* 주문 현황 */}
-        <div className="px-4 py-5 border-b border-border">
-          <p className="text-xs font-semibold text-foreground mb-4">주문 현황</p>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            {["결제완료", "배송준비", "배송중", "배송완료"].map((status) => (
-              <div key={status} className="py-3 bg-secondary rounded-xl">
-                <p className="text-lg font-bold text-foreground">0</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{status}</p>
+            {/* 주문 현황 */}
+            <div className="px-4 py-5 border-b border-border">
+              <p className="text-xs font-semibold text-foreground mb-4">주문 현황</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                {["결제완료", "배송준비", "배송중", "배송완료"].map((status) => (
+                  <div key={status} className="py-3 bg-secondary rounded-xl">
+                    <p className="text-lg font-bold text-foreground">0</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{status}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
 
-        {/* 스타일링 진행 현황 슬라이더 */}
-        <StylingProgressSlider />
-
-        {/* 메뉴 항목 */}
+        {/* 메뉴 항목 (공통) */}
         <div className="px-4 py-4">
           {MENU_ITEMS.map(({ icon: Icon, label, action }) => (
             <button
