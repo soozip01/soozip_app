@@ -32,6 +32,7 @@ import SocialConsent from "./pages/SocialConsent";
 import SocialProfile from "./pages/SocialProfile";
 import EmailSignup from "./pages/EmailSignup";
 import EmailLogin from "./pages/EmailLogin";
+import SettingsPage from "./pages/SettingsPage";
 
 function Router() {
   return (
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/auth/social-profile" component={SocialProfile} />
       <Route path="/auth/email-signup" component={EmailSignup} />
       <Route path="/auth/email-login" component={EmailLogin} />
+      <Route path="/settings" component={SettingsPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
