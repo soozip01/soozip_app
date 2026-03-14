@@ -107,50 +107,32 @@ function StylingProgressSlider({ nickname }: { nickname: string }) {
 
   return (
     <div className="px-4 pt-4 pb-4 border-b border-border">
-      {/* 상단: 점 인디케이터 + 화살표 + 닉네임/서비스 타입 */}
+      {/* 상단: 점 인디케이터 + 서비스 타입 */}
       <div className="flex items-center justify-between mb-3 px-1">
-        {/* 좌측: 화살표 + 점 인디케이터 */}
+        {/* 좌측: 점 인디케이터만 (클릭으로 이동 가능) */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={goPrev}
-            disabled={currentIdx === 0}
-            className="disabled:opacity-20 transition-opacity"
-          >
-            <ChevronLeft size={16} className="text-muted-foreground" />
-          </button>
-
-          <div className="flex items-center gap-2">
-            {STYLING_STEPS.map((step, idx) => (
-              <button
-                key={step.id}
-                onClick={() => setCurrentIdx(idx)}
-                className="rounded-full transition-all duration-200"
-                style={{
-                  width: idx === activeStepIdx ? "12px" : "10px",
-                  height: idx === activeStepIdx ? "12px" : "10px",
-                  background:
-                    idx === activeStepIdx
-                      ? TERRACOTTA
-                      : idx < activeStepIdx
-                      ? "oklch(0.65 0 0)"
-                      : "oklch(0.82 0 0)",
-                }}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={goNext}
-            disabled={currentIdx === STYLING_STEPS.length - 1}
-            className="disabled:opacity-20 transition-opacity"
-          >
-            <ChevronRightIcon size={16} className="text-muted-foreground" />
-          </button>
+          {STYLING_STEPS.map((step, idx) => (
+            <button
+              key={step.id}
+              onClick={() => setCurrentIdx(idx)}
+              className="rounded-full transition-all duration-200"
+              style={{
+                width: idx === activeStepIdx ? "12px" : "10px",
+                height: idx === activeStepIdx ? "12px" : "10px",
+                background:
+                  idx === activeStepIdx
+                    ? TERRACOTTA
+                    : idx < activeStepIdx
+                    ? "oklch(0.65 0 0)"
+                    : "oklch(0.82 0 0)",
+              }}
+            />
+          ))}
         </div>
 
-        {/* 우측: 닉네임 / 서비스 타입 / 요금 타입 - 한 줄 고정 */}
-        <p className="text-[10px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis ml-2 max-w-[48%]">
-          {nickname} 님 / {MOCK_ORDER.serviceType} / {MOCK_ORDER.priceType}
+        {/* 우측: 서비스 타입 / 요금 타입만 표시 */}
+        <p className="text-[11px] text-muted-foreground whitespace-nowrap">
+          {MOCK_ORDER.serviceType} / {MOCK_ORDER.priceType}
         </p>
       </div>
 
