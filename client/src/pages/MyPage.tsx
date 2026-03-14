@@ -1,7 +1,7 @@
 /* SOOZIP Design: Japandi Minimalism - My Page (탭 구조) */
 import {
   ShoppingBag, Heart, Bell, HelpCircle, ChevronRight, LogIn,
-  Settings, ShoppingCart, ChevronLeft, CheckCircle2, Clock, Circle,
+  Settings, ShoppingCart, ChevronLeft, ChevronRight as ChevronRightIcon,
   PenLine, Share2
 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -36,49 +36,49 @@ const STYLING_STEPS = [
   {
     id: 1,
     title: "신청 완료",
-    detail: "담당 스타일리스트가 배정될 예정입니다. 잠시만 기다려 주세요.",
-    icon: "✅",
+    actionLabel: "신청 내역 확인하기",
     status: "done",
   },
   {
     id: 2,
-    title: "실측 패키지 발송",
-    detail: "패키지를 수령하신 후 공간을 실측하고 도면 초안을 온라인으로 전송해 주세요.",
-    icon: "📦",
+    title: "기존 가구 정보 입력하기",
+    actionLabel: "정보를 등록해주세요",
     status: "active",
   },
   {
     id: 3,
-    title: "가구 정보 전달",
-    detail: "보유하신 가구의 제품 링크, 사이즈 정보를 전달해 주시면 최적의 배치를 계획합니다.",
-    icon: "🛋️",
+    title: "실측 패키지 수령",
+    actionLabel: "수령 확인하기",
     status: "pending",
   },
   {
     id: 4,
-    title: "배치안 제안",
-    detail: "3D 도면을 기반으로 2가지 배치안을 제안드립니다. 마음에 드시는 안을 선택해 주세요.",
-    icon: "📐",
+    title: "배치안 확인하기",
+    actionLabel: "배치안을 확인해주세요",
     status: "pending",
   },
   {
     id: 5,
-    title: "피드백 반영",
-    detail: "선택하신 배치안에 대한 피드백을 주시면 최종안에 반영하겠습니다.",
-    icon: "💬",
+    title: "피드백 전달하기",
+    actionLabel: "피드백을 남겨주세요",
     status: "pending",
   },
   {
     id: 6,
-    title: "최종안 전달",
-    detail: "최종 배치안과 함께 추천 제품 링크를 전달드립니다. 스타일링을 즐겨보세요!",
-    icon: "🎉",
+    title: "최종안 전달 완료",
+    actionLabel: "최종안 확인하기",
     status: "pending",
   },
 ];
 
+/* 예시 신청 정보 (추후 DB 연동) */
+const MOCK_ORDER = {
+  serviceType: "풀 스타일링(온라인)",
+  priceType: "무료 타입",
+};
+
 /* ─── 스타일링 진행 현황 슬라이더 ─── */
-function StylingProgressSlider() {
+function StylingProgressSlider({ nickname }: { nickname: string }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const touchStartX = useRef(0);
   const isDragging = useRef(false);
@@ -86,7 +86,6 @@ function StylingProgressSlider() {
 
   const currentStep = STYLING_STEPS[currentIdx];
   const activeStepIdx = STYLING_STEPS.findIndex((s) => s.status === "active");
-  const activeStepNum = activeStepIdx >= 0 ? activeStepIdx + 1 : 1;
 
   const goNext = () => { if (currentIdx < STYLING_STEPS.length - 1) setCurrentIdx((p) => p + 1); };
   const goPrev = () => { if (currentIdx > 0) setCurrentIdx((p) => p - 1); };
@@ -104,107 +103,112 @@ function StylingProgressSlider() {
     if (Math.abs(diff) > 40) { if (diff > 0) goNext(); else goPrev(); }
   };
 
-  const getStatusIcon = (status: string) => {
-    if (status === "done") return <CheckCircle2 size={16} className="text-green-500" />;
-    if (status === "active") return <Clock size={16} style={{ color: TERRACOTTA }} />;
-    return <Circle size={16} className="text-muted-foreground" />;
-  };
+  const isActionable = currentStep.status === "active";
 
   return (
-    <div className="px-4 py-5 border-b border-border">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold text-foreground">스타일링 진행 현황</p>
-        <span className="text-xs text-muted-foreground">
-          <span className="font-bold" style={{ color: TERRACOTTA }}>{activeStepNum}단계</span>
-          {" "}진행 중 / 전체 {STYLING_STEPS.length}단계
-        </span>
-      </div>
-
+    <div className="px-4 pt-5 pb-4 border-b border-border">
+      {/* 슬라이더 카드 */}
       <div
-        className="relative bg-secondary rounded-2xl overflow-hidden select-none cursor-grab active:cursor-grabbing"
+        className="bg-secondary rounded-2xl overflow-hidden select-none"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
       >
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: TERRACOTTA }}>
-              STEP {currentIdx + 1}
-            </span>
-            <span className="text-xs text-muted-foreground">/ {STYLING_STEPS.length}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            {getStatusIcon(currentStep.status)}
-            <span className="text-[11px] text-muted-foreground">
-              {currentStep.status === "done" ? "완료" : currentStep.status === "active" ? "진행 중" : "대기"}
-            </span>
-          </div>
+        {/* 카드 상단: STEP 뱃지 + 자세히 보기 */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-4">
+          <span
+            className="text-sm font-bold px-3 py-1 rounded-md text-white"
+            style={{ background: TERRACOTTA }}
+          >
+            STEP {String(currentIdx + 1).padStart(2, "0")}
+          </span>
+          <button
+            onClick={() => toast.info("자세히 보기 기능이 준비 중입니다.")}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            자세히 보기
+          </button>
         </div>
 
-        <div className="px-4 pb-4">
-          <div className="text-3xl mb-2">{currentStep.icon}</div>
-          <p className="font-bold text-foreground text-base mb-1">{currentStep.title}</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">{currentStep.detail}</p>
-        </div>
+        {/* 카드 본문: 단계 제목 */}
+        <div className="px-5 pb-5">
+          <h3 className="text-xl font-bold text-foreground mb-4 leading-snug">
+            {currentStep.title}
+          </h3>
 
-        <div className="flex items-center justify-between px-3 pb-4">
+          {/* 액션 버튼 */}
+          <button
+            onClick={() => {
+              if (isActionable) toast.info("해당 기능이 준비 중입니다.");
+              else toast.info("아직 진행되지 않은 단계입니다.");
+            }}
+            className="w-full py-3.5 rounded-2xl text-sm font-medium transition-colors"
+            style={{
+              background: isActionable ? "oklch(0.55 0 0)" : "oklch(0.82 0 0)",
+              color: isActionable ? "white" : "oklch(0.55 0 0)",
+              cursor: isActionable ? "pointer" : "default",
+            }}
+          >
+            {currentStep.actionLabel}
+          </button>
+        </div>
+      </div>
+
+      {/* 카드 하단: 점 인디케이터 + 닉네임/서비스 타입 */}
+      <div className="flex items-center justify-between mt-4 px-1">
+        {/* 좌측: 점 인디케이터 + 화살표 */}
+        <div className="flex items-center gap-2">
           <button
             onClick={goPrev}
             disabled={currentIdx === 0}
-            className="w-8 h-8 rounded-full bg-background flex items-center justify-center disabled:opacity-30 transition-opacity shadow-sm"
+            className="disabled:opacity-20 transition-opacity"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={16} className="text-muted-foreground" />
           </button>
-          <div className="flex gap-1.5">
+
+          <div className="flex items-center gap-2">
             {STYLING_STEPS.map((step, idx) => (
               <button
                 key={step.id}
                 onClick={() => setCurrentIdx(idx)}
-                className="rounded-full transition-all"
+                className="rounded-full transition-all duration-200"
                 style={{
-                  width: idx === currentIdx ? "20px" : "6px",
-                  height: "6px",
-                  background: idx === currentIdx ? TERRACOTTA : "oklch(0.75 0 0)",
+                  width: idx === activeStepIdx ? "12px" : "10px",
+                  height: idx === activeStepIdx ? "12px" : "10px",
+                  background:
+                    idx === activeStepIdx
+                      ? TERRACOTTA
+                      : idx < activeStepIdx
+                      ? "oklch(0.65 0 0)"
+                      : "oklch(0.82 0 0)",
                 }}
               />
             ))}
           </div>
+
           <button
             onClick={goNext}
             disabled={currentIdx === STYLING_STEPS.length - 1}
-            className="w-8 h-8 rounded-full bg-background flex items-center justify-center disabled:opacity-30 transition-opacity shadow-sm"
+            className="disabled:opacity-20 transition-opacity"
           >
-            <ChevronRight size={16} />
+            <ChevronRightIcon size={16} className="text-muted-foreground" />
           </button>
         </div>
-      </div>
 
-      <div className="mt-3 flex gap-1">
-        {STYLING_STEPS.map((step, idx) => (
-          <div
-            key={step.id}
-            className="flex-1 h-1 rounded-full transition-all"
-            style={{
-              background:
-                step.status === "done" ? "#22c55e"
-                : step.status === "active" ? TERRACOTTA
-                : idx === currentIdx ? "oklch(0.75 0 0)"
-                : "oklch(0.88 0 0)",
-            }}
-          />
-        ))}
-      </div>
-      <div className="flex justify-between mt-1">
-        <span className="text-[10px] text-muted-foreground">신청 완료</span>
-        <span className="text-[10px] text-muted-foreground">최종안 전달</span>
+        {/* 우측: 닉네임 / 서비스 타입 / 요금 타입 */}
+        <p className="text-xs text-muted-foreground text-right leading-relaxed">
+          {nickname} 님 / {MOCK_ORDER.serviceType} / {MOCK_ORDER.priceType}
+        </p>
       </div>
     </div>
   );
 }
 
 /* ─── 프로필 탭 ─── */
-function ProfileTab({ user }: { user: { nickname: string; email?: string | null; provider: string; profileImageUrl?: string | null } | null }) {
+function ProfileTab({ user }: {
+  user: { nickname: string; email?: string | null; provider: string; profileImageUrl?: string | null } | null
+}) {
   const [, navigate] = useLocation();
 
   if (!user) {
@@ -230,10 +234,8 @@ function ProfileTab({ user }: { user: { nickname: string; email?: string | null;
 
   return (
     <div className="pb-6">
-      {/* 프로필 상단 영역 */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-start justify-between">
-          {/* 닉네임 + 소셜 뱃지 */}
           <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-2xl font-bold text-foreground">{user.nickname}</h2>
@@ -248,8 +250,6 @@ function ProfileTab({ user }: { user: { nickname: string; email?: string | null;
               <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
             )}
           </div>
-
-          {/* 아바타 */}
           {user.profileImageUrl ? (
             <img
               src={user.profileImageUrl}
@@ -267,7 +267,6 @@ function ProfileTab({ user }: { user: { nickname: string; email?: string | null;
         </div>
       </div>
 
-      {/* 액션 버튼 */}
       <div className="px-5 flex gap-2">
         <button
           onClick={() => toast.info("프로필 편집 기능이 준비 중입니다.")}
@@ -284,10 +283,7 @@ function ProfileTab({ user }: { user: { nickname: string; email?: string | null;
         </button>
       </div>
 
-      {/* 구분선 */}
       <div className="mt-5 border-t border-border" />
-
-      {/* 활동 내역 (준비 중) */}
       <div className="px-5 py-6 text-center">
         <p className="text-sm text-muted-foreground">아직 활동 내역이 없습니다.</p>
       </div>
@@ -296,16 +292,20 @@ function ProfileTab({ user }: { user: { nickname: string; email?: string | null;
 }
 
 /* ─── 쇼핑 탭 ─── */
-function ShoppingTab({ user, isLoggedIn }: { user: { nickname: string; email?: string | null; provider: string; profileImageUrl?: string | null } | null; isLoggedIn: boolean }) {
+function ShoppingTab({
+  user,
+  isLoggedIn,
+}: {
+  user: { nickname: string; email?: string | null; provider: string; profileImageUrl?: string | null } | null;
+  isLoggedIn: boolean;
+}) {
   const [, navigate] = useLocation();
 
   return (
     <>
       {isLoggedIn && user ? (
-        /* 로그인 상태: 스타일링 진행 현황 슬라이더 */
-        <StylingProgressSlider />
+        <StylingProgressSlider nickname={user.nickname} />
       ) : (
-        /* 비로그인 상태: 로그인 유도 */
         <div className="px-4 py-6 border-b border-border">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center shrink-0">
@@ -382,31 +382,24 @@ export default function MyPage() {
       {/* 헤더 */}
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center justify-between">
-          {/* 탭 전환 */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => setActiveTab("profile")}
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                activeTab === "profile"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                activeTab === "profile" ? "text-foreground" : "text-muted-foreground"
               }`}
             >
               프로필
             </button>
             <button
               onClick={() => setActiveTab("shopping")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1 ${
-                activeTab === "shopping"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                activeTab === "shopping" ? "text-foreground" : "text-muted-foreground"
               }`}
             >
               쇼핑
             </button>
           </div>
-
-          {/* 우측 아이콘 */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => navigate("/cart")}
@@ -424,19 +417,16 @@ export default function MyPage() {
             </button>
           </div>
         </div>
-
-        {/* 탭 하단 인디케이터 */}
-        <div className="flex px-4 -mt-px">
-          <div className="flex gap-1">
-            <div
-              className="h-0.5 rounded-full transition-all duration-300"
-              style={{
-                width: activeTab === "profile" ? "36px" : "0px",
-                background: activeTab === "profile" ? TERRACOTTA : "transparent",
-                marginLeft: "12px",
-              }}
-            />
-          </div>
+        {/* 탭 인디케이터 */}
+        <div className="relative h-0.5 bg-transparent">
+          <div
+            className="absolute bottom-0 h-0.5 rounded-full transition-all duration-300"
+            style={{
+              background: TERRACOTTA,
+              width: "40px",
+              left: activeTab === "profile" ? "16px" : "76px",
+            }}
+          />
         </div>
       </header>
 
