@@ -106,58 +106,10 @@ function StylingProgressSlider({ nickname }: { nickname: string }) {
   const isActionable = currentStep.status === "active";
 
   return (
-    <div className="px-4 pt-5 pb-4 border-b border-border">
-      {/* 슬라이더 카드 */}
-      <div
-        className="bg-secondary rounded-2xl overflow-hidden select-none"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-      >
-        {/* 카드 상단: STEP 뱃지 + 자세히 보기 */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4">
-          <span
-            className="text-sm font-bold px-3 py-1 rounded-md text-white"
-            style={{ background: TERRACOTTA }}
-          >
-            STEP {String(currentIdx + 1).padStart(2, "0")}
-          </span>
-          <button
-            onClick={() => toast.info("자세히 보기 기능이 준비 중입니다.")}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            자세히 보기
-          </button>
-        </div>
-
-        {/* 카드 본문: 단계 제목 */}
-        <div className="px-5 pb-5">
-          <h3 className="text-xl font-bold text-foreground mb-4 leading-snug">
-            {currentStep.title}
-          </h3>
-
-          {/* 액션 버튼 */}
-          <button
-            onClick={() => {
-              if (isActionable) toast.info("해당 기능이 준비 중입니다.");
-              else toast.info("아직 진행되지 않은 단계입니다.");
-            }}
-            className="w-full py-3.5 rounded-2xl text-sm font-medium transition-colors"
-            style={{
-              background: isActionable ? "oklch(0.55 0 0)" : "oklch(0.82 0 0)",
-              color: isActionable ? "white" : "oklch(0.55 0 0)",
-              cursor: isActionable ? "pointer" : "default",
-            }}
-          >
-            {currentStep.actionLabel}
-          </button>
-        </div>
-      </div>
-
-      {/* 카드 하단: 점 인디케이터 + 닉네임/서비스 타입 */}
-      <div className="flex items-center justify-between mt-4 px-1">
-        {/* 좌측: 점 인디케이터 + 화살표 */}
+    <div className="px-4 pt-4 pb-4 border-b border-border">
+      {/* 상단: 점 인디케이터 + 화살표 + 닉네임/서비스 타입 */}
+      <div className="flex items-center justify-between mb-3 px-1">
+        {/* 좌측: 화살표 + 점 인디케이터 */}
         <div className="flex items-center gap-2">
           <button
             onClick={goPrev}
@@ -196,10 +148,58 @@ function StylingProgressSlider({ nickname }: { nickname: string }) {
           </button>
         </div>
 
-        {/* 우측: 닉네임 / 서비스 타입 / 요금 타입 */}
-        <p className="text-xs text-muted-foreground text-right leading-relaxed">
+        {/* 우측: 닉네임 / 서비스 타입 / 요금 타입 - 한 줄 고정 */}
+        <p className="text-[10px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis ml-2 max-w-[48%]">
           {nickname} 님 / {MOCK_ORDER.serviceType} / {MOCK_ORDER.priceType}
         </p>
+      </div>
+
+      {/* 슬라이더 카드 */}
+      <div
+        className="bg-secondary rounded-2xl overflow-hidden select-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+      >
+        {/* 카드 상단: STEP 뱃지 + 자세히 보기 */}
+        <div className="flex items-center justify-between px-5 pt-7 pb-5">
+          <span
+            className="text-sm font-bold px-3 py-1.5 rounded-md text-white"
+            style={{ background: TERRACOTTA }}
+          >
+            STEP {String(currentIdx + 1).padStart(2, "0")}
+          </span>
+          <button
+            onClick={() => toast.info("자세히 보기 기능이 준비 중입니다.")}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            자세히 보기
+          </button>
+        </div>
+
+        {/* 카드 본문: 단계 제목 */}
+        <div className="px-5 pb-7">
+          <h3 className="text-2xl font-bold text-foreground mb-6 leading-snug">
+            {currentStep.title}
+          </h3>
+
+          {/* 액션 버튼 */}
+          <button
+            onClick={() => {
+              if (isActionable) toast.info("해당 기능이 준비 중입니다.");
+              else toast.info("아직 진행되지 않은 단계입니다.");
+            }}
+            className="w-full py-4 rounded-2xl text-sm font-medium transition-colors"
+            style={{
+              background: isActionable ? "oklch(0.55 0 0)" : "oklch(0.82 0 0)",
+              color: isActionable ? "white" : "oklch(0.55 0 0)",
+              cursor: isActionable ? "pointer" : "default",
+            }}
+          >
+            {currentStep.actionLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
