@@ -3,7 +3,7 @@
  * Active state: terracotta accent color
  */
 import { useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 /* ── 아이콘 컴포넌트 ── */
 const HomeIcon = ({ active }: { active: boolean }) => (
@@ -56,14 +56,10 @@ const navItems = [
 
 export default function BottomNav() {
   const [location, navigate] = useLocation();
-  const { isAuthenticated, loading } = useAuth();
+  const { isLoggedIn } = useSoozipAuth();
 
   const handleNavClick = (path: string) => {
-    // 마이 탭: 비로그인 상태면 로그인 페이지로 바로 이동
-    if (path === "/mypage" && !loading && !isAuthenticated) {
-      navigate("/login");
-      return;
-    }
+    // 마이 탭: 비로그인 상태면 마이페이지로 이동 (마이페이지 내에서 로그인 유도)
     navigate(path);
   };
 
