@@ -21,6 +21,8 @@ const IMG = {
   8: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-8_0e5cab5e.png",
   9: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-9_3a98f947.jpg",
   10: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-10_2cd6493b.png",
+  11: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-11_fa4191ff.png",
+  12: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-12_0c1e3f7a.png",
 };
 
 const STEP_LABELS = [
@@ -165,27 +167,21 @@ export default function StylingTypeFurniture() {
             </h3>
           </div>
 
-          {/* STEP 01 추가 이미지 — 좌우 2장 플레이스홀더 */}
+          {/* STEP 01 추가 이미지 — 좌우 2장 */}
           <div className="px-4 mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-300">
-              <div className="text-gray-400 mb-1">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-              </div>
-              <span className="text-gray-400 text-[13px] font-semibold">이미지 11</span>
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMG[11]}
+                alt="실측 이미지 1"
+                className="w-full h-auto object-contain"
+              />
             </div>
-            <div className="rounded-xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-300">
-              <div className="text-gray-400 mb-1">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-              </div>
-              <span className="text-gray-400 text-[13px] font-semibold">이미지 12</span>
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMG[12]}
+                alt="실측 이미지 2"
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
         </section>
