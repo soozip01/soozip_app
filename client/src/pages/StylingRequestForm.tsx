@@ -1,54 +1,125 @@
-import { useState } from "react";
+/**
+ * 스타일링 신청서 폼
+ * - 로그인 사용자: userId + 닉네임 자동 입력, Supabase survey_submissions에 직접 저장
+ * - 비로그인 사용자: 로그인 유도
+ * - 제출 후 마이페이지 스타일링 탭에서 STEP 진행 현황 자동 연동
+ */
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { ChevronLeft, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, CheckCircle2, LogIn, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 const TERRACOTTA = "oklch(0.55 0.22 32)";
 
-const STYLING_TYPES = ["배치솔루션", "풀스타일링(온라인)", "풀스타일링(오프라인)"] as const;
-const ROOM_TYPES = ["거실", "침실", "주방/다이닝", "서재", "전체 공간", "기타"];
+const STYLING_TYPES = [
+  { value: "배치솔루션(가구 재배치 위주)", label: "배치솔루션", desc: "기존 가구 재배치 중심의 공간 최적화" },
+  { value: "풀 스타일링(온라인)", label: "풀 스타일링 (온라인)", desc: "온라인으로 진행하는 전체 스타일링" },
+  { value: "풀 스타일링(오프라인)", label: "풀 스타일링 (오프라인)", desc: "방문 상담부터 가구 세팅까지 전체 진행" },
+] as const;
+
+const HOUSING_TYPES = ["아파트", "오피스텔", "빌라/연립", "단독주택", "기타"];
 const ROOM_SIZES = ["10평 미만", "10~15평", "15~20평", "20~25평", "25~30평", "30평 이상"];
 const BUDGETS = ["100만원 미만", "100~200만원", "200~300만원", "300~500만원", "500만원 이상", "미정"];
+const ACTIVITIES = ["요리", "독서", "재택근무", "운동", "홈파티", "반려동물", "육아", "취미활동"];
 
 export default function StylingRequestForm() {
   const [, navigate] = useLocation();
-  const [step, setStep] = useState(1); // 1: 기본정보, 2: 공간정보, 3: 요청사항, 4: 완료
+  const { user, isLoggedIn } = useSoozipAuth();
+  const [step, setStep] = useState(1); // 1: 스타일링 타입, 2: 공간정보, 3: 라이프스타일, 4: 완료
   const [form, setForm] = useState({
-    requesterNickname: "",
-    requesterEmail: "",
-    stylingType: "" as typeof STYLING_TYPES[number] | "",
-    roomType: "",
+    stylingType: "" as string,
+    housingType: "",
     roomSize: "",
     budget: "",
-    description: "",
-    preferredDate: "",
+    moveInDate: "",
+    deadline: "",
+    referenceNote: "",
+    activities: [] as string[],
+    existingFurniture: [] as string[],
+    buyFurniture: [] as string[],
   });
 
-  const createRequest = trpc.stylingRequest.create.useMutation({
+  // 로그인 사용자 닉네임 자동 입력
+  const userName = user?.nickname ?? "";
+  const userId = user ? String(user.id) : "";
+
+  const submitSurvey = trpc.survey.submit.useMutation({
     onSuccess: () => setStep(4),
     onError: (err) => toast.error(err.message),
   });
 
   const handleSubmit = () => {
-    if (!form.requesterNickname || !form.stylingType) {
-      toast.error("필수 항목을 입력해주세요");
+    if (!isLoggedIn || !userId) {
+      toast.error("로그인 후 신청서를 제출할 수 있습니다.");
       return;
     }
-    createRequest.mutate({
-      requesterNickname: form.requesterNickname,
-      requesterEmail: form.requesterEmail || undefined,
-      stylingType: form.stylingType as typeof STYLING_TYPES[number],
-      roomType: form.roomType || undefined,
+    if (!form.stylingType) {
+      toast.error("스타일링 타입을 선택해주세요");
+      return;
+    }
+    submitSurvey.mutate({
+      userId,
+      name: userName,
+      stylingType: form.stylingType,
+      housingType: form.housingType || undefined,
       roomSize: form.roomSize || undefined,
       budget: form.budget || undefined,
-      description: form.description || undefined,
-      preferredDate: form.preferredDate || undefined,
+      moveInDate: form.moveInDate || undefined,
+      deadline: form.deadline || undefined,
+      referenceNote: form.referenceNote || undefined,
+      activities: form.activities.length > 0 ? form.activities : undefined,
+      existingFurniture: form.existingFurniture.length > 0 ? form.existingFurniture : undefined,
+      buyFurniture: form.buyFurniture.length > 0 ? form.buyFurniture : undefined,
     });
+  };
+
+  const toggleActivity = (item: string) => {
+    setForm(f => ({
+      ...f,
+      activities: f.activities.includes(item)
+        ? f.activities.filter(a => a !== item)
+        : [...f.activities, item],
+    }));
   };
 
   const TOTAL_STEPS = 3;
 
+  // 비로그인 사용자 안내
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+          style={{ background: "oklch(0.95 0.05 32)" }}
+        >
+          <Lock size={36} style={{ color: TERRACOTTA }} />
+        </div>
+        <h2 className="font-bold text-xl mb-2">로그인이 필요합니다</h2>
+        <p className="text-sm text-muted-foreground mb-8">
+          신청서 제출 후 마이페이지에서<br />스타일링 진행 현황을 확인할 수 있어요
+        </p>
+        <button
+          onClick={() => navigate("/login")}
+          className="w-full py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-2"
+          style={{ background: TERRACOTTA }}
+        >
+          <LogIn size={18} />
+          로그인 / 회원가입
+        </button>
+        <button
+          onClick={() => window.history.back()}
+          className="w-full py-3 rounded-2xl text-sm mt-2"
+          style={{ color: TERRACOTTA }}
+        >
+          돌아가기
+        </button>
+      </div>
+    );
+  }
+
+  // 제출 완료 화면
   if (step === 4) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
@@ -62,22 +133,25 @@ export default function StylingRequestForm() {
         <p className="text-sm text-muted-foreground mb-2">
           수집의 디자이너들이 신청서를 확인하고<br />직접 연락드릴 예정입니다.
         </p>
-        <p className="text-xs text-muted-foreground mb-8">
+        <p className="text-xs text-muted-foreground mb-2">
           보통 1~2 영업일 내에 연락드립니다
         </p>
+        <p className="text-xs font-medium mb-8" style={{ color: TERRACOTTA }}>
+          마이페이지 &gt; 스타일링 탭에서 진행 현황을 확인하세요
+        </p>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/my")}
           className="w-full py-4 rounded-2xl text-white font-bold"
           style={{ background: TERRACOTTA }}
         >
-          홈으로 돌아가기
+          마이페이지에서 확인하기
         </button>
         <button
-          onClick={() => navigate("/styling")}
+          onClick={() => navigate("/")}
           className="w-full py-3 rounded-2xl text-sm mt-2"
           style={{ color: TERRACOTTA }}
         >
-          스타일링 페이지로 이동
+          홈으로 돌아가기
         </button>
       </div>
     );
@@ -110,70 +184,61 @@ export default function StylingRequestForm() {
       </header>
 
       <div className="px-4 pt-4">
-        {/* STEP 1: 기본 정보 */}
+        {/* STEP 1: 스타일링 타입 선택 */}
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <h2 className="font-bold text-base mb-1">기본 정보를 입력해주세요</h2>
-              <p className="text-xs text-muted-foreground">디자이너가 연락드릴 때 사용됩니다</p>
+              <h2 className="font-bold text-base mb-1">희망하는 스타일링 타입을 선택해주세요</h2>
+              <p className="text-xs text-muted-foreground">선택한 타입에 따라 진행 단계가 달라집니다</p>
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">
-                닉네임 <span style={{ color: TERRACOTTA }}>*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="닉네임을 입력해주세요"
-                value={form.requesterNickname}
-                onChange={e => setForm(f => ({ ...f, requesterNickname: e.target.value }))}
-                className="w-full border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-[oklch(0.55_0.22_32)]"
-              />
+            {/* 로그인 사용자 정보 표시 */}
+            <div
+              className="flex items-center gap-3 p-3 rounded-xl"
+              style={{ background: "oklch(0.97 0.02 32)" }}
+            >
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold shrink-0"
+                style={{ background: TERRACOTTA }}
+              >
+                {userName.slice(0, 1)}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{userName}</p>
+                <p className="text-xs text-muted-foreground">로그인 상태로 신청서가 자동 연동됩니다</p>
+              </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">이메일 (선택)</label>
-              <input
-                type="email"
-                placeholder="연락받을 이메일 주소"
-                value={form.requesterEmail}
-                onChange={e => setForm(f => ({ ...f, requesterEmail: e.target.value }))}
-                className="w-full border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-[oklch(0.55_0.22_32)]"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                스타일링 타입 <span style={{ color: TERRACOTTA }}>*</span>
-              </label>
-              <div className="space-y-2">
-                {STYLING_TYPES.map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setForm(f => ({ ...f, stylingType: type }))}
-                    className="w-full flex items-center gap-3 border rounded-xl px-4 py-3 text-sm text-left transition-colors"
+            <div className="space-y-3">
+              {STYLING_TYPES.map(type => (
+                <button
+                  key={type.value}
+                  onClick={() => setForm(f => ({ ...f, stylingType: type.value }))}
+                  className="w-full flex items-start gap-3 border rounded-2xl px-4 py-4 text-left transition-all"
+                  style={
+                    form.stylingType === type.value
+                      ? { borderColor: TERRACOTTA, background: "oklch(0.97 0.02 32)", borderWidth: "2px" }
+                      : { borderColor: "#e5e5e5", borderWidth: "1.5px" }
+                  }
+                >
+                  <div
+                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
                     style={
-                      form.stylingType === type
-                        ? { borderColor: TERRACOTTA, background: "oklch(0.97 0.02 32)" }
-                        : { borderColor: "#e5e5e5" }
+                      form.stylingType === type.value
+                        ? { borderColor: TERRACOTTA, background: TERRACOTTA }
+                        : { borderColor: "#ccc" }
                     }
                   >
-                    <div
-                      className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
-                      style={
-                        form.stylingType === type
-                          ? { borderColor: TERRACOTTA, background: TERRACOTTA }
-                          : { borderColor: "#ccc" }
-                      }
-                    >
-                      {form.stylingType === type && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                      )}
-                    </div>
-                    <span className="font-medium">{type}</span>
-                  </button>
-                ))}
-              </div>
+                    {form.stylingType === type.value && (
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-foreground">{type.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{type.desc}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -187,15 +252,15 @@ export default function StylingRequestForm() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">공간 유형</label>
+              <label className="text-sm font-medium mb-2 block">주거 유형</label>
               <div className="grid grid-cols-3 gap-2">
-                {ROOM_TYPES.map(type => (
+                {HOUSING_TYPES.map(type => (
                   <button
                     key={type}
-                    onClick={() => setForm(f => ({ ...f, roomType: type }))}
+                    onClick={() => setForm(f => ({ ...f, housingType: type }))}
                     className="py-2.5 rounded-xl text-sm border transition-colors"
                     style={
-                      form.roomType === type
+                      form.housingType === type
                         ? { borderColor: TERRACOTTA, color: TERRACOTTA, background: "oklch(0.97 0.02 32)", fontWeight: 600 }
                         : { borderColor: "#e5e5e5", color: "#555" }
                     }
@@ -245,61 +310,98 @@ export default function StylingRequestForm() {
                 ))}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* STEP 3: 요청사항 */}
-        {step === 3 && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="font-bold text-base mb-1">요청사항을 알려주세요</h2>
-              <p className="text-xs text-muted-foreground">원하는 스타일이나 특별 요청사항을 적어주세요</p>
-            </div>
 
             <div>
-              <label className="text-sm font-medium mb-1.5 block">희망 일정 (선택)</label>
+              <label className="text-sm font-medium mb-1.5 block">입주 예정일 (선택)</label>
               <input
                 type="text"
                 placeholder="예: 4월 중순, 5월 첫째 주 등"
-                value={form.preferredDate}
-                onChange={e => setForm(f => ({ ...f, preferredDate: e.target.value }))}
+                value={form.moveInDate}
+                onChange={e => setForm(f => ({ ...f, moveInDate: e.target.value }))}
                 className="w-full border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-[oklch(0.55_0.22_32)]"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1.5 block">요청사항 (선택)</label>
+              <label className="text-sm font-medium mb-1.5 block">완료 희망 시기 (선택)</label>
+              <input
+                type="text"
+                placeholder="예: 6월 말까지, 빠를수록 좋음 등"
+                value={form.deadline}
+                onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                className="w-full border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-[oklch(0.55_0.22_32)]"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: 라이프스타일 & 요청사항 */}
+        {step === 3 && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="font-bold text-base mb-1">라이프스타일을 알려주세요</h2>
+              <p className="text-xs text-muted-foreground">취향에 맞는 스타일링을 제안해 드립니다</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">주요 활동 (복수 선택 가능)</label>
+              <div className="flex flex-wrap gap-2">
+                {ACTIVITIES.map(activity => (
+                  <button
+                    key={activity}
+                    onClick={() => toggleActivity(activity)}
+                    className="px-3 py-1.5 rounded-full text-sm border transition-colors"
+                    style={
+                      form.activities.includes(activity)
+                        ? { borderColor: TERRACOTTA, color: TERRACOTTA, background: "oklch(0.97 0.02 32)", fontWeight: 600 }
+                        : { borderColor: "#e5e5e5", color: "#555" }
+                    }
+                  >
+                    {activity}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">참고 사항 (선택)</label>
               <textarea
                 placeholder="원하는 스타일, 현재 가구 상황, 특별 요청사항 등을 자유롭게 작성해주세요"
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                rows={6}
+                value={form.referenceNote}
+                onChange={e => setForm(f => ({ ...f, referenceNote: e.target.value }))}
+                rows={5}
                 className="w-full border border-border rounded-xl px-4 py-3 text-sm outline-none resize-none focus:border-[oklch(0.55_0.22_32)]"
               />
-              <p className="text-xs text-muted-foreground mt-1 text-right">{form.description.length}/1000</p>
+              <p className="text-xs text-muted-foreground mt-1 text-right">{form.referenceNote.length}/500</p>
             </div>
 
             {/* 신청 내용 요약 */}
             <div className="bg-[#f8f8f8] rounded-xl p-4 space-y-2">
               <p className="text-xs font-medium text-muted-foreground mb-2">신청 내용 확인</p>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">닉네임</span>
-                <span className="font-medium">{form.requesterNickname}</span>
+                <span className="text-muted-foreground">신청자</span>
+                <span className="font-medium">{userName}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">스타일링 타입</span>
-                <span className="font-medium">{form.stylingType}</span>
+                <span className="font-medium text-right max-w-[60%]">{form.stylingType}</span>
               </div>
-              {form.roomType && (
+              {form.housingType && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">공간 유형</span>
-                  <span className="font-medium">{form.roomType}</span>
+                  <span className="text-muted-foreground">주거 유형</span>
+                  <span className="font-medium">{form.housingType}</span>
                 </div>
               )}
               {form.roomSize && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">평수</span>
                   <span className="font-medium">{form.roomSize}</span>
+                </div>
+              )}
+              {form.budget && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">예산</span>
+                  <span className="font-medium">{form.budget}</span>
                 </div>
               )}
             </div>
@@ -312,8 +414,8 @@ export default function StylingRequestForm() {
         {step < 3 ? (
           <button
             onClick={() => {
-              if (step === 1 && (!form.requesterNickname || !form.stylingType)) {
-                toast.error("닉네임과 스타일링 타입을 선택해주세요");
+              if (step === 1 && !form.stylingType) {
+                toast.error("스타일링 타입을 선택해주세요");
                 return;
               }
               setStep(s => s + 1);
@@ -326,11 +428,11 @@ export default function StylingRequestForm() {
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={createRequest.isPending}
+            disabled={submitSurvey.isPending}
             className="w-full py-4 rounded-2xl text-white font-bold text-base disabled:opacity-60"
             style={{ background: TERRACOTTA }}
           >
-            {createRequest.isPending ? "신청 중..." : "신청서 제출하기"}
+            {submitSurvey.isPending ? "신청 중..." : "신청서 제출하기"}
           </button>
         )}
       </div>

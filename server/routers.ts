@@ -732,33 +732,121 @@ export const appRouter = router({
   // ─── Supabase 설문조사 연동 라우터 ────────────────────────────
   survey: router({
     /**
-     * 로그인 사용자의 닉네임으로 설문조사 신청 내역 조회
-     * Supabase survey_submissions 테이블에서 name 컬럼으로 매칭
+     * 로그인 사용자의 userId로 설문조사 신청 내역 조회
+     * Supabase survey_submissions 테이블에서 user_id 컬럼으로 매칭 (없으면 name 폴백)
      */
     mySubmission: publicProcedure
-      .input(z.object({ nickname: z.string() }))
+      .input(z.object({
+        userId: z.string().optional(),
+        nickname: z.string().optional(),
+      }))
       .query(async ({ input }) => {
-        if (!input.nickname) return null;
+        if (!input.userId && !input.nickname) return null;
 
-        const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey);
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
 
-        const { data, error } = await supabase
+        // userId 기반 조회 우선
+        if (input.userId) {
+          const { data, error } = await supabase
+            .from("survey_submissions")
+            .select("id, name, styling_type, styling_state, created_at")
+            .eq("user_id", input.userId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (!error && data) {
+            return {
+              id: data.id as number,
+              name: data.name as string,
+              stylingType: data.styling_type as string,
+              stylingState: (data.styling_state as number) ?? 1,
+              createdAt: data.created_at as string,
+            };
+          }
+        }
+
+        // 폴백: 닉네임 기반 조회
+        if (input.nickname) {
+          const { data, error } = await supabase
+            .from("survey_submissions")
+            .select("id, name, styling_type, styling_state, created_at")
+            .eq("name", input.nickname)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (!error && data) {
+            return {
+              id: data.id as number,
+              name: data.name as string,
+              stylingType: data.styling_type as string,
+              stylingState: (data.styling_state as number) ?? 1,
+              createdAt: data.created_at as string,
+            };
+          }
+        }
+
+        return null;
+      }),
+
+    /**
+     * 신청서 제출 - Supabase survey_submissions에 직접 저장 (userId 포함)
+     */
+    submit: publicProcedure
+      .input(z.object({
+        userId: z.string(),          // soozip 로그인 사용자 ID
+        name: z.string(),             // 닉네임
+        stylingType: z.string(),      // 희망 스타일링 타입
+        housingType: z.string().optional(),
+        roomSize: z.string().optional(),
+        budget: z.string().optional(),
+        moveInDate: z.string().optional(),
+        deadline: z.string().optional(),
+        referenceNote: z.string().optional(),
+        activities: z.array(z.string()).optional(),
+        existingFurniture: z.array(z.string()).optional(),
+        buyFurniture: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+
+        // 이미 동일 userId로 신청한 내역이 있는지 확인
+        const { data: existing } = await supabase
           .from("survey_submissions")
-          .select("id, name, styling_type, styling_state, created_at")
-          .eq("name", input.nickname)
-          .order("created_at", { ascending: false })
+          .select("id")
+          .eq("user_id", input.userId)
           .limit(1)
           .single();
 
-        if (error || !data) return null;
+        if (existing) {
+          throw new Error("이미 신청서를 제출하셨습니다. 마이페이지에서 진행 현황을 확인해주세요.");
+        }
 
-        return {
-          id: data.id as number,
-          name: data.name as string,
-          stylingType: data.styling_type as string,
-          stylingState: data.styling_state as number,
-          createdAt: data.created_at as string,
-        };
+        const { error } = await supabase
+          .from("survey_submissions")
+          .insert({
+            user_id: input.userId,
+            name: input.name,
+            styling_type: input.stylingType,
+            housing_type: input.housingType ?? null,
+            room_size: input.roomSize ?? null,
+            budget: input.budget ?? null,
+            move_in_date: input.moveInDate ?? null,
+            deadline: input.deadline ?? null,
+            reference_note: input.referenceNote ?? null,
+            activities: input.activities ?? [],
+            existing_furniture: input.existingFurniture ?? [],
+            buy_furniture: input.buyFurniture ?? [],
+            styling_state: 1,
+          });
+
+        if (error) {
+          console.error("[survey.submit] Supabase 저장 오류:", error);
+          throw new Error("신청서 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        }
+
+        return { success: true };
       }),
   }),
 

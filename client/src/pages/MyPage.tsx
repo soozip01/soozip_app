@@ -88,7 +88,7 @@ const SERVICE_ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 /* ─── 스타일링 탭 ─── */
-function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: boolean }) {
+function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname: string; isLoggedIn: boolean }) {
   const [, navigate] = useLocation();
 
   // 로그인 안 된 경우
@@ -113,10 +113,10 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
     );
   }
 
-  // Supabase 설문조사 신청 데이터 조회 (닉네임 기반)
+  // Supabase 설문조사 신청 데이터 조회 (userId 기반 우선, 폴백: 닉네임)
   const { data: surveyData, isLoading } = trpc.survey.mySubmission.useQuery(
-    { nickname },
-    { enabled: isLoggedIn && !!nickname }
+    { userId: userId || undefined, nickname: nickname || undefined },
+    { enabled: isLoggedIn && (!!userId || !!nickname) }
   );
 
   if (isLoading) {
@@ -176,7 +176,7 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
 
         <div className="px-4 mt-5">
           <button
-            onClick={() => navigate("/styling/types")}
+            onClick={() => navigate("/styling/request")}
             className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
             style={{ background: TERRACOTTA }}
           >
@@ -611,6 +611,7 @@ export default function MyPage() {
         {activeTab === "shopping" && <ShoppingTab isLoggedIn={isLoggedIn} />}
         {activeTab === "styling" && (
           <StylingTab
+            userId={user ? String(user.id) : ""}
             nickname={user?.nickname ?? ""}
             isLoggedIn={isLoggedIn}
           />

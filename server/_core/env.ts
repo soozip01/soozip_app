@@ -12,9 +12,12 @@ export const ENV = {
   kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET ?? "",
   naverClientId: process.env.NAVER_CLIENT_ID ?? "",
   naverClientSecret: process.env.NAVER_CLIENT_SECRET ?? "",
-  // Supabase
+  // Supabase (메인 프로젝트)
   supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
+  // Supabase (설문조사 전용 프로젝트)
+  surveySupabaseUrl: process.env.SURVEY_SUPABASE_URL ?? "",
+  surveySupabaseAnonKey: process.env.SURVEY_SUPABASE_ANON_KEY ?? "",
   // SMTP (이메일 발송)
   smtpHost: process.env.SMTP_HOST ?? "",
   smtpPort: parseInt(process.env.SMTP_PORT ?? "587"),

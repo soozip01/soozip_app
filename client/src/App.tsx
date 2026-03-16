@@ -82,6 +82,7 @@ function Router() {
       <Route path="/booking" component={BookingCalendar} />
       <Route path="/booking/complete" component={BookingComplete} />
       <Route path="/styling-request-form" component={StylingRequestForm} />
+      <Route path="/styling/request" component={StylingRequestForm} />
       <Route path="/styling-request-embed" component={StylingRequestEmbed} />
       <Route path="/styling-requests" component={StylingRequestList} />
       <Route path="/styling/furniture-info" component={FurnitureInfoForm} />
