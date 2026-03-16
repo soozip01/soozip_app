@@ -182,8 +182,8 @@ export default function StylingTypeFurniture() {
             </p>
           </div>
 
-          {/* ③ 도면 초안 — 좌우 여백 2배(px-8) */}
-          <div className="px-8 mb-7">
+          {/* ③ 도면 초안 */}
+          <div className="px-4 mb-7">
             <img
               src={IMG[3]}
               alt="도면 초안"
