@@ -5,8 +5,8 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes } from "../drizzle/schema";
-import { eq, or, desc } from "drizzle-orm";
+import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, designers, designerReviews, stylingRequests, stylingBookings } from "../drizzle/schema";
+import { eq, or, desc, and } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
 import { sendVerificationEmail } from "./mailer";
@@ -55,12 +55,6 @@ export const appRouter = router({
       return { success: true } as const;
     }),
 
-    /**
-     * 소셜 로그인 (카카오/네이버)
-     * 1. 인가 코드로 액세스 토큰 교환
-     * 2. 사용자 정보 조회
-     * 3. 신규/기존 회원 판별
-     */
     socialLogin: publicProcedure
       .input(z.object({
         code: z.string(),
@@ -74,7 +68,6 @@ export const appRouter = router({
         if (!db) throw new Error("데이터베이스 연결 오류");
 
         if (provider === "kakao") {
-          // 1. 카카오 액세스 토큰 교환
           const tokenRes = await fetch("https://kauth.kakao.com/oauth/token", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -97,7 +90,6 @@ export const appRouter = router({
             throw new Error(`카카오 인증 오류: ${tokenData.error_description || tokenData.error}`);
           }
 
-          // 2. 카카오 사용자 정보 조회
           const userRes = await fetch("https://kapi.kakao.com/v2/user/me", {
             headers: { Authorization: `Bearer ${tokenData.access_token}` },
           });
@@ -112,10 +104,8 @@ export const appRouter = router({
           const profileImageUrl = userData.kakao_account?.profile?.profile_image_url ?? null;
           const kakaoNickname = userData.kakao_account?.profile?.nickname ?? null;
 
-          // 3. 기존 회원 확인
           const existing = await db.select().from(kakaoUsers).where(eq(kakaoUsers.kakaoId, kakaoId)).limit(1);
           if (existing.length > 0) {
-            // 기존 회원 - 마지막 로그인 시간 업데이트
             await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
             return {
               isNewUser: false,
@@ -127,7 +117,6 @@ export const appRouter = router({
             };
           }
 
-          // 신규 회원 - 임시 토큰 발급 (약관 동의 화면으로)
           const tempToken = await createTempToken({
             provider: "kakao",
             kakaoId,
@@ -138,8 +127,6 @@ export const appRouter = router({
           return { isNewUser: true, provider: "kakao", tempToken };
 
         } else {
-          // 네이버
-          // 1. 네이버 액세스 토큰 교환
           const tokenRes = await fetch("https://nid.naver.com/oauth2.0/token", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -163,7 +150,6 @@ export const appRouter = router({
             throw new Error(`네이버 인증 오류: ${tokenData.error_description || tokenData.error}`);
           }
 
-          // 2. 네이버 사용자 정보 조회
           const userRes = await fetch("https://openapi.naver.com/v1/nid/me", {
             headers: { Authorization: `Bearer ${tokenData.access_token}` },
           });
@@ -174,9 +160,9 @@ export const appRouter = router({
               email?: string;
               nickname?: string;
               profile_image?: string;
-              gender?: string;    // M/F
-              birthday?: string;  // MM-DD
-              age?: string;       // 연령대 (예: "20-29")
+              gender?: string;
+              birthday?: string;
+              age?: string;
             };
           };
 
@@ -188,7 +174,6 @@ export const appRouter = router({
           const birthday = userData.response.birthday ?? null;
           const age = userData.response.age ?? null;
 
-          // 3. 기존 회원 확인
           const existing = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
           if (existing.length > 0) {
             await db.update(naverUsers).set({ lastSignedIn: new Date() }).where(eq(naverUsers.naverId, naverId));
@@ -216,9 +201,6 @@ export const appRouter = router({
         }
       }),
 
-    /**
-     * 소셜 회원가입 완료 (약관 동의 + 닉네임 설정)
-     */
     socialSignup: publicProcedure
       .input(z.object({
         tempToken: z.string(),
@@ -236,7 +218,6 @@ export const appRouter = router({
           throw new Error("필수 약관에 동의해주세요.");
         }
 
-        // 임시 토큰 검증
         let payload: Record<string, unknown>;
         try {
           payload = await verifyTempToken(input.tempToken) as Record<string, unknown>;
@@ -244,7 +225,6 @@ export const appRouter = router({
           throw new Error("인증 세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
-        // 닉네임 중복 확인
         const taken = await isNicknameTaken(input.nickname);
         if (taken) throw new Error("이미 사용 중인 닉네임입니다.");
 
@@ -283,9 +263,6 @@ export const appRouter = router({
         };
       }),
 
-    /**
-     * 닉네임 중복 확인
-     */
     checkNickname: publicProcedure
       .input(z.object({ nickname: z.string().min(2).max(20) }))
       .query(async ({ input }) => {
@@ -293,38 +270,23 @@ export const appRouter = router({
         return { available: !taken };
       }),
 
-    /**
-     * 이메일 인증 코드 발송
-     * 6자리 랜덤 코드를 생성하여 DB에 저장하고 Supabase Edge Function을 통해 이메일 발송
-     */
     sendEmailVerification: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("데이터베이스 연결 오류");
 
-        // 이미 가입된 이메일인지 확인
         const existingUser = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
         if (existingUser.length > 0) throw new Error("이미 가입된 이메일입니다.");
 
-        // 6자리 인증 코드 생성
         const code = String(Math.floor(100000 + Math.random() * 900000));
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10분 유효
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-        // 기존 미사용 코드 무효화 (같은 이메일)
         await db.delete(emailVerificationCodes).where(eq(emailVerificationCodes.email, input.email));
+        await db.insert(emailVerificationCodes).values({ email: input.email, code, expiresAt });
 
-        // 새 코드 저장
-        await db.insert(emailVerificationCodes).values({
-          email: input.email,
-          code,
-          expiresAt,
-        });
-
-        // Nodemailer를 통한 이메일 발송
         const emailSent = await sendVerificationEmail(input.email, code);
 
-        // 개발 환경에서는 콘솔에 코드 출력
         if (!ENV.isProduction) {
           console.log(`[Dev] 이메일 인증 코드 (${input.email}): ${code}`);
         }
@@ -336,9 +298,6 @@ export const appRouter = router({
         return { success: true, message: "인증 코드가 발송되었습니다. (10분 유효)" };
       }),
 
-    /**
-     * 이메일 인증 코드 검증
-     */
     verifyEmailCode: publicProcedure
       .input(z.object({ email: z.string().email(), code: z.string() }))
       .mutation(async ({ input }) => {
@@ -356,15 +315,10 @@ export const appRouter = router({
         if (new Date() > latest.expiresAt) throw new Error("인증 코드가 만료되었습니다. 다시 요청해주세요.");
         if (latest.code !== input.code) throw new Error("인증 코드가 올바르지 않습니다.");
 
-        // 코드 사용 처리
         await db.update(emailVerificationCodes).set({ used: true }).where(eq(emailVerificationCodes.id, latest.id));
-
         return { success: true, verified: true };
       }),
 
-    /**
-     * 이메일 회원가입
-     */
     emailSignup: publicProcedure
       .input(z.object({
         email: z.string().email(),
@@ -383,16 +337,14 @@ export const appRouter = router({
           throw new Error("필수 약관에 동의해주세요.");
         }
 
-        // 이메일 중복 확인
         const existingEmail = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
         if (existingEmail.length > 0) throw new Error("이미 가입된 이메일입니다.");
 
-        // 닉네임 중복 확인
         const taken = await isNicknameTaken(input.nickname);
         if (taken) throw new Error("이미 사용 중인 닉네임입니다.");
 
         const passwordHash = hashPassword(input.password);
-        const [insertResult] = await db.insert(emailUsers).values({
+        await db.insert(emailUsers).values({
           email: input.email,
           passwordHash,
           nickname: input.nickname,
@@ -401,14 +353,10 @@ export const appRouter = router({
           marketingAgreed: input.marketingAgreed,
           ageAgreed: input.ageAgreed,
         });
-        // 삽입된 사용자 ID 조회
         const newUser = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
-        return { success: true, userId: newUser[0]?.id ?? 0 };;
+        return { success: true, userId: newUser[0]?.id ?? 0 };
       }),
 
-    /**
-     * 이메일 로그인
-     */
     emailLogin: publicProcedure
       .input(z.object({
         email: z.string().email(),
@@ -430,6 +378,273 @@ export const appRouter = router({
         await db.update(emailUsers).set({ lastSignedIn: new Date() }).where(eq(emailUsers.email, input.email));
         return { success: true, userId: user[0].id, nickname: user[0].nickname };
       }),
+  }),
+
+  // ─── 디자이너 라우터 ───────────────────────────────────────────────
+  designer: router({
+    /**
+     * 승인된 디자이너 목록 조회 (소비자용)
+     */
+    list: publicProcedure
+      .input(z.object({
+        stylingType: z.string().optional(), // 타입 필터
+      }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+
+        const allDesigners = await db.select().from(designers)
+          .where(eq(designers.status, "approved"))
+          .orderBy(desc(designers.createdAt));
+
+        // 타입 필터링 (JSON 배열 문자열 검색)
+        let filtered = allDesigners;
+        if (input.stylingType) {
+          filtered = allDesigners.filter(d => {
+            try {
+              const specs = JSON.parse(d.specialties ?? "[]") as string[];
+              return specs.includes(input.stylingType!);
+            } catch { return false; }
+          });
+        }
+
+        // 각 디자이너의 리뷰 평균 점수 조회
+        const result = await Promise.all(filtered.map(async (d) => {
+          const reviews = await db.select().from(designerReviews)
+            .where(eq(designerReviews.designerId, d.id));
+          const avgRating = reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+            : 0;
+          const reviewCount = reviews.length;
+          // 최신 리뷰 2개 요약
+          const recentReviews = reviews
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, 2)
+            .map(r => ({ rating: r.rating, comment: r.comment, stylingType: r.stylingType, reviewerNickname: r.reviewerNickname }));
+
+          return {
+            ...d,
+            specialties: (() => { try { return JSON.parse(d.specialties ?? "[]") as string[]; } catch { return []; } })(),
+            portfolioUrls: (() => { try { return JSON.parse(d.portfolioUrls ?? "[]") as string[]; } catch { return []; } })(),
+            avgRating: Math.round(avgRating * 10) / 10,
+            reviewCount,
+            recentReviews,
+          };
+        }));
+
+        return result;
+      }),
+
+    /**
+     * 디자이너 상세 조회
+     */
+    get: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return null;
+
+        const [designer] = await db.select().from(designers)
+          .where(and(eq(designers.id, input.id), eq(designers.status, "approved")))
+          .limit(1);
+
+        if (!designer) return null;
+
+        const reviews = await db.select().from(designerReviews)
+          .where(eq(designerReviews.designerId, designer.id))
+          .orderBy(desc(designerReviews.createdAt));
+
+        const avgRating = reviews.length > 0
+          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+          : 0;
+
+        return {
+          ...designer,
+          specialties: (() => { try { return JSON.parse(designer.specialties ?? "[]") as string[]; } catch { return []; } })(),
+          portfolioUrls: (() => { try { return JSON.parse(designer.portfolioUrls ?? "[]") as string[]; } catch { return []; } })(),
+          avgRating: Math.round(avgRating * 10) / 10,
+          reviewCount: reviews.length,
+          reviews: reviews.map(r => ({
+            id: r.id,
+            rating: r.rating,
+            comment: r.comment,
+            stylingType: r.stylingType,
+            reviewerNickname: r.reviewerNickname,
+            createdAt: r.createdAt,
+          })),
+        };
+      }),
+
+    /**
+     * 디자이너 입점 신청
+     */
+    applyDesigner: publicProcedure
+      .input(z.object({
+        nickname: z.string().min(2).max(50),
+        email: z.string().email(),
+        bio: z.string().max(200).optional(),
+        specialties: z.array(z.string()).min(1),
+        applyReason: z.string().min(10).max(1000),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        // 이미 신청한 이메일 확인
+        const existing = await db.select().from(designers)
+          .where(eq(designers.email, input.email))
+          .limit(1);
+        if (existing.length > 0) {
+          const status = existing[0].status;
+          if (status === "pending") throw new Error("이미 입점 신청이 접수되어 검토 중입니다.");
+          if (status === "approved") throw new Error("이미 승인된 디자이너 계정입니다.");
+          if (status === "rejected") throw new Error("입점 신청이 반려되었습니다. 문의해주세요.");
+        }
+
+        await db.insert(designers).values({
+          nickname: input.nickname,
+          email: input.email,
+          bio: input.bio ?? null,
+          specialties: JSON.stringify(input.specialties),
+          applyReason: input.applyReason,
+          status: "pending",
+        });
+
+        return { success: true, message: "입점 신청이 접수되었습니다. 검토 후 이메일로 안내드립니다." };
+      }),
+  }),
+
+  // ─── 스타일링 신청서 라우터 (숨고 방식) ────────────────────────────
+  stylingRequest: router({
+    /**
+     * 신청서 작성 (소비자)
+     */
+    create: publicProcedure
+      .input(z.object({
+        requesterNickname: z.string().min(1).max(50),
+        requesterEmail: z.string().email().optional(),
+        stylingType: z.enum(["배치솔루션", "풀스타일링(온라인)", "풀스타일링(오프라인)"]),
+        roomSize: z.string().optional(),
+        roomType: z.string().optional(),
+        budget: z.string().optional(),
+        description: z.string().max(1000).optional(),
+        preferredDate: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.insert(stylingRequests).values({
+          requesterNickname: input.requesterNickname,
+          requesterEmail: input.requesterEmail ?? null,
+          stylingType: input.stylingType,
+          roomSize: input.roomSize ?? null,
+          roomType: input.roomType ?? null,
+          budget: input.budget ?? null,
+          description: input.description ?? null,
+          preferredDate: input.preferredDate ?? null,
+          status: "waiting",
+        });
+
+        return { success: true, message: "신청서가 등록되었습니다. 디자이너가 곧 연락드립니다." };
+      }),
+
+    /**
+     * 대기 중인 신청서 목록 (디자이너용)
+     */
+    listWaiting: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+
+      return db.select().from(stylingRequests)
+        .where(eq(stylingRequests.status, "waiting"))
+        .orderBy(desc(stylingRequests.createdAt));
+    }),
+  }),
+
+  // ─── 스타일링 예약 라우터 (캘린더 방식) ────────────────────────────
+  stylingBooking: router({
+    /**
+     * 예약 생성 (날짜 선택 후 - 설문 전 임시 예약)
+     */
+    create: publicProcedure
+      .input(z.object({
+        bookerNickname: z.string().min(1).max(50),
+        bookerEmail: z.string().email().optional(),
+        stylingType: z.enum(["배치솔루션", "풀스타일링(온라인)", "풀스타일링(오프라인)"]),
+        designerId: z.number().optional(),
+        preferredDate: z.string(), // YYYY-MM-DD
+        preferredTime: z.string().optional(),
+        roomSize: z.string().optional(),
+        description: z.string().max(500).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const [result] = await db.insert(stylingBookings).values({
+          bookerNickname: input.bookerNickname,
+          bookerEmail: input.bookerEmail ?? null,
+          stylingType: input.stylingType,
+          designerId: input.designerId ?? null,
+          preferredDate: input.preferredDate,
+          preferredTime: input.preferredTime ?? null,
+          roomSize: input.roomSize ?? null,
+          description: input.description ?? null,
+          surveyCompleted: false,
+          status: "pending",
+        });
+
+        // 삽입된 예약 ID 조회
+        const newBooking = await db.select().from(stylingBookings)
+          .where(and(
+            eq(stylingBookings.bookerNickname, input.bookerNickname),
+            eq(stylingBookings.preferredDate, input.preferredDate),
+          ))
+          .orderBy(desc(stylingBookings.createdAt))
+          .limit(1);
+
+        return {
+          success: true,
+          bookingId: newBooking[0]?.id ?? 0,
+          message: "예약이 임시 저장되었습니다. 설문을 완료하면 최종 확정됩니다.",
+        };
+      }),
+
+    /**
+     * 설문 완료 처리 (설문 후 최종 예약 확정)
+     */
+    completeSurvey: publicProcedure
+      .input(z.object({ bookingId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.update(stylingBookings)
+          .set({ surveyCompleted: true, status: "confirmed" })
+          .where(eq(stylingBookings.id, input.bookingId));
+
+        return { success: true, message: "예약이 최종 확정되었습니다!" };
+      }),
+
+    /**
+     * 예약된 날짜 목록 조회 (캘린더 표시용)
+     */
+    bookedDates: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+
+      const bookings = await db.select({
+        preferredDate: stylingBookings.preferredDate,
+        status: stylingBookings.status,
+      }).from(stylingBookings)
+        .where(or(
+          eq(stylingBookings.status, "pending"),
+          eq(stylingBookings.status, "confirmed"),
+        ));
+
+      return bookings;
+    }),
   }),
 });
 
