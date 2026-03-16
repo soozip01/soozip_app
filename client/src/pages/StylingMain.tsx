@@ -73,7 +73,7 @@ export default function StylingMain() {
 
             {/* 방식 2: 신청서 작성 후 제안 받기 */}
             <button
-              onClick={() => { setShowReservationModal(false); navigate("/styling-request"); }}
+              onClick={() => { setShowReservationModal(false); navigate("/styling-request-embed"); }}
               className="w-full flex items-start gap-4 p-4 rounded-2xl text-left active:scale-[0.98] transition-all border-2 border-gray-100 hover:border-gray-300"
             >
               <div

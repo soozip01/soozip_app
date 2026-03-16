@@ -478,7 +478,7 @@ export const appRouter = router({
     /**
      * 디자이너 입점 신청
      */
-    applyDesigner: publicProcedure
+    submitApplication: publicProcedure
       .input(z.object({
         nickname: z.string().min(2).max(50),
         email: z.string().email(),

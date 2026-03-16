@@ -40,6 +40,7 @@ import BookingCalendar from "./pages/BookingCalendar";
 import BookingComplete from "./pages/BookingComplete";
 import StylingRequestForm from "./pages/StylingRequestForm";
 import StylingRequestList from "./pages/StylingRequestList";
+import StylingRequestEmbed from "./pages/StylingRequestEmbed";
 
 function Router() {
   return (
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/booking" component={BookingCalendar} />
       <Route path="/booking/complete" component={BookingComplete} />
       <Route path="/styling-request-form" component={StylingRequestForm} />
+      <Route path="/styling-request-embed" component={StylingRequestEmbed} />
       <Route path="/styling-requests" component={StylingRequestList} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

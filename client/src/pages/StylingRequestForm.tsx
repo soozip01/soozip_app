@@ -88,7 +88,7 @@ export default function StylingRequestForm() {
       {/* 헤더 */}
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => step > 1 ? setStep(s => s - 1) : navigate(-1 as never)} className="p-1">
+          <button onClick={() => step > 1 ? setStep(s => s - 1) : navigate("/styling")} className="p-1">
             <ChevronLeft size={22} />
           </button>
           <h1 className="font-bold text-base flex-1 text-center">스타일링 신청서 작성</h1>

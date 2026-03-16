@@ -102,7 +102,7 @@ export default function SocialProfile() {
       {/* 헤더 */}
       <header className="flex items-center px-4 py-3">
         <button
-          onClick={() => navigate(-1 as any)}
+          onClick={() => navigate("/login")}
           className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

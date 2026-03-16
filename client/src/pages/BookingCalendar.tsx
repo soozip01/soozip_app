@@ -95,7 +95,7 @@ export default function BookingCalendar() {
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => step === "calendar" ? navigate(-1 as never) : setStep(s => s === "info" ? "calendar" : "info")}
+            onClick={() => step === "calendar" ? navigate("/styling") : setStep(s => s === "info" ? "calendar" : "info")}
             className="p-1"
           >
             <ChevronLeft size={22} />
