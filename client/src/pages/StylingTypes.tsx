@@ -136,8 +136,13 @@ function TypeCard({
 
           {/* 추천 목록 */}
           <ul className="flex flex-col gap-2 flex-1">
-            {card.recommendations.map((rec, i) => (
-              <li key={i} className="text-gray-800 text-[12px] leading-snug whitespace-nowrap">
+              {card.recommendations.map((rec, i) => (
+              <li
+                key={i}
+                className={`text-gray-800 text-[12px] leading-snug${
+                  card.id === "furniture" && i === 1 ? "" : " whitespace-nowrap"
+                }`}
+              >
                 • {rec}
               </li>
             ))}
