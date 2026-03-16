@@ -5,9 +5,23 @@
  */
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell, ImageIcon } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell } from "lucide-react";
 
 const TERRACOTTA = "#d31400";
+
+// CDN 이미지 URL 매핑
+const IMG = {
+  1: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-1_edc6cc5f.png",
+  2: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-2_3d2bc782.png",
+  3: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-3_5fa1c0fc.png",
+  4: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-4_1930ace5.png",
+  5: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-5_7efdb40c.png",
+  6: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-6_93525efd.jpg",
+  7: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-7_8f8e2299.jpg",
+  8: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-8_0e5cab5e.png",
+  9: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-9_3a98f947.jpg",
+  10: "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH/furniture-10_2cd6493b.png",
+};
 
 const STEP_LABELS = [
   "1. 실측 패키지 발송 및 공간 실측",
@@ -16,30 +30,6 @@ const STEP_LABELS = [
   "4. 피드백 및 수정",
   "5. 최종 시안 확인 및 제품 링크 전달 받기",
 ];
-
-/* ── 이미지 플레이스홀더 컴포넌트 ── */
-function ImgPlaceholder({
-  num,
-  label,
-  aspectRatio = "4/3",
-  className = "",
-}: {
-  num: string | number;
-  label?: string;
-  aspectRatio?: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`w-full rounded-xl flex flex-col items-center justify-center gap-2 bg-gray-100 border-2 border-dashed border-gray-300 ${className}`}
-      style={{ aspectRatio }}
-    >
-      <ImageIcon size={28} className="text-gray-400" />
-      <span className="text-gray-500 font-bold text-[22px]">{num}</span>
-      {label && <span className="text-gray-400 text-[12px] text-center px-2">{label}</span>}
-    </div>
-  );
-}
 
 export default function StylingTypeFurniture() {
   const [, navigate] = useLocation();
@@ -76,9 +66,22 @@ export default function StylingTypeFurniture() {
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-6 pb-6">
+          {/* ①② 소개 이미지 2장 — 원본 비율(세로형) 유지, 2열 그리드 */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <ImgPlaceholder num="①" label="소개 이미지 1" aspectRatio="1/1" />
-            <ImgPlaceholder num="②" label="소개 이미지 2" aspectRatio="1/1" />
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMG[1]}
+                alt="소개 이미지 1"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMG[2]}
+                alt="소개 이미지 2"
+                className="w-full h-auto object-contain"
+              />
+            </div>
           </div>
 
           <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-3">
@@ -134,29 +137,33 @@ export default function StylingTypeFurniture() {
         </section>
 
         {/* ── STEP 01 ── */}
-        <section className="px-4 pt-8 pb-8">
-          <div ref={(el) => { stepTitleRefs.current[0] = el; }}>
+        <section className="pt-8 pb-8">
+          <div className="px-4" ref={(el) => { stepTitleRefs.current[0] = el; }}>
             <StepBadge num="01" />
           </div>
-          <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-2 mt-6">
-            배치솔루션 예약이 완료되면<br />실측 패키지가 발송돼요!
-          </h3>
-          <p className="text-gray-400 text-[11px] mb-5">
-            자료가 있으신 경우 빠른 진행을 위해 패키지 발송이 생략됩니다
-          </p>
-
-          {/* 도면 초안 카드 */}
-          <div className="flex flex-col items-center gap-2 mb-5">
-            <div className="bg-gray-50 rounded-xl p-4 flex flex-col items-center gap-2 w-full max-w-[200px]">
-              <ImgPlaceholder num="③" label="도면 초안" aspectRatio="1/1" />
-              <span className="text-gray-700 text-[13px] font-medium text-center">도면 초안</span>
-              <span className="text-gray-400 text-[11px] text-center">(온라인 전송)</span>
-            </div>
+          <div className="px-4">
+            <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-2 mt-6">
+              배치솔루션 예약이 완료되면<br />실측 패키지가 발송돼요!
+            </h3>
+            <p className="text-gray-400 text-[11px] mb-5">
+              자료가 있으신 경우 빠른 진행을 위해 패키지 발송이 생략됩니다
+            </p>
           </div>
 
-          <h3 className="text-gray-900 font-bold text-[16px] leading-snug mb-3">
-            발송드린 온라인 도면에<br />실측값을 작성해주세요
-          </h3>
+          {/* ③ 도면 초안 — 좌우 여백 없이 전체 폭 */}
+          <div className="w-full mb-5">
+            <img
+              src={IMG[3]}
+              alt="도면 초안"
+              className="w-full h-auto object-contain"
+            />
+          </div>
+
+          <div className="px-4">
+            <h3 className="text-gray-900 font-bold text-[16px] leading-snug mb-3">
+              발송드린 온라인 도면에<br />실측값을 작성해주세요
+            </h3>
+          </div>
         </section>
 
         {/* ── STEP 02 ── */}
@@ -207,8 +214,13 @@ export default function StylingTypeFurniture() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
+                {/* ④ 가구 사진 — 원본 비율 유지 */}
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <ImgPlaceholder num="④" label="가구 사진" aspectRatio="1/1" />
+                  <img
+                    src={IMG[4]}
+                    alt="가구 사진"
+                    className="w-full h-auto object-contain rounded-lg"
+                  />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-2">사이즈 정보</p>
@@ -235,8 +247,13 @@ export default function StylingTypeFurniture() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
+                {/* ⑤ 공간 사진 — 원본 비율 유지 */}
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <ImgPlaceholder num="⑤" label="공간 사진" aspectRatio="1/1" />
+                  <img
+                    src={IMG[5]}
+                    alt="공간 사진"
+                    className="w-full h-auto object-contain rounded-lg"
+                  />
                 </div>
                 <ul className="flex-1 space-y-2.5 pt-1">
                   {[
@@ -272,9 +289,22 @@ export default function StylingTypeFurniture() {
             <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 1~3가지로 달라질 수 있어요" />
           </div>
 
+          {/* ⑥⑦ 배치안 예시 — 원본 가로형 비율 유지 */}
           <div className="flex flex-col gap-3">
-            <ImgPlaceholder num="⑥" label="배치안 예시 1" aspectRatio="4/3" />
-            <ImgPlaceholder num="⑦" label="배치안 예시 2" aspectRatio="4/3" />
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMG[6]}
+                alt="배치안 예시 1"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMG[7]}
+                alt="배치안 예시 2"
+                className="w-full h-auto object-contain"
+              />
+            </div>
           </div>
         </section>
 
@@ -291,8 +321,15 @@ export default function StylingTypeFurniture() {
             <NoticeBox text="최대 2회 수정이 가능하기 때문에 자세하게 말씀 주실수록 좋아요" />
           </div>
 
+          {/* ⑧ 피드백 안내 이미지 — 원본 비율 유지 */}
           <div className="flex justify-center mt-4">
-            <ImgPlaceholder num="⑧" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
+            <div className="w-full max-w-xs rounded-xl overflow-hidden">
+              <img
+                src={IMG[8]}
+                alt="피드백 안내 이미지"
+                className="w-full h-auto object-contain"
+              />
+            </div>
           </div>
         </section>
 
@@ -308,11 +345,23 @@ export default function StylingTypeFurniture() {
             </h3>
           </div>
 
-          <ImgPlaceholder num="⑨" label="최종 배치안 이미지" aspectRatio="4/3" className="mb-4" />
+          {/* ⑨ 최종 배치안 — 원본 가로형 비율 유지 */}
+          <div className="rounded-xl overflow-hidden mb-4">
+            <img
+              src={IMG[9]}
+              alt="최종 배치안"
+              className="w-full h-auto object-contain"
+            />
+          </div>
 
           <div className="flex gap-3 items-start">
-            <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0">
-              <ImgPlaceholder num="⑩" label="제품" aspectRatio="1/1" />
+            {/* ⑩ 제품 이미지 — 원본 세로형 비율 유지 */}
+            <div className="w-20 shrink-0 rounded-lg overflow-hidden">
+              <img
+                src={IMG[10]}
+                alt="제품"
+                className="w-full h-auto object-contain rounded-lg"
+              />
             </div>
             <div className="flex-1 pt-1">
               <p className="text-gray-400 text-[11px] mb-0.5">서랍형 · 옵션</p>
