@@ -41,6 +41,7 @@ import BookingComplete from "./pages/BookingComplete";
 import StylingRequestForm from "./pages/StylingRequestForm";
 import StylingRequestList from "./pages/StylingRequestList";
 import StylingRequestEmbed from "./pages/StylingRequestEmbed";
+import FurnitureInfoForm from "./pages/FurnitureInfoForm";
 
 function Router() {
   return (
@@ -50,6 +51,7 @@ function Router() {
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/brand-entry" component={BrandEntry} />
       <Route path="/mypage" component={MyPage} />
+      <Route path="/my" component={MyPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/inquiry" component={InquiryPage} />
@@ -82,6 +84,7 @@ function Router() {
       <Route path="/styling-request-form" component={StylingRequestForm} />
       <Route path="/styling-request-embed" component={StylingRequestEmbed} />
       <Route path="/styling-requests" component={StylingRequestList} />
+      <Route path="/styling/furniture-info" component={FurnitureInfoForm} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

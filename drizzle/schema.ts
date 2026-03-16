@@ -204,3 +204,61 @@ export const stylingBookings = mysqlTable("styling_bookings", {
 
 export type StylingBooking = typeof stylingBookings.$inferSelect;
 export type InsertStylingBooking = typeof stylingBookings.$inferInsert;
+
+/**
+ * 스타일링 진행 상태 테이블
+ * 사용자의 스타일링 서비스 진행 단계를 추적합니다.
+ * 닉네임 기반으로 연결 (소셜/이메일 로그인 통합)
+ */
+export const stylingProgress = mysqlTable("styling_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  // 사용자 식별 (닉네임 기반 - 소셜/이메일 통합)
+  userNickname: varchar("userNickname", { length: 50 }).notNull(),
+  // 신청 유형
+  stylingType: mysqlEnum("stylingType", ["배치솔루션", "풀스타일링(온라인)", "풀스타일링(오프라인)"]).notNull(),
+  // 현재 진행 단계 (1부터 시작)
+  currentStep: int("currentStep").default(1).notNull(),
+  // 전체 단계 수 (배치솔루션:5, 풀온라인:6, 풀오프라인:7)
+  totalSteps: int("totalSteps").notNull(),
+  // 서비스 상태
+  status: mysqlEnum("status", ["active", "completed", "cancelled"]).default("active").notNull(),
+  // 신청 예약 ID (stylingBookings 연결)
+  bookingId: int("bookingId"),
+  // 신청일
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StylingProgress = typeof stylingProgress.$inferSelect;
+export type InsertStylingProgress = typeof stylingProgress.$inferInsert;
+
+/**
+ * 가구 정보 입력 테이블
+ * STEP 02에서 사용자가 입력하는 기존 가구 정보
+ */
+export const furnitureInfo = mysqlTable("furniture_info", {
+  id: int("id").autoincrement().primaryKey(),
+  // 연결된 스타일링 진행 ID
+  progressId: int("progressId").notNull(),
+  // 사용자 닉네임
+  userNickname: varchar("userNickname", { length: 50 }).notNull(),
+  // 입력 방식: link(제품 링크) 또는 photo(사진+사이즈)
+  inputType: mysqlEnum("inputType", ["link", "photo"]).notNull(),
+  // 제품 링크 방식
+  productLink: text("productLink"),
+  productOption: varchar("productOption", { length: 200 }),
+  // 사진+사이즈 방식
+  photoUrl: text("photoUrl"),
+  productName: varchar("productName", { length: 100 }),
+  width: varchar("width", { length: 20 }),   // 가로 (mm)
+  depth: varchar("depth", { length: 20 }),   // 깊이 (mm)
+  height: varchar("height", { length: 20 }), // 높이 (mm)
+  notes: varchar("notes", { length: 300 }),  // 특이사항
+  // 정렬 순서
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FurnitureInfo = typeof furnitureInfo.$inferSelect;
+export type InsertFurnitureInfo = typeof furnitureInfo.$inferInsert;

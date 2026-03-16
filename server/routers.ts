@@ -5,7 +5,8 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, designers, designerReviews, stylingRequests, stylingBookings } from "../drizzle/schema";
+import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo } from "../drizzle/schema";
+import { storagePut } from "./storage";
 import { eq, or, desc, and } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
@@ -645,6 +646,196 @@ export const appRouter = router({
 
       return bookings;
     }),
+  }),
+
+  // ─── 스타일링 진행 상태 라우터 ────────────────────────────
+  stylingProgress: router({
+    /**
+     * 내 스타일링 진행 현황 조회 (로그인 사용자)
+     */
+    myProgress: publicProcedure
+      .input(z.object({ userNickname: z.string() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return null;
+
+        const rows = await db.select().from(stylingProgress)
+          .where(and(
+            eq(stylingProgress.userNickname, input.userNickname),
+            eq(stylingProgress.status, "active"),
+          ))
+          .orderBy(desc(stylingProgress.createdAt))
+          .limit(1);
+
+        return rows[0] ?? null;
+      }),
+
+    /**
+     * 스타일링 진행 상태 생성 (어드민/테스트용)
+     */
+    create: publicProcedure
+      .input(z.object({
+        userNickname: z.string(),
+        stylingType: z.enum(["배치솔루션", "풀스타일링(온라인)", "풀스타일링(오프라인)"]),
+        bookingId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const totalStepsMap = {
+          "배치솔루션": 5,
+          "풀스타일링(온라인)": 6,
+          "풀스타일링(오프라인)": 7,
+        };
+
+        await db.insert(stylingProgress).values({
+          userNickname: input.userNickname,
+          stylingType: input.stylingType,
+          currentStep: 1,
+          totalSteps: totalStepsMap[input.stylingType],
+          status: "active",
+          bookingId: input.bookingId ?? null,
+        });
+
+        return { success: true };
+      }),
+
+    /**
+     * STEP 진행 (다음 단계로 이동)
+     */
+    advanceStep: publicProcedure
+      .input(z.object({ progressId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const rows = await db.select().from(stylingProgress)
+          .where(eq(stylingProgress.id, input.progressId))
+          .limit(1);
+
+        if (!rows[0]) throw new Error("진행 정보를 찾을 수 없습니다.");
+
+        const { currentStep, totalSteps } = rows[0];
+        const nextStep = Math.min(currentStep + 1, totalSteps);
+        const newStatus = nextStep >= totalSteps ? "completed" : "active";
+
+        await db.update(stylingProgress)
+          .set({ currentStep: nextStep, status: newStatus })
+          .where(eq(stylingProgress.id, input.progressId));
+
+        return { success: true, nextStep, completed: newStatus === "completed" };
+      }),
+  }),
+
+  // ─── 가구 정보 입력 라우터 ────────────────────────────
+  furnitureInfo: router({
+    /**
+     * 내 가구 정보 목록 조회
+     */
+    list: publicProcedure
+      .input(z.object({ progressId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+
+        return db.select().from(furnitureInfo)
+          .where(eq(furnitureInfo.progressId, input.progressId))
+          .orderBy(furnitureInfo.sortOrder);
+      }),
+
+    /**
+     * 가구 정보 저장 (제품 링크 방식)
+     */
+    saveLink: publicProcedure
+      .input(z.object({
+        progressId: z.number(),
+        userNickname: z.string(),
+        productLink: z.string().url("올바른 URL을 입력해주세요"),
+        productOption: z.string().max(200).optional(),
+        sortOrder: z.number().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.insert(furnitureInfo).values({
+          progressId: input.progressId,
+          userNickname: input.userNickname,
+          inputType: "link",
+          productLink: input.productLink,
+          productOption: input.productOption ?? null,
+          sortOrder: input.sortOrder,
+        });
+
+        return { success: true };
+      }),
+
+    /**
+     * 가구 정보 저장 (사진+사이즈 방식)
+     */
+    savePhoto: publicProcedure
+      .input(z.object({
+        progressId: z.number(),
+        userNickname: z.string(),
+        photoUrl: z.string(),
+        productName: z.string().max(100).optional(),
+        width: z.string().max(20).optional(),
+        depth: z.string().max(20).optional(),
+        height: z.string().max(20).optional(),
+        notes: z.string().max(300).optional(),
+        sortOrder: z.number().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.insert(furnitureInfo).values({
+          progressId: input.progressId,
+          userNickname: input.userNickname,
+          inputType: "photo",
+          photoUrl: input.photoUrl,
+          productName: input.productName ?? null,
+          width: input.width ?? null,
+          depth: input.depth ?? null,
+          height: input.height ?? null,
+          notes: input.notes ?? null,
+          sortOrder: input.sortOrder,
+        });
+
+        return { success: true };
+      }),
+
+    /**
+     * 가구 사진 업로드 (S3)
+     */
+    uploadPhoto: publicProcedure
+      .input(z.object({
+        userNickname: z.string(),
+        fileName: z.string(),
+        fileBase64: z.string(), // base64 encoded
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const randomSuffix = Math.random().toString(36).slice(2, 8);
+        const fileKey = `furniture-photos/${input.userNickname}/${Date.now()}-${randomSuffix}-${input.fileName}`;
+        const buffer = Buffer.from(input.fileBase64, "base64");
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        return { url };
+      }),
+
+    /**
+     * 가구 정보 삭제
+     */
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.delete(furnitureInfo).where(eq(furnitureInfo.id, input.id));
+        return { success: true };
+      }),
   }),
 });
 

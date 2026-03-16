@@ -1,18 +1,20 @@
 /* SOOZIP Design: Japandi Minimalism - My Page (탭 구조)
  * 탭: 프로필 / 쇼핑 / 스타일링
- * - 쇼핑 탭: 주문 현황 + 메뉴 항목 (스타일링 슬라이더 제거)
- * - 스타일링 탭: 신청 현황 + STEP별 진행 카드
+ * - 쇼핑 탭: 주문 현황 + 메뉴 항목
+ * - 스타일링 탭: 신청 유형별 STEP 분기 + 빈 상태 UI + 실제 DB 연동
  */
 import {
   ShoppingBag, Heart, Bell, HelpCircle, ChevronRight, LogIn,
   Settings, ShoppingCart, PenLine, Share2, Sparkles,
-  CheckCircle2, Circle, ClipboardList, ImageIcon, MessageSquare, FileText
+  CheckCircle2, ClipboardList, MessageSquare, FileText, Home,
+  Package
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useSoozipAuth } from "@/contexts/AuthContext";
+import { trpc } from "@/lib/trpc";
 
 const TERRACOTTA = "#d31400";
 
@@ -35,73 +37,65 @@ const MENU_ITEMS = [
   { icon: HelpCircle, label: "고객센터", action: "inquiry" },
 ];
 
-/* ─── 스타일링 STEP 정의 (배치솔루션 기준) ─── */
-const STYLING_STEPS_FURNITURE = [
-  {
-    id: 1,
-    label: "신청 완료",
-    icon: CheckCircle2,
-    desc: "서비스 신청이 완료되었어요",
-    actionLabel: "신청 내역 확인",
-    status: "done" as const,
-  },
-  {
-    id: 2,
-    label: "기존 가구 정보 입력",
-    icon: ClipboardList,
-    desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요",
-    actionLabel: "정보 입력하기",
-    status: "active" as const,
-  },
-  {
-    id: 3,
-    label: "실측 패키지 수령",
-    icon: ImageIcon,
-    desc: "실측 패키지를 수령한 후 확인해주세요",
-    actionLabel: "수령 확인",
-    status: "pending" as const,
-  },
-  {
-    id: 4,
-    label: "배치안 확인",
-    icon: FileText,
-    desc: "제안된 배치안을 확인해주세요",
-    actionLabel: "배치안 확인하기",
-    status: "pending" as const,
-  },
-  {
-    id: 5,
-    label: "피드백 전달",
-    icon: MessageSquare,
-    desc: "배치안에 대한 피드백을 남겨주세요",
-    actionLabel: "피드백 남기기",
-    status: "pending" as const,
-  },
-  {
-    id: 6,
-    label: "최종안 전달 완료",
-    icon: CheckCircle2,
-    desc: "최종 배치안과 제품 링크를 확인해주세요",
-    actionLabel: "최종안 확인하기",
-    status: "pending" as const,
-  },
+/* ─── 서비스 유형별 STEP 정의 ─── */
+type StepStatus = "done" | "active" | "pending";
+
+interface StepDef {
+  id: number;
+  label: string;
+  desc: string;
+  actionLabel: string;
+  actionRoute?: string; // 이동할 페이지 경로
+}
+
+const STEPS_FURNITURE: StepDef[] = [
+  { id: 1, label: "신청 완료", desc: "서비스 신청이 완료되었어요", actionLabel: "신청 내역 확인" },
+  { id: 2, label: "기존 가구 정보 입력", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
+  { id: 3, label: "실측 패키지 수령", desc: "실측 패키지를 수령한 후 확인해주세요", actionLabel: "수령 확인" },
+  { id: 4, label: "배치안 확인", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
+  { id: 5, label: "최종안 전달 완료", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종안 확인하기" },
 ];
 
-/* 예시 신청 정보 (추후 DB 연동) */
-const MOCK_STYLING_ORDER = {
-  serviceType: "배치 솔루션",
-  appliedAt: "2025.03.10",
-  currentStep: 2,
+const STEPS_FULL_ONLINE: StepDef[] = [
+  { id: 1, label: "신청 완료", desc: "서비스 신청이 완료되었어요", actionLabel: "신청 내역 확인" },
+  { id: 2, label: "공간 실측 정보 전달", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기" },
+  { id: 3, label: "기존 가구 정보 입력", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
+  { id: 4, label: "배치 솔루션 확인", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
+  { id: 5, label: "피드백 전달", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
+  { id: 6, label: "최종 시안 전달 완료", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
+];
+
+const STEPS_FULL_OFFLINE: StepDef[] = [
+  { id: 1, label: "신청 완료", desc: "서비스 신청이 완료되었어요", actionLabel: "신청 내역 확인" },
+  { id: 2, label: "방문 상담 일정 조율", desc: "방문 상담 및 실측을 위한 일정을 조율해주세요", actionLabel: "일정 확인하기" },
+  { id: 3, label: "기존 가구 정보 입력", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
+  { id: 4, label: "배치 솔루션 확인", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
+  { id: 5, label: "피드백 전달", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
+  { id: 6, label: "최종 시안 전달 완료", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
+  { id: 7, label: "가구 세팅 완료", desc: "선정된 가구와 소품 세팅이 완료되었어요", actionLabel: "완료 확인하기" },
+];
+
+const STEPS_MAP: Record<string, StepDef[]> = {
+  "배치솔루션": STEPS_FURNITURE,
+  "풀스타일링(온라인)": STEPS_FULL_ONLINE,
+  "풀스타일링(오프라인)": STEPS_FULL_OFFLINE,
+};
+
+const SERVICE_ICON_MAP: Record<string, React.ReactNode> = {
+  "배치솔루션": <Home size={18} />,
+  "풀스타일링(온라인)": <Sparkles size={18} />,
+  "풀스타일링(오프라인)": <Package size={18} />,
 };
 
 /* ─── 스타일링 탭 ─── */
-function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
+function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: boolean }) {
   const [, navigate] = useLocation();
 
+  // 로그인 안 된 경우
   if (!isLoggedIn) {
     return (
       <div className="px-4 py-10 flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#f3f4f6" }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gray-100">
           <Sparkles size={28} className="text-gray-400" />
         </div>
         <div className="text-center">
@@ -119,20 +113,105 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
     );
   }
 
-  const steps = STYLING_STEPS_FURNITURE;
-  const currentStepIdx = MOCK_STYLING_ORDER.currentStep - 1;
+  // 실제 DB에서 진행 중인 스타일링 조회
+  const { data: progress, isLoading } = trpc.stylingProgress.myProgress.useQuery(
+    { userNickname: nickname },
+    { enabled: isLoggedIn && !!nickname }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="px-4 py-10 flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-gray-200 rounded-full animate-spin" style={{ borderTopColor: TERRACOTTA }} />
+        <p className="text-sm text-muted-foreground">불러오는 중...</p>
+      </div>
+    );
+  }
+
+  // 신청한 스타일링이 없는 경우 - 빈 상태 UI
+  if (!progress) {
+    return (
+      <div className="pb-6">
+        <div className="px-4 py-12 flex flex-col items-center gap-4">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center"
+            style={{ background: "#f9f9f9", border: "2px dashed #e5e7eb" }}
+          >
+            <Sparkles size={32} className="text-gray-300" />
+          </div>
+          <div className="text-center">
+            <p className="font-bold text-gray-800 text-[16px]">아직 신청한 스타일링이 없어요</p>
+            <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+              배치 솔루션, 풀 스타일링 등<br />다양한 서비스를 신청해보세요
+            </p>
+          </div>
+        </div>
+
+        {/* 서비스 소개 카드 */}
+        <div className="px-4 space-y-3">
+          {[
+            { type: "배치솔루션", desc: "공간 실측 후 최적의 가구 배치안 제안", steps: "5단계" },
+            { type: "풀스타일링(온라인)", desc: "배치안부터 가구 선정까지 온라인으로 진행", steps: "6단계" },
+            { type: "풀스타일링(오프라인)", desc: "방문 상담부터 가구 세팅까지 오프라인 진행", steps: "7단계" },
+          ].map((service) => (
+            <div
+              key={service.type}
+              className="rounded-2xl border border-gray-100 p-4 flex items-center gap-3"
+              style={{ background: "#fafafa" }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white"
+                style={{ background: TERRACOTTA }}
+              >
+                {SERVICE_ICON_MAP[service.type]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-gray-900">{service.type}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5 truncate">{service.desc}</p>
+              </div>
+              <span className="text-[11px] text-gray-400 shrink-0">{service.steps}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="px-4 mt-5">
+          <button
+            onClick={() => navigate("/styling/types")}
+            className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
+            style={{ background: TERRACOTTA }}
+          >
+            스타일링 서비스 신청하기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 신청한 스타일링이 있는 경우 - STEP별 진행 카드
+  const steps = STEPS_MAP[progress.stylingType] ?? STEPS_FURNITURE;
+  const currentStepIdx = (progress.currentStep ?? 1) - 1;
 
   return (
     <div className="pb-6">
       {/* 신청 현황 카드 */}
       <div className="mx-4 mt-5 mb-5 rounded-2xl border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 flex items-center justify-between" style={{ background: "#fafafa" }}>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">진행 중인 스타일링</p>
-            <p className="text-sm font-bold text-gray-900">{MOCK_STYLING_ORDER.serviceType}</p>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
+              style={{ background: TERRACOTTA }}
+            >
+              {SERVICE_ICON_MAP[progress.stylingType] ?? <Sparkles size={16} />}
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">진행 중인 스타일링</p>
+              <p className="text-sm font-bold text-gray-900">{progress.stylingType}</p>
+            </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400">{MOCK_STYLING_ORDER.appliedAt} 신청</p>
+            <p className="text-xs text-gray-400">
+              {new Date(progress.createdAt).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })} 신청
+            </p>
             <span
               className="inline-block mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full text-white"
               style={{ background: TERRACOTTA }}
@@ -146,7 +225,7 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500">진행 단계</span>
             <span className="text-xs font-semibold" style={{ color: TERRACOTTA }}>
-              {MOCK_STYLING_ORDER.currentStep} / {steps.length}
+              {progress.currentStep} / {progress.totalSteps}
             </span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -154,7 +233,7 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
               className="h-1.5 rounded-full transition-all duration-500"
               style={{
                 background: TERRACOTTA,
-                width: `${((MOCK_STYLING_ORDER.currentStep - 1) / (steps.length - 1)) * 100}%`,
+                width: `${((progress.currentStep - 1) / Math.max(progress.totalSteps - 1, 1)) * 100}%`,
               }}
             />
           </div>
@@ -167,7 +246,6 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
           const isDone = idx < currentStepIdx;
           const isActive = idx === currentStepIdx;
           const isPending = idx > currentStepIdx;
-          const StepIcon = step.icon;
 
           return (
             <div
@@ -208,12 +286,8 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
                       STEP {String(step.id).padStart(2, "0")}
                     </span>
                   </div>
-                  {isDone && (
-                    <span className="text-[11px] text-gray-400 font-medium">완료</span>
-                  )}
-                  {isPending && (
-                    <span className="text-[11px] text-gray-300 font-medium">대기중</span>
-                  )}
+                  {isDone && <span className="text-[11px] text-gray-400 font-medium">완료</span>}
+                  {isPending && <span className="text-[11px] text-gray-300 font-medium">대기중</span>}
                   {isActive && (
                     <span
                       className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white"
@@ -240,7 +314,13 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
                 {/* 액션 버튼 (활성 단계만) */}
                 {isActive && (
                   <button
-                    onClick={() => toast.info("해당 기능이 준비 중입니다.")}
+                    onClick={() => {
+                      if (step.actionRoute) {
+                        navigate(`${step.actionRoute}?progressId=${progress.id}`);
+                      } else {
+                        toast.info("해당 기능이 준비 중입니다.");
+                      }
+                    }}
                     className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
                     style={{ background: "#111111" }}
                   >
@@ -260,7 +340,7 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
                 )}
               </div>
 
-              {/* 활성 단계 하단 구분선 강조 */}
+              {/* 활성 단계 하단 강조선 */}
               {isActive && (
                 <div className="h-0.5" style={{ background: TERRACOTTA }} />
               )}
@@ -269,7 +349,7 @@ function StylingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
         })}
       </div>
 
-      {/* 스타일링 신청 없을 때 CTA (추후 신청 없는 경우 분기) */}
+      {/* 다른 서비스 CTA */}
       <div className="mx-4 mt-6 p-4 rounded-2xl bg-gray-50 border border-gray-100">
         <p className="text-[13px] font-semibold text-gray-700 mb-1">다른 스타일링 서비스도 살펴보세요</p>
         <p className="text-[12px] text-gray-400 mb-3">배치 솔루션, 풀 스타일링(온라인/오프라인)</p>
@@ -371,13 +451,12 @@ function ProfileTab({ user }: {
   );
 }
 
-/* ─── 쇼핑 탭 (스타일링 슬라이더 제거, 주문 현황 상단) ─── */
+/* ─── 쇼핑 탭 ─── */
 function ShoppingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [, navigate] = useLocation();
 
   return (
     <>
-      {/* 로그인 유도 (비로그인 시) */}
       {!isLoggedIn && (
         <div className="px-4 py-5 border-b border-border">
           <div className="flex items-center gap-4 mb-4">
@@ -460,7 +539,6 @@ export default function MyPage() {
     { key: "styling", label: "스타일링" },
   ];
 
-  // 탭 인디케이터 left 위치 계산 (각 탭 버튼 너비 기준)
   const TAB_POSITIONS: Record<string, string> = {
     profile: "16px",
     shopping: "76px",
@@ -518,7 +596,12 @@ export default function MyPage() {
       <main>
         {activeTab === "profile" && <ProfileTab user={isLoggedIn ? user : null} />}
         {activeTab === "shopping" && <ShoppingTab isLoggedIn={isLoggedIn} />}
-        {activeTab === "styling" && <StylingTab isLoggedIn={isLoggedIn} />}
+        {activeTab === "styling" && (
+          <StylingTab
+            nickname={user?.nickname ?? ""}
+            isLoggedIn={isLoggedIn}
+          />
+        )}
       </main>
 
       <BottomNav />
