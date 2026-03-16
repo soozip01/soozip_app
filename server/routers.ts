@@ -1,4 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
+import { createClient } from "@supabase/supabase-js";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
@@ -725,6 +726,39 @@ export const appRouter = router({
           .where(eq(stylingProgress.id, input.progressId));
 
         return { success: true, nextStep, completed: newStatus === "completed" };
+      }),
+  }),
+
+  // ─── Supabase 설문조사 연동 라우터 ────────────────────────────
+  survey: router({
+    /**
+     * 로그인 사용자의 닉네임으로 설문조사 신청 내역 조회
+     * Supabase survey_submissions 테이블에서 name 컬럼으로 매칭
+     */
+    mySubmission: publicProcedure
+      .input(z.object({ nickname: z.string() }))
+      .query(async ({ input }) => {
+        if (!input.nickname) return null;
+
+        const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey);
+
+        const { data, error } = await supabase
+          .from("survey_submissions")
+          .select("id, name, styling_type, styling_state, created_at")
+          .eq("name", input.nickname)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error || !data) return null;
+
+        return {
+          id: data.id as number,
+          name: data.name as string,
+          stylingType: data.styling_type as string,
+          stylingState: data.styling_state as number,
+          createdAt: data.created_at as string,
+        };
       }),
   }),
 

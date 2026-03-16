@@ -113,9 +113,9 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
     );
   }
 
-  // 실제 DB에서 진행 중인 스타일링 조회
-  const { data: progress, isLoading } = trpc.stylingProgress.myProgress.useQuery(
-    { userNickname: nickname },
+  // Supabase 설문조사 신청 데이터 조회 (닉네임 기반)
+  const { data: surveyData, isLoading } = trpc.survey.mySubmission.useQuery(
+    { nickname },
     { enabled: isLoggedIn && !!nickname }
   );
 
@@ -129,7 +129,7 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
   }
 
   // 신청한 스타일링이 없는 경우 - 빈 상태 UI
-  if (!progress) {
+  if (!surveyData) {
     return (
       <div className="pb-6">
         <div className="px-4 py-12 flex flex-col items-center gap-4">
@@ -187,9 +187,22 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
     );
   }
 
-  // 신청한 스타일링이 있는 경우 - STEP별 진행 카드
-  const steps = STEPS_MAP[progress.stylingType] ?? STEPS_FURNITURE;
-  const currentStepIdx = (progress.currentStep ?? 1) - 1;
+  // Supabase 데이터로 STEP 매핑
+  // styling_type 실제 값: "배치솔루션(가구 재배치 위주)", "풀 스타일링(온라인)", "풀 스타일링(오프라인)"
+  const rawType = surveyData.stylingType;
+  let mappedType: string;
+  if (rawType.includes("풀 스타일링(오프라인)") || rawType.includes("풀스타일링(오프라인)")) {
+    mappedType = "풀스타일링(오프라인)";
+  } else if (rawType.includes("풀 스타일링(온라인)") || rawType.includes("풀스타일링(온라인)")) {
+    mappedType = "풀스타일링(온라인)";
+  } else {
+    mappedType = "배치솔루션";
+  }
+
+  const steps = STEPS_MAP[mappedType] ?? STEPS_FURNITURE;
+  // styling_state: 1부터 시작, 현재 진행 단계 = styling_state
+  const currentStepIdx = Math.max(0, (surveyData.stylingState ?? 1) - 1);
+  const totalSteps = steps.length;
 
   return (
     <div className="pb-6">
@@ -201,16 +214,16 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
               className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
               style={{ background: TERRACOTTA }}
             >
-              {SERVICE_ICON_MAP[progress.stylingType] ?? <Sparkles size={16} />}
+              {SERVICE_ICON_MAP[mappedType] ?? <Sparkles size={16} />}
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-0.5">진행 중인 스타일링</p>
-              <p className="text-sm font-bold text-gray-900">{progress.stylingType}</p>
+              <p className="text-sm font-bold text-gray-900">{rawType}</p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">
-              {new Date(progress.createdAt).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })} 신청
+              {new Date(surveyData.createdAt).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })} 신청
             </p>
             <span
               className="inline-block mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full text-white"
@@ -225,7 +238,7 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500">진행 단계</span>
             <span className="text-xs font-semibold" style={{ color: TERRACOTTA }}>
-              {progress.currentStep} / {progress.totalSteps}
+              {surveyData.stylingState} / {totalSteps}
             </span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -233,7 +246,7 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
               className="h-1.5 rounded-full transition-all duration-500"
               style={{
                 background: TERRACOTTA,
-                width: `${((progress.currentStep - 1) / Math.max(progress.totalSteps - 1, 1)) * 100}%`,
+                width: `${((surveyData.stylingState - 1) / Math.max(totalSteps - 1, 1)) * 100}%`,
               }}
             />
           </div>
@@ -316,7 +329,7 @@ function StylingTab({ nickname, isLoggedIn }: { nickname: string; isLoggedIn: bo
                   <button
                     onClick={() => {
                       if (step.actionRoute) {
-                        navigate(`${step.actionRoute}?progressId=${progress.id}`);
+                        navigate(`${step.actionRoute}?surveyId=${surveyData.id}`);
                       } else {
                         toast.info("해당 기능이 준비 중입니다.");
                       }
