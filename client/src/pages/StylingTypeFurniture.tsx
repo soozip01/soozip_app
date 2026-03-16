@@ -1,11 +1,11 @@
 /* 수집 배치솔루션 페이지 (가구 배치만 받아보고 싶어요)
  * - 상단 소개 섹션 (도면 예시 이미지 2장, 설명 텍스트)
- * - 펼치기/접기 박스 (5단계 목록, 클릭 시 해당 STEP 제목으로 스크롤)
- * - STEP 01~05 각 단계 상세 내용 (코드로 직접 구현)
+ * - STEP 박스: sticky 고정 + IntersectionObserver로 현재 단계 자동 변경
+ * - STEP 01~05 각 단계 상세 내용
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Bell } from "lucide-react";
 
 const TERRACOTTA = "#d31400";
 
@@ -35,24 +35,49 @@ const STEP_LABELS = [
 
 export default function StylingTypeFurniture() {
   const [, navigate] = useLocation();
-  const [isBoxOpen, setIsBoxOpen] = useState(false);
-  const stepTitleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeStep, setActiveStep] = useState(0);
+  const stepSectionRefs = useRef<(HTMLElement | null)[]>([]);
+
+  // IntersectionObserver: 각 STEP 섹션이 뷰포트 상단 40% 이내에 들어오면 activeStep 변경
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    stepSectionRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActiveStep(idx);
+            }
+          });
+        },
+        {
+          rootMargin: "-30% 0px -60% 0px",
+          threshold: 0,
+        }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((obs) => obs.disconnect());
+  }, []);
 
   const scrollToStep = (index: number) => {
-    setIsBoxOpen(false);
     setTimeout(() => {
-      const el = stepTitleRefs.current[index];
+      const el = stepSectionRefs.current[index];
       if (el) {
-        const top = el.getBoundingClientRect().top + window.scrollY - 81;
+        const top = el.getBoundingClientRect().top + window.scrollY - 120;
         window.scrollTo({ top, behavior: "smooth" });
       }
-    }, 150);
+    }, 50);
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-lg mx-auto">
       {/* 헤더 */}
-      <header className="flex items-center px-4 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+      <header className="flex items-center px-4 py-4 border-b border-gray-100 sticky top-0 bg-white z-20">
         <button
           onClick={() => navigate("/styling/types")}
           className="p-1 mr-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -65,11 +90,55 @@ export default function StylingTypeFurniture() {
         </h1>
       </header>
 
+      {/* ── sticky STEP 진행 박스 ── */}
+      <div className="sticky top-[57px] z-10 bg-white border-b border-gray-100 shadow-sm">
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-1">
+            {STEP_LABELS.map((label, idx) => {
+              const isActive = idx === activeStep;
+              const isPast = idx < activeStep;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => scrollToStep(idx)}
+                  className="flex items-center gap-1 transition-all duration-300"
+                  style={{ flex: isActive ? "1 1 auto" : "0 0 auto" }}
+                >
+                  {/* 원형 번호 */}
+                  <div
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300"
+                    style={{
+                      background: isActive ? TERRACOTTA : isPast ? "#e5e7eb" : "#f3f4f6",
+                      color: isActive ? "white" : isPast ? "#9ca3af" : "#9ca3af",
+                    }}
+                  >
+                    {String(idx + 1).padStart(2, "0")}
+                  </div>
+                  {/* 활성 단계일 때만 레이블 표시 */}
+                  {isActive && (
+                    <span
+                      className="text-[12px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] transition-all duration-300"
+                      style={{ color: TERRACOTTA }}
+                    >
+                      {label.replace(/^\d+\.\s*/, "")}
+                    </span>
+                  )}
+                  {/* 구분선 (마지막 제외) */}
+                  {idx < STEP_LABELS.length - 1 && !isActive && (
+                    <div className="w-2 h-px bg-gray-200 shrink-0 mx-0.5" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
-        <section className="px-4 pt-6 pb-6">
+        <section className="px-4 pt-8 pb-8">
           {/* ①② 소개 이미지 2장 — 원본 비율(세로형) 유지, 2열 그리드 */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="grid grid-cols-2 gap-3 mb-7">
             <div className="rounded-xl overflow-hidden">
               <img
                 src={IMG[1]}
@@ -86,7 +155,7 @@ export default function StylingTypeFurniture() {
             </div>
           </div>
 
-          <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-3">
+          <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-4">
             실제 공간과 가구의 사이즈를 반영하여<br />최적의 배치를 잡아드려요
           </h2>
           <p className="text-gray-500 text-[13px] leading-relaxed">
@@ -96,64 +165,25 @@ export default function StylingTypeFurniture() {
           </p>
         </section>
 
-        {/* ── 펼치기/접기 박스 ── */}
-        <section className="px-4 mb-2">
-          <div className="border-t border-b border-gray-200">
-            <button
-              onClick={() => setIsBoxOpen(!isBoxOpen)}
-              className="w-full flex items-center justify-between py-4 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-[18px] font-serif leading-none">&ldquo;</span>
-                <span className="text-gray-900 font-semibold text-[14px]">
-                  배치솔루션, 어떻게 진행되나요?
-                </span>
-              </div>
-              <div className="flex items-center gap-1" style={{ color: TERRACOTTA }}>
-                <span className="text-[13px] font-semibold">
-                  {isBoxOpen ? "접기" : "펼치기"}
-                </span>
-                {isBoxOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
-            </button>
-
-            {isBoxOpen && (
-              <div className="pb-5 border-t border-gray-100 pt-4">
-                <div className="h-0.5 w-8 mb-5" style={{ background: TERRACOTTA }} />
-                <ul className="space-y-4">
-                  {STEP_LABELS.map((label, idx) => (
-                    <li key={idx}>
-                      <button
-                        onClick={() => scrollToStep(idx)}
-                        className="text-left text-[14px] hover:underline transition-colors"
-                        style={idx === 0 ? { color: TERRACOTTA, fontWeight: 600 } : { color: "#333" }}
-                      >
-                        {label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* ── STEP 01 ── */}
-        <section className="pt-8 pb-8">
-          <div className="px-4" ref={(el) => { stepTitleRefs.current[0] = el; }}>
+        <section
+          ref={(el) => { stepSectionRefs.current[0] = el; }}
+          className="pt-8 pb-10 border-t border-gray-100"
+        >
+          <div className="px-4">
             <StepBadge num="01" />
           </div>
-          <div className="px-4">
-            <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-2 mt-6">
+          <div className="px-4 mt-7 mb-6">
+            <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-3">
               배치솔루션 예약이 완료되면<br />실측 패키지가 발송돼요!
             </h3>
-            <p className="text-gray-400 text-[11px] mb-5">
+            <p className="text-gray-400 text-[11px]">
               자료가 있으신 경우 빠른 진행을 위해 패키지 발송이 생략됩니다
             </p>
           </div>
 
           {/* ③ 도면 초안 — 좌우 여백 2배(px-8) */}
-          <div className="px-8 mb-5">
+          <div className="px-8 mb-7">
             <img
               src={IMG[3]}
               alt="도면 초안"
@@ -161,14 +191,14 @@ export default function StylingTypeFurniture() {
             />
           </div>
 
-          <div className="px-4">
-            <h3 className="text-gray-900 font-bold text-[16px] leading-snug mb-3">
+          <div className="px-4 mb-6">
+            <h3 className="text-gray-900 font-bold text-[16px] leading-snug">
               줄자들을 활용하여 발송드린 온라인 도면에<br />실측값을 작성해주세요
             </h3>
           </div>
 
           {/* STEP 01 추가 이미지 — 좌우 2장 */}
-          <div className="px-4 mt-5 grid grid-cols-2 gap-3">
+          <div className="px-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl overflow-hidden">
               <img
                 src={IMG[11]}
@@ -187,13 +217,14 @@ export default function StylingTypeFurniture() {
         </section>
 
         {/* ── STEP 02 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[1] = el; }}>
-            <StepBadge num="02" />
-          </div>
+        <section
+          ref={(el) => { stepSectionRefs.current[1] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="02" />
 
-          <div className="mt-6 mb-6">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
               기존가구 정보 전달
             </h3>
             <p className="text-gray-500 text-[14px] leading-relaxed">
@@ -202,14 +233,14 @@ export default function StylingTypeFurniture() {
           </div>
 
           {/* 제품 링크 전달 시 */}
-          <div className="mb-6">
+          <div className="mb-7">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={20} style={{ color: TERRACOTTA }} fill={TERRACOTTA} className="text-white shrink-0" />
               <span className="font-bold text-[15px]" style={{ color: TERRACOTTA }}>제품 링크 전달 시</span>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-800 font-bold text-[15px] mb-3">기존 제품 1</p>
-              <div className="space-y-2">
+              <p className="text-gray-800 font-bold text-[15px] mb-4">기존 제품 1</p>
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500 text-[13px] w-16 shrink-0">제품 링크 :</span>
                   <div className="flex-1 bg-white border border-gray-200 rounded px-3 py-1.5">
@@ -227,7 +258,7 @@ export default function StylingTypeFurniture() {
           </div>
 
           {/* 사이즈+정보 전달 시 */}
-          <div className="mb-6">
+          <div className="mb-7">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={20} style={{ color: TERRACOTTA }} fill={TERRACOTTA} className="text-white shrink-0" />
               <span className="font-bold text-[15px]" style={{ color: TERRACOTTA }}>사이즈+정보 전달 시</span>
@@ -243,16 +274,16 @@ export default function StylingTypeFurniture() {
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-800 font-bold text-[14px] mb-2">사이즈 정보</p>
-                  <div className="space-y-1.5">
+                  <p className="text-gray-800 font-bold text-[14px] mb-3">사이즈 정보</p>
+                  <div className="space-y-2">
                     <SizeRow label="제품 :" value="수납장" />
                     <SizeRow label="가로 :" value="800" unit="mm" />
                     <SizeRow label="깊이 :" value="400" unit="mm" />
                     <SizeRow label="높이 :" value="740" unit="mm" />
                   </div>
-                  <p className="text-gray-500 text-[12px] mt-2">특이사항</p>
+                  <p className="text-gray-500 text-[12px] mt-3">특이사항</p>
                   <div className="bg-white border border-gray-200 rounded px-2 py-1.5 mt-1">
-                    <span className="text-gray-500 text-[12px]">여닫이 제품이에요</span>
+                    <span className="text-gray-500 text-[12px]">여닫이 제품</span>
                   </div>
                 </div>
               </div>
@@ -275,7 +306,7 @@ export default function StylingTypeFurniture() {
                     className="w-full h-auto object-contain rounded-lg"
                   />
                 </div>
-                <ul className="flex-1 space-y-2.5 pt-1">
+                <ul className="flex-1 space-y-3 pt-1">
                   {[
                     "제품이 제대로 보이지 않는 사진",
                     "제품이 잘려 나온 사진",
@@ -294,23 +325,24 @@ export default function StylingTypeFurniture() {
         </section>
 
         {/* ── STEP 03 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[2] = el; }}>
-            <StepBadge num="03" />
-          </div>
+        <section
+          ref={(el) => { stepSectionRefs.current[2] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="03" />
 
-          <div className="mt-6 mb-5">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
               입력해주신 정보들로<br />최적의 배치를 잡아드려요!
             </h3>
-            <p className="text-gray-500 text-[14px] mb-3">
+            <p className="text-gray-500 text-[14px] mb-4">
               라이프 스타일에 맞춘 최적의 배치를 제안드려요
             </p>
-            <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 1~3가지로 달라질 수 있어요" />
+            <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 달라질 수 있어요" />
           </div>
 
           {/* ⑥⑦ 배치안 예시 — 원본 가로형 비율 유지 */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <div className="rounded-xl overflow-hidden">
               <img
                 src={IMG[6]}
@@ -329,20 +361,21 @@ export default function StylingTypeFurniture() {
         </section>
 
         {/* ── STEP 04 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[3] = el; }}>
-            <StepBadge num="04" />
-          </div>
+        <section
+          ref={(el) => { stepSectionRefs.current[3] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="04" />
 
-          <div className="mt-6 mb-5">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-4">
               시안에 대한 피드백을 받아<br />최종안을 전달드려요
             </h3>
             <NoticeBox text="최대 2회 수정이 가능하여, 자세히 말씀 주실수록 좋아요" />
           </div>
 
           {/* ⑧ 피드백 안내 이미지 — 원본 비율 유지 */}
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center">
             <div className="w-full max-w-xs rounded-xl overflow-hidden">
               <img
                 src={IMG[8]}
@@ -354,19 +387,20 @@ export default function StylingTypeFurniture() {
         </section>
 
         {/* ── STEP 05 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[4] = el; }}>
-            <StepBadge num="05" />
-          </div>
+        <section
+          ref={(el) => { stepSectionRefs.current[4] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="05" />
 
-          <div className="mt-6 mb-5">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug">
               최종안과 함께 추가된 가구가 있다면<br />링크를 함께 전달드려요
             </h3>
           </div>
 
           {/* ⑨ 최종 배치안 — 원본 가로형 비율 유지 */}
-          <div className="rounded-xl overflow-hidden mb-4">
+          <div className="rounded-xl overflow-hidden mb-6">
             <img
               src={IMG[9]}
               alt="최종 배치안"
@@ -384,8 +418,8 @@ export default function StylingTypeFurniture() {
               />
             </div>
             <div className="flex-1 pt-1">
-              <p className="text-gray-400 text-[11px] mb-0.5">서랍형 · 옵션</p>
-              <p className="text-gray-800 text-[13px] font-medium leading-snug mb-1">
+              <p className="text-gray-400 text-[11px] mb-1">서랍형 · 옵션</p>
+              <p className="text-gray-800 text-[13px] font-medium leading-snug mb-2">
                 서랍형 뒤로 물리는 무다곤 타노 행거 추가 옵션이용
               </p>
               <p className="text-gray-900 font-bold text-[14px]">79,000원</p>
