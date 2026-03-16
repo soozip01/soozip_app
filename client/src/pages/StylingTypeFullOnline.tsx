@@ -2,74 +2,67 @@
  * - 배치솔루션과 완전히 동일한 레이아웃 구조
  * - sticky STEP 진행 박스 (top-[57px]) + IntersectionObserver 스크롤 연동
  * - STEP 01~06 각 단계 상세 내용
+ * - 이미지: 번호 플레이스홀더 (추후 업로드 예정)
  */
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle2, XCircle, Bell } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Bell, ImageIcon } from "lucide-react";
 
 const TERRACOTTA = "#d31400";
-const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH";
-
-const IMGS = {
-  // 소개 섹션
-  intro1: `${CDN}/hyuna_94688ed9.png`,
-  intro2: `${CDN}/ddanya_00197013.png`,
-  // STEP 01 - 공간 실측
-  step01Main: `${CDN}/furniture-3_5fa1c0fc.png`,
-  step01Sub1: `${CDN}/furniture-11_fa4191ff.png`,
-  step01Sub2: `${CDN}/furniture-12_0c1e3f7a.png`,
-  // STEP 02 - 기존 가구 정보 전달
-  step02Furniture: `${CDN}/furniture-4_1930ace5.png`,
-  step02Room: `${CDN}/furniture-5_7efdb40c.png`,
-  // STEP 03 - 배치 솔루션 제안
-  step03Plan1: `${CDN}/furniture-6_93525efd.jpg`,
-  step03Plan2: `${CDN}/furniture-7_8f8e2299.jpg`,
-  // STEP 04 - 풀 스타일링 진행
-  step04Main: `${CDN}/furniture-8_0e5cab5e.png`,
-  // STEP 05 - 피드백 및 수정
-  step05Main: `${CDN}/furniture-8_0e5cab5e.png`,
-  // STEP 06 - 최종안 및 제품 링크 전달
-  step06Final: `${CDN}/furniture-9_3a98f947.jpg`,
-  step06Product: `${CDN}/furniture-10_2cd6493b.png`,
-};
 
 const STEP_LABELS = [
-  "1. 공간 실측",
-  "2. 기존 가구 정보 전달",
-  "3. 배치 솔루션 제안",
-  "4. 풀 스타일링 진행",
-  "5. 피드백 및 수정",
-  "6. 최종안 및 제품 링크 전달",
+  "01 공간 실측",
+  "02 기존가구 정보",
+  "03 배치 솔루션 제안",
+  "04 풀 스타일링 진행",
+  "05 피드백 및 수정",
+  "06 최종 시안 전달",
 ];
+
+/* ── 이미지 플레이스홀더 컴포넌트 ── */
+function ImgPlaceholder({
+  num,
+  label,
+  aspectRatio = "4/3",
+  className = "",
+}: {
+  num: string | number;
+  label?: string;
+  aspectRatio?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`w-full rounded-xl flex flex-col items-center justify-center gap-2 bg-gray-100 border-2 border-dashed border-gray-300 ${className}`}
+      style={{ aspectRatio }}
+    >
+      <ImageIcon size={28} className="text-gray-400" />
+      <span className="text-gray-500 font-bold text-[22px]">{num}</span>
+      {label && <span className="text-gray-400 text-[12px] text-center px-2">{label}</span>}
+    </div>
+  );
+}
 
 export default function StylingTypeFullOnline() {
   const [, navigate] = useLocation();
   const [activeStep, setActiveStep] = useState(0);
   const stepSectionRefs = useRef<(HTMLElement | null)[]>([]);
 
-  // IntersectionObserver: 각 STEP 섹션이 뷰포트 상단 40% 이내에 들어오면 activeStep 변경
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
-
     stepSectionRefs.current.forEach((el, idx) => {
       if (!el) return;
       const obs = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setActiveStep(idx);
-            }
+            if (entry.isIntersecting) setActiveStep(idx);
           });
         },
-        {
-          rootMargin: "-30% 0px -60% 0px",
-          threshold: 0,
-        }
+        { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
       );
       obs.observe(el);
       observers.push(obs);
     });
-
     return () => observers.forEach((obs) => obs.disconnect());
   }, []);
 
@@ -113,26 +106,23 @@ export default function StylingTypeFullOnline() {
                   className="flex items-center gap-1 transition-all duration-300"
                   style={{ flex: isActive ? "1 1 auto" : "0 0 auto" }}
                 >
-                  {/* 원형 번호 */}
                   <div
                     className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300"
                     style={{
                       background: isActive ? TERRACOTTA : isPast ? "#e5e7eb" : "#f3f4f6",
-                      color: isActive ? "white" : isPast ? "#9ca3af" : "#9ca3af",
+                      color: isActive ? "white" : "#9ca3af",
                     }}
                   >
                     {String(idx + 1).padStart(2, "0")}
                   </div>
-                  {/* 활성 단계일 때만 레이블 표시 */}
                   {isActive && (
                     <span
-                      className="text-[12px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px] transition-all duration-300"
+                      className="text-[12px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] transition-all duration-300"
                       style={{ color: TERRACOTTA }}
                     >
-                      {label.replace(/^\d+\.\s*/, "")}
+                      {label.replace(/^\d+\s*/, "")}
                     </span>
                   )}
-                  {/* 구분선 (마지막 제외) */}
                   {idx < STEP_LABELS.length - 1 && !isActive && (
                     <div className="w-2 h-px bg-gray-200 shrink-0 mx-0.5" />
                   )}
@@ -146,30 +136,16 @@ export default function StylingTypeFullOnline() {
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-8 pb-8">
-          {/* 소개 이미지 2장 — 원본 비율 유지, 2열 그리드 */}
           <div className="grid grid-cols-2 gap-3 mb-7">
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.intro1}
-                alt="스타일링 사례 1"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.intro2}
-                alt="스타일링 사례 2"
-                className="w-full h-auto object-contain"
-              />
-            </div>
+            <ImgPlaceholder num="①" label="사례 이미지 1" aspectRatio="3/4" />
+            <ImgPlaceholder num="②" label="사례 이미지 2" aspectRatio="3/4" />
           </div>
-
           <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-4">
-            공간의 실제 사이즈를 반영하여<br />가구배치부터 제품선정까지 도와드려요
+            공간 실측부터, 홈 스타일링까지<br />온라인으로 진행되는 타입이에요
           </h2>
           <p className="text-gray-500 text-[13px] leading-relaxed">
-            하루 한 공간 기준 가구를 실제 사이즈로 반영하여 라이프 스타일에 맞는 배치부터
-            제품 선정까지 도와드리는 서비스에요.
+            공간 실측 정보와 기존 가구 정보를 전달해주시면
+            배치 솔루션부터 풀 스타일링까지 온라인으로 진행해드려요.
           </p>
         </section>
 
@@ -183,54 +159,24 @@ export default function StylingTypeFullOnline() {
           </div>
           <div className="px-4 mt-7 mb-6">
             <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-3">
-              풀 스타일링 예약이 완료되면<br />실측 패키지가 발송돼요!
+              풀 스타일링 예약이 완료되면<br />공간 실측 정보를 전달해주세요!
             </h3>
-            <p className="text-gray-400 text-[11px]">
-              자료가 있으신 경우 빠른 진행을 위해 패키지 발송이 생략됩니다
+            <p className="text-gray-500 text-[13px] leading-relaxed">
+              공간의 가로·세로·높이 치수와 창문, 문 위치 등<br />
+              기본 실측 정보를 전달해주세요
             </p>
           </div>
-
-          {/* 도면 초안 */}
-          <div className="px-4 mb-7">
-            <img
-              src={IMGS.step01Main}
-              alt="도면 초안"
-              className="w-full h-auto object-contain"
-            />
-          </div>
-
-          <div className="px-4 mb-6">
-            <h3 className="text-gray-900 font-bold text-[16px] leading-snug">
-              줄자들을 활용하여 발송드린 온라인 도면에<br />실측값을 작성해주세요
-            </h3>
-          </div>
-
-          {/* STEP 01 추가 이미지 — 좌우 2장 */}
-          <div className="px-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.step01Sub1}
-                alt="실측 이미지 1"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.step01Sub2}
-                alt="실측 이미지 2"
-                className="w-full h-auto object-contain"
-              />
-            </div>
+          <div className="px-4 flex justify-center">
+            <ImgPlaceholder num="③" label="공간 실측 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
-        {/* ── STEP 02: 기존 가구 정보 전달 ── */}
+        {/* ── STEP 02: 기존가구 정보 ── */}
         <section
           ref={(el) => { stepSectionRefs.current[1] = el; }}
           className="px-4 pt-8 pb-10 border-t border-gray-100"
         >
           <StepBadge num="02" />
-
           <div className="mt-7 mb-7">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
               기존가구 정보 전달
@@ -274,11 +220,7 @@ export default function StylingTypeFullOnline() {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <img
-                    src={IMGS.step02Furniture}
-                    alt="가구 사진"
-                    className="w-full h-auto object-contain rounded-lg"
-                  />
+                  <ImgPlaceholder num="④" label="가구 사진" aspectRatio="1/1" />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-3">사이즈 정보</p>
@@ -306,11 +248,7 @@ export default function StylingTypeFullOnline() {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <img
-                    src={IMGS.step02Room}
-                    alt="공간 사진"
-                    className="w-full h-auto object-contain rounded-lg"
-                  />
+                  <ImgPlaceholder num="⑤" label="공간 사진" aspectRatio="1/1" />
                 </div>
                 <ul className="flex-1 space-y-3 pt-1">
                   {[
@@ -336,7 +274,6 @@ export default function StylingTypeFullOnline() {
           className="px-4 pt-8 pb-10 border-t border-gray-100"
         >
           <StepBadge num="03" />
-
           <div className="mt-7 mb-7">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
               입력해주신 정보들로<br />최적의 배치를 잡아드려요!
@@ -346,23 +283,9 @@ export default function StylingTypeFullOnline() {
             </p>
             <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 달라질 수 있어요" />
           </div>
-
-          {/* 배치안 예시 — 원본 가로형 비율 유지 */}
           <div className="flex flex-col gap-4">
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.step03Plan1}
-                alt="배치안 예시 1"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.step03Plan2}
-                alt="배치안 예시 2"
-                className="w-full h-auto object-contain"
-              />
-            </div>
+            <ImgPlaceholder num="⑥" label="배치안 예시 1" aspectRatio="4/3" />
+            <ImgPlaceholder num="⑦" label="배치안 예시 2" aspectRatio="4/3" />
           </div>
         </section>
 
@@ -372,7 +295,6 @@ export default function StylingTypeFullOnline() {
           className="px-4 pt-8 pb-10 border-t border-gray-100"
         >
           <StepBadge num="04" />
-
           <div className="mt-7 mb-7">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-4">
               배치안을 바탕으로<br />풀 스타일링을 진행해드려요
@@ -382,16 +304,8 @@ export default function StylingTypeFullOnline() {
               완성도 높은 스타일링을 제안드려요
             </p>
           </div>
-
-          {/* 풀 스타일링 진행 이미지 */}
           <div className="flex justify-center">
-            <div className="w-full max-w-xs rounded-xl overflow-hidden">
-              <img
-                src={IMGS.step04Main}
-                alt="풀 스타일링 진행 안내"
-                className="w-full h-auto object-contain"
-              />
-            </div>
+            <ImgPlaceholder num="⑧" label="풀 스타일링 진행 안내" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -401,56 +315,32 @@ export default function StylingTypeFullOnline() {
           className="px-4 pt-8 pb-10 border-t border-gray-100"
         >
           <StepBadge num="05" />
-
           <div className="mt-7 mb-7">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-4">
               시안에 대한 피드백을 받아<br />최종안을 전달드려요
             </h3>
             <NoticeBox text="최대 2회 수정이 가능하여, 자세히 말씀 주실수록 좋아요" />
           </div>
-
-          {/* 피드백 안내 이미지 */}
           <div className="flex justify-center">
-            <div className="w-full max-w-xs rounded-xl overflow-hidden">
-              <img
-                src={IMGS.step05Main}
-                alt="피드백 안내 이미지"
-                className="w-full h-auto object-contain"
-              />
-            </div>
+            <ImgPlaceholder num="⑨" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
-        {/* ── STEP 06: 최종안 및 제품 링크 전달 ── */}
+        {/* ── STEP 06: 최종 시안 전달 ── */}
         <section
           ref={(el) => { stepSectionRefs.current[5] = el; }}
           className="px-4 pt-8 pb-10 border-t border-gray-100"
         >
           <StepBadge num="06" />
-
           <div className="mt-7 mb-7">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug">
-              최종안과 함께 추가된 가구가 있다면<br />링크를 함께 전달드려요
+              최종 시안과 함께 추가된 가구가 있다면<br />링크를 함께 전달드려요
             </h3>
           </div>
-
-          {/* 최종 배치안 — 원본 가로형 비율 유지 */}
-          <div className="rounded-xl overflow-hidden mb-6">
-            <img
-              src={IMGS.step06Final}
-              alt="최종 배치안"
-              className="w-full h-auto object-contain"
-            />
-          </div>
-
+          <ImgPlaceholder num="⑩" label="최종 배치안" aspectRatio="4/3" className="mb-6" />
           <div className="flex gap-3 items-start">
-            {/* 제품 이미지 — 원본 세로형 비율 유지 */}
             <div className="w-20 shrink-0 rounded-lg overflow-hidden">
-              <img
-                src={IMGS.step06Product}
-                alt="제품"
-                className="w-full h-auto object-contain rounded-lg"
-              />
+              <ImgPlaceholder num="⑪" label="제품" aspectRatio="1/1" />
             </div>
             <div className="flex-1 pt-1">
               <p className="text-gray-400 text-[11px] mb-1">서랍형 · 옵션</p>
