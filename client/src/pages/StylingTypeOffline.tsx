@@ -1,62 +1,93 @@
 /* 수집 풀 스타일링(오프라인) 페이지
  * - 배치솔루션과 동일한 레이아웃 구조
- * - 상단 이미지: 오프라인 방문 스타일링 사진 2장
- * - STEP 01: 방문 상담 및 실측 (패키지 발송 없음)
- * - STEP 02~05: 배치솔루션과 동일한 구조
+ * - sticky STEP 진행 박스 + IntersectionObserver 스크롤 연동
+ * - STEP 01~07 각 단계 상세 내용
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Bell } from "lucide-react";
 
 const TERRACOTTA = "#d31400";
 const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH";
 
 const IMGS = {
   // 소개 섹션
-  offlineRoom1: `${CDN}/offline_room1_4e830ebb.png`,
-  offlineRoom2: `${CDN}/offline_room2_499e376e.png`,
-  // STEP 01 (방문 상담 - 곰 캐릭터)
-  bearVisit: `${CDN}/bear_character_494e086e.png`,
-  // STEP 02 (실제 사진)
-  furniturePhoto: `${CDN}/step02-furniture-photo_1fe0b617.png`,
-  roomPhoto: `${CDN}/step02-room-photo_743991b0.png`,
-  // STEP 03 (배치안 이미지)
-  plan1: `${CDN}/step03-plan1_d49cbf7c.jpg`,
-  plan2: `${CDN}/step03-plan2_06f2dfaf.jpg`,
-  // STEP 04 (곰 캐릭터)
-  bearCharacter: `${CDN}/step04-bear-character_d1ab78c1.png`,
-  // STEP 05
-  product1: `${CDN}/step05-product1_db1c2d26.png`,
+  intro1: `${CDN}/offline_room1_4e830ebb.png`,
+  intro2: `${CDN}/offline_room2_499e376e.png`,
+  // STEP 01 - 방문 상담 및 공간 실측
+  step01Main: `${CDN}/bear_character_494e086e.png`,
+  // STEP 02 - 기존 가구 정보 전달
+  step02Furniture: `${CDN}/furniture-4_1930ace5.png`,
+  step02Room: `${CDN}/furniture-5_7efdb40c.png`,
+  // STEP 03 - 배치 솔루션 제안
+  step03Plan1: `${CDN}/furniture-6_93525efd.jpg`,
+  step03Plan2: `${CDN}/furniture-7_8f8e2299.jpg`,
+  // STEP 04 - 풀 스타일링 진행
+  step04Main: `${CDN}/furniture-8_0e5cab5e.png`,
+  // STEP 05 - 피드백 및 수정
+  step05Main: `${CDN}/furniture-8_0e5cab5e.png`,
+  // STEP 06 - 최종안 및 제품 링크 전달
+  step06Final: `${CDN}/furniture-9_3a98f947.jpg`,
+  step06Product: `${CDN}/furniture-10_2cd6493b.png`,
+  // STEP 07 - 가구 및 소품 세팅
+  step07Main: `${CDN}/bear_character_494e086e.png`,
 };
 
 const STEP_LABELS = [
-  "1. 방문 상담 및 실측",
-  "2. 기존가구 정보 입력하기",
-  "3. 공간에 맞는 배치 받아보기",
-  "4. 수시 신청하기",
-  "5. 최종 제품받기",
+  "1. 방문 상담 및 공간 실측",
+  "2. 기존 가구 정보 전달",
+  "3. 배치 솔루션 제안",
+  "4. 풀 스타일링 진행",
+  "5. 피드백 및 수정",
+  "6. 최종안 및 제품 링크 전달",
+  "7. 가구 및 소품 세팅",
 ];
 
 export default function StylingTypeOffline() {
   const [, navigate] = useLocation();
-  const [isBoxOpen, setIsBoxOpen] = useState(false);
-  const stepTitleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeStep, setActiveStep] = useState(0);
+  const stepSectionRefs = useRef<(HTMLElement | null)[]>([]);
+
+  // IntersectionObserver: 각 STEP 섹션이 뷰포트 상단 40% 이내에 들어오면 activeStep 변경
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    stepSectionRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActiveStep(idx);
+            }
+          });
+        },
+        {
+          rootMargin: "-30% 0px -60% 0px",
+          threshold: 0,
+        }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((obs) => obs.disconnect());
+  }, []);
 
   const scrollToStep = (index: number) => {
-    setIsBoxOpen(false);
     setTimeout(() => {
-      const el = stepTitleRefs.current[index];
+      const el = stepSectionRefs.current[index];
       if (el) {
-        const top = el.getBoundingClientRect().top + window.scrollY - 81;
+        const top = el.getBoundingClientRect().top + window.scrollY - 120;
         window.scrollTo({ top, behavior: "smooth" });
       }
-    }, 150);
+    }, 50);
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-lg mx-auto">
       {/* 헤더 */}
-      <header className="flex items-center px-4 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+      <header className="flex items-center px-4 py-4 border-b border-gray-100 sticky top-0 bg-white z-20">
         <button
           onClick={() => navigate("/styling/types")}
           className="p-1 mr-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -69,33 +100,72 @@ export default function StylingTypeOffline() {
         </h1>
       </header>
 
+      {/* ── sticky STEP 진행 박스 ── */}
+      <div className="sticky top-[57px] z-10 bg-white border-b border-gray-100 shadow-sm">
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-0.5">
+            {STEP_LABELS.map((label, idx) => {
+              const isActive = idx === activeStep;
+              const isPast = idx < activeStep;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => scrollToStep(idx)}
+                  className="flex items-center gap-0.5 transition-all duration-300"
+                  style={{ flex: isActive ? "1 1 auto" : "0 0 auto" }}
+                >
+                  {/* 원형 번호 */}
+                  <div
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300"
+                    style={{
+                      background: isActive ? TERRACOTTA : isPast ? "#e5e7eb" : "#f3f4f6",
+                      color: isActive ? "white" : isPast ? "#9ca3af" : "#9ca3af",
+                    }}
+                  >
+                    {String(idx + 1).padStart(2, "0")}
+                  </div>
+                  {/* 활성 단계일 때만 레이블 표시 */}
+                  {isActive && (
+                    <span
+                      className="text-[11px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] transition-all duration-300 ml-0.5"
+                      style={{ color: TERRACOTTA }}
+                    >
+                      {label.replace(/^\d+\.\s*/, "")}
+                    </span>
+                  )}
+                  {/* 구분선 (마지막 제외) */}
+                  {idx < STEP_LABELS.length - 1 && !isActive && (
+                    <div className="w-1.5 h-px bg-gray-200 shrink-0 mx-0.5" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
-        <section className="px-4 pt-6 pb-6">
-          <div className="grid grid-cols-2 gap-4 mb-5">
-            <div className="flex flex-col items-center">
-              <div className="w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }}>
-                <img
-                  src={IMGS.offlineRoom1}
-                  alt="오프라인 스타일링 사례 1"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="text-gray-500 text-[11px] text-center mt-1.5">수 님 스타일링</p>
+        <section className="px-4 pt-8 pb-8">
+          {/* 소개 이미지 2장 — 원본 비율 유지, 2열 그리드 */}
+          <div className="grid grid-cols-2 gap-3 mb-7">
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMGS.intro1}
+                alt="오프라인 스타일링 사례 1"
+                className="w-full h-auto object-contain"
+              />
             </div>
-            <div className="flex flex-col items-center">
-              <div className="w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }}>
-                <img
-                  src={IMGS.offlineRoom2}
-                  alt="오프라인 스타일링 사례 2"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="text-gray-500 text-[11px] text-center mt-1.5">스타일링 사례</p>
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMGS.intro2}
+                alt="오프라인 스타일링 사례 2"
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
 
-          <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-3">
+          <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-4">
             공간 실측부터, 홈 스타일링, 가구 세팅까지<br />진행되는 타입이에요
           </h2>
           <p className="text-gray-500 text-[13px] leading-relaxed">
@@ -104,78 +174,44 @@ export default function StylingTypeOffline() {
           </p>
         </section>
 
-        {/* ── 펼치기/접기 박스 ── */}
-        <section className="px-4 mb-2">
-          <div className="border-t border-b border-gray-200">
-            <button
-              onClick={() => setIsBoxOpen(!isBoxOpen)}
-              className="w-full flex items-center justify-between py-4 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-[18px] font-serif leading-none">&ldquo;</span>
-                <span className="text-gray-900 font-semibold text-[14px]">
-                  풀 스타일링(오프라인), 어떻게 진행되나요?
-                </span>
-              </div>
-              <div className="flex items-center gap-1" style={{ color: TERRACOTTA }}>
-                <span className="text-[13px] font-semibold">
-                  {isBoxOpen ? "접기" : "펼치기"}
-                </span>
-                {isBoxOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
-            </button>
-
-            {isBoxOpen && (
-              <div className="pb-5 border-t border-gray-100 pt-4">
-                <div className="h-0.5 w-8 mb-5" style={{ background: TERRACOTTA }} />
-                <ul className="space-y-4">
-                  {STEP_LABELS.map((label, idx) => (
-                    <li key={idx}>
-                      <button
-                        onClick={() => scrollToStep(idx)}
-                        className="text-left text-[14px] hover:underline transition-colors"
-                        style={idx === 0 ? { color: TERRACOTTA, fontWeight: 600 } : { color: "#333" }}
-                      >
-                        {label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ── STEP 01 ── */}
-        <section className="px-4 pt-8 pb-8">
-          <div ref={(el) => { stepTitleRefs.current[0] = el; }}>
+        {/* ── STEP 01: 방문 상담 및 공간 실측 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[0] = el; }}
+          className="pt-8 pb-10 border-t border-gray-100"
+        >
+          <div className="px-4">
             <StepBadge num="01" />
           </div>
-          <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-2 mt-6">
-            풀 스타일링 예약이 완료되면<br />방문 상담 및 실측을 위한 일정을 조율해요!
-          </h3>
-          <p className="text-gray-500 text-[13px] leading-relaxed mb-5">
-            조율한 일정에 맞춰 담당자가 실측을 진행해요
-          </p>
+          <div className="px-4 mt-7 mb-6">
+            <h3 className="text-gray-900 font-bold text-[18px] leading-snug mb-3">
+              풀 스타일링 예약이 완료되면<br />방문 상담 및 실측을 위한 일정을 조율해요!
+            </h3>
+            <p className="text-gray-500 text-[13px] leading-relaxed">
+              조율한 일정에 맞춰 담당자가 방문하여 실측을 진행해요
+            </p>
+          </div>
 
-          {/* 방문 상담 곰 캐릭터 이미지 */}
-          <div className="flex justify-center">
-            <img
-              src={IMGS.bearVisit}
-              alt="방문 상담 안내 캐릭터"
-              className="w-full max-w-xs object-contain"
-            />
+          {/* 방문 상담 이미지 */}
+          <div className="px-4 flex justify-center">
+            <div className="w-full max-w-xs rounded-xl overflow-hidden">
+              <img
+                src={IMGS.step01Main}
+                alt="방문 상담 안내"
+                className="w-full h-auto object-contain"
+              />
+            </div>
           </div>
         </section>
 
-        {/* ── STEP 02 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[1] = el; }}>
-            <StepBadge num="02" />
-          </div>
+        {/* ── STEP 02: 기존 가구 정보 전달 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[1] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="02" />
 
-          <div className="mt-6 mb-6">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
               기존가구 정보 전달
             </h3>
             <p className="text-gray-500 text-[14px] leading-relaxed">
@@ -184,14 +220,14 @@ export default function StylingTypeOffline() {
           </div>
 
           {/* 제품 링크 전달 시 */}
-          <div className="mb-6">
+          <div className="mb-7">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={20} style={{ color: TERRACOTTA }} fill={TERRACOTTA} className="text-white shrink-0" />
               <span className="font-bold text-[15px]" style={{ color: TERRACOTTA }}>제품 링크 전달 시</span>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-800 font-bold text-[15px] mb-3">기존 제품 1</p>
-              <div className="space-y-2">
+              <p className="text-gray-800 font-bold text-[15px] mb-4">기존 제품 1</p>
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500 text-[13px] w-16 shrink-0">제품 링크 :</span>
                   <div className="flex-1 bg-white border border-gray-200 rounded px-3 py-1.5">
@@ -209,32 +245,31 @@ export default function StylingTypeOffline() {
           </div>
 
           {/* 사이즈+정보 전달 시 */}
-          <div className="mb-6">
+          <div className="mb-7">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={20} style={{ color: TERRACOTTA }} fill={TERRACOTTA} className="text-white shrink-0" />
               <span className="font-bold text-[15px]" style={{ color: TERRACOTTA }}>사이즈+정보 전달 시</span>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
+                <div className="w-28 shrink-0 rounded-lg overflow-hidden">
                   <img
-                    src={IMGS.furniturePhoto}
-                    alt="가구 사진 예시"
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "112px" }}
+                    src={IMGS.step02Furniture}
+                    alt="가구 사진"
+                    className="w-full h-auto object-contain rounded-lg"
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-800 font-bold text-[14px] mb-2">사이즈 정보</p>
-                  <div className="space-y-1.5">
+                  <p className="text-gray-800 font-bold text-[14px] mb-3">사이즈 정보</p>
+                  <div className="space-y-2">
                     <SizeRow label="제품 :" value="수납장" />
                     <SizeRow label="가로 :" value="800" unit="mm" />
                     <SizeRow label="깊이 :" value="400" unit="mm" />
                     <SizeRow label="높이 :" value="740" unit="mm" />
                   </div>
-                  <p className="text-gray-500 text-[12px] mt-2">특이사항</p>
+                  <p className="text-gray-500 text-[12px] mt-3">특이사항</p>
                   <div className="bg-white border border-gray-200 rounded px-2 py-1.5 mt-1">
-                    <span className="text-gray-500 text-[12px]">여닫이 제품이에요</span>
+                    <span className="text-gray-500 text-[12px]">여닫이 제품</span>
                   </div>
                 </div>
               </div>
@@ -249,15 +284,14 @@ export default function StylingTypeOffline() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
+                <div className="w-28 shrink-0 rounded-lg overflow-hidden">
                   <img
-                    src={IMGS.roomPhoto}
-                    alt="공간 전체 사진 예시"
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "128px" }}
+                    src={IMGS.step02Room}
+                    alt="공간 사진"
+                    className="w-full h-auto object-contain rounded-lg"
                   />
                 </div>
-                <ul className="flex-1 space-y-2.5 pt-1">
+                <ul className="flex-1 space-y-3 pt-1">
                   {[
                     "제품이 제대로 보이지 않는 사진",
                     "제품이 잘려 나온 사진",
@@ -275,84 +309,163 @@ export default function StylingTypeOffline() {
           </div>
         </section>
 
-        {/* ── STEP 03 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[2] = el; }}>
-            <StepBadge num="03" />
-          </div>
+        {/* ── STEP 03: 배치 솔루션 제안 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[2] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="03" />
 
-          <div className="mt-6 mb-5">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
-              입력해주신 정보들로<br />최적의 배치를 잡아드려요!
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
+              실측한 정보들로<br />최적의 배치를 잡아드려요!
             </h3>
-            <p className="text-gray-500 text-[14px] mb-3">
-              라이프 스타일에 맞춘 최적의 배치와 제품을 제안드려요
+            <p className="text-gray-500 text-[14px] mb-4">
+              라이프 스타일에 맞춘 최적의 배치를 제안드려요
             </p>
-            <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 1~3가지로 달라질 수 있어요" />
+            <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 달라질 수 있어요" />
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="bg-gray-100 rounded-xl overflow-hidden">
-              <img src={IMGS.plan1} alt="배치안 예시 1" className="w-full object-cover" />
+          {/* 배치안 예시 — 원본 가로형 비율 유지 */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMGS.step03Plan1}
+                alt="배치안 예시 1"
+                className="w-full h-auto object-contain"
+              />
             </div>
-            <div className="bg-gray-100 rounded-xl overflow-hidden">
-              <img src={IMGS.plan2} alt="배치안 예시 2" className="w-full object-cover" />
+            <div className="rounded-xl overflow-hidden">
+              <img
+                src={IMGS.step03Plan2}
+                alt="배치안 예시 2"
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
         </section>
 
-        {/* ── STEP 04 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[3] = el; }}>
-            <StepBadge num="04" />
+        {/* ── STEP 04: 풀 스타일링 진행 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[3] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="04" />
+
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-4">
+              배치안을 바탕으로<br />풀 스타일링을 진행해드려요
+            </h3>
+            <p className="text-gray-500 text-[14px] leading-relaxed">
+              확정된 배치안을 기반으로 공간에 어울리는 가구와 소품을 선정하여
+              완성도 높은 스타일링을 제안드려요
+            </p>
           </div>
 
-          <div className="mt-6 mb-5">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
+          {/* 풀 스타일링 진행 이미지 */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-xs rounded-xl overflow-hidden">
+              <img
+                src={IMGS.step04Main}
+                alt="풀 스타일링 진행 안내"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ── STEP 05: 피드백 및 수정 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[4] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="05" />
+
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-4">
               시안에 대한 피드백을 받아<br />최종안을 전달드려요
             </h3>
-            <NoticeBox text="최대 2회 수정이 가능하기 때문에 자세하게 말씀 주실수록 좋아요" />
+            <NoticeBox text="최대 2회 수정이 가능하여, 자세히 말씀 주실수록 좋아요" />
           </div>
 
-          <div className="flex justify-center mt-4">
-            <img
-              src={IMGS.bearCharacter}
-              alt="피드백 안내 캐릭터"
-              className="w-full max-w-xs object-contain"
-            />
+          {/* 피드백 안내 이미지 */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-xs rounded-xl overflow-hidden">
+              <img
+                src={IMGS.step05Main}
+                alt="피드백 안내 이미지"
+                className="w-full h-auto object-contain"
+              />
+            </div>
           </div>
         </section>
 
-        {/* ── STEP 05 ── */}
-        <section className="px-4 pt-8 pb-8 border-t border-gray-100">
-          <div ref={(el) => { stepTitleRefs.current[4] = el; }}>
-            <StepBadge num="05" />
-          </div>
+        {/* ── STEP 06: 최종안 및 제품 링크 전달 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[5] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="06" />
 
-          <div className="mt-6 mb-5">
-            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug">
               최종안과 함께 추가된 가구가 있다면<br />링크를 함께 전달드려요
             </h3>
           </div>
 
-          <div className="bg-gray-100 rounded-xl overflow-hidden mb-4">
-            <img src={IMGS.plan1} alt="최종 배치안" className="w-full object-cover" />
+          {/* 최종 배치안 — 원본 가로형 비율 유지 */}
+          <div className="rounded-xl overflow-hidden mb-6">
+            <img
+              src={IMGS.step06Final}
+              alt="최종 배치안"
+              className="w-full h-auto object-contain"
+            />
           </div>
 
           <div className="flex gap-3 items-start">
-            <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+            {/* 제품 이미지 — 원본 세로형 비율 유지 */}
+            <div className="w-20 shrink-0 rounded-lg overflow-hidden">
               <img
-                src={IMGS.product1}
-                alt="추천 제품"
-                className="w-full h-full object-cover"
+                src={IMGS.step06Product}
+                alt="제품"
+                className="w-full h-auto object-contain rounded-lg"
               />
             </div>
             <div className="flex-1 pt-1">
-              <p className="text-gray-400 text-[11px] mb-0.5">서랍형 · 옵션</p>
-              <p className="text-gray-800 text-[13px] font-medium leading-snug mb-1">
+              <p className="text-gray-400 text-[11px] mb-1">서랍형 · 옵션</p>
+              <p className="text-gray-800 text-[13px] font-medium leading-snug mb-2">
                 서랍형 뒤로 물리는 무다곤 타노 행거 추가 옵션이용
               </p>
               <p className="text-gray-900 font-bold text-[14px]">79,000원</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── STEP 07: 가구 및 소품 세팅 ── */}
+        <section
+          ref={(el) => { stepSectionRefs.current[6] = el; }}
+          className="px-4 pt-8 pb-10 border-t border-gray-100"
+        >
+          <StepBadge num="07" />
+
+          <div className="mt-7 mb-7">
+            <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-4">
+              선정된 가구와 소품을<br />직접 세팅해드려요
+            </h3>
+            <p className="text-gray-500 text-[14px] leading-relaxed">
+              최종 확정된 가구와 소품을 실제 공간에 배치하고 세팅하는
+              오프라인 방문 서비스까지 함께 진행돼요
+            </p>
+          </div>
+
+          {/* 가구 세팅 이미지 */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-xs rounded-xl overflow-hidden">
+              <img
+                src={IMGS.step07Main}
+                alt="가구 및 소품 세팅 안내"
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
         </section>
@@ -383,14 +496,14 @@ export default function StylingTypeOffline() {
 function StepBadge({ num }: { num: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex-1" style={{ height: "2px", background: "#d31400", borderRadius: "1px" }} />
       <div
         className="text-white font-bold text-[13px] px-4 py-1.5 rounded-full shrink-0"
         style={{ background: "#d31400" }}
       >
         STEP {num}
       </div>
-      <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex-1" style={{ height: "2px", background: "#d31400", borderRadius: "1px" }} />
     </div>
   );
 }
