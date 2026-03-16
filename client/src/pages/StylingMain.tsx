@@ -4,12 +4,13 @@
  * - 빠른 상담 설문 버튼 / 먼저 상담 받기 버튼
  * - 수집 스타일링샷 보러가기 링크
  */
+import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, X, Search, FileText } from "lucide-react";
 
 export default function StylingMain() {
   const [, navigate] = useLocation();
+  const [showReservationModal, setShowReservationModal] = useState(false);
 
   const handleSurvey = () => {
     window.open("https://soozipland-j3tut3mq.manus.space/", "_blank");
@@ -24,11 +25,73 @@ export default function StylingMain() {
   };
 
   const handleReservation = () => {
-    toast.info("홈 스타일링 예약하기 기능이 준비 중입니다.");
+    setShowReservationModal(true);
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-lg mx-auto">
+      {/* 예약 방식 선택 모달 */}
+      {showReservationModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setShowReservationModal(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-t-3xl px-5 pt-6 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900">예약 방식 선택</h2>
+              <button
+                onClick={() => setShowReservationModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* 방식 1: 디자이너 직접 선택 */}
+            <button
+              onClick={() => { setShowReservationModal(false); navigate("/designers"); }}
+              className="w-full flex items-start gap-4 p-4 rounded-2xl mb-3 text-left active:scale-[0.98] transition-all border-2 border-gray-100 hover:border-gray-300"
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "#EEEEEE" }}
+              >
+                <Search size={22} className="text-gray-700" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-[15px] mb-1">디자이너 직접 선택</p>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  프로필과 포트폴리오를 보고<br />마음에 드는 디자이너에게 직접 예약해요
+                </p>
+              </div>
+            </button>
+
+            {/* 방식 2: 신청서 작성 후 제안 받기 */}
+            <button
+              onClick={() => { setShowReservationModal(false); navigate("/styling-request"); }}
+              className="w-full flex items-start gap-4 p-4 rounded-2xl text-left active:scale-[0.98] transition-all border-2 border-gray-100 hover:border-gray-300"
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "#EEEEEE" }}
+              >
+                <FileText size={22} className="text-gray-700" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-[15px] mb-1">신청서 작성 후 제안 받기</p>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  간단한 신청서를 작성하면<br />디자이너들이 먼저 연락을 드려요
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
       {/* 헤더 */}
       <header className="flex items-center px-4 py-4 border-b border-gray-100">
         <button
