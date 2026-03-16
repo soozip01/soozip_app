@@ -338,7 +338,7 @@ export default function StylingTypeFurniture() {
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-3">
               시안에 대한 피드백을 받아<br />최종안을 전달드려요
             </h3>
-            <NoticeBox text="최대 2회 수정이 가능하기 때문에 자세하게 말씀 주실수록 좋아요" />
+            <NoticeBox text="최대 2회 수정이 가능하여, 자세히 말씀 주실수록 좋아요" />
           </div>
 
           {/* ⑧ 피드백 안내 이미지 — 원본 비율 유지 */}
