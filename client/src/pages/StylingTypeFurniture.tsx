@@ -5,29 +5,9 @@
  */
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell, ImageIcon } from "lucide-react";
 
 const TERRACOTTA = "#d31400";
-const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH";
-
-const IMGS = {
-  // 소개 섹션 - 도면 예시 이미지 + 곰 캐릭터
-  floorPlan1: `${CDN}/floor_plan_example_de7d5391.png`,
-  floorPlan2: `${CDN}/bear_character_100aff40.png`,
-  // STEP 01
-  packageImg: `${CDN}/step01-package_d51c76d9.png`,
-  // STEP 02 (실제 사진)
-  furniturePhoto: `${CDN}/step02-furniture-photo_1fe0b617.png`,
-  roomPhoto: `${CDN}/step02-room-photo_743991b0.png`,
-  // STEP 03 (배치안 이미지)
-  plan1: `${CDN}/step03-plan1_29c86efd.jpg`,
-  plan2: `${CDN}/step03-plan2_9f700db9.jpg`,
-  // STEP 04 (곰 캐릭터)
-  bearCharacter: `${CDN}/step04-feedback_ec3d0cab.png`,
-  // STEP 05 (3D 배치 + 제품)
-  finalPlan: `${CDN}/step05-final_9c5b236e.png`,
-  product1: `${CDN}/step05-product1_db1c2d26.png`,
-};
 
 const STEP_LABELS = [
   "1. 실측 패키지 발송 및 공간 실측",
@@ -36,6 +16,30 @@ const STEP_LABELS = [
   "4. 피드백 및 수정",
   "5. 최종 시안 확인 및 제품 링크 전달 받기",
 ];
+
+/* ── 이미지 플레이스홀더 컴포넌트 ── */
+function ImgPlaceholder({
+  num,
+  label,
+  aspectRatio = "4/3",
+  className = "",
+}: {
+  num: string | number;
+  label?: string;
+  aspectRatio?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`w-full rounded-xl flex flex-col items-center justify-center gap-2 bg-gray-100 border-2 border-dashed border-gray-300 ${className}`}
+      style={{ aspectRatio }}
+    >
+      <ImageIcon size={28} className="text-gray-400" />
+      <span className="text-gray-500 font-bold text-[22px]">{num}</span>
+      {label && <span className="text-gray-400 text-[12px] text-center px-2">{label}</span>}
+    </div>
+  );
+}
 
 export default function StylingTypeFurniture() {
   const [, navigate] = useLocation();
@@ -73,22 +77,8 @@ export default function StylingTypeFurniture() {
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-6 pb-6">
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.floorPlan1}
-                alt="배치 도면 예시 1"
-                className="w-full object-cover"
-                style={{ aspectRatio: "1/1" }}
-              />
-            </div>
-            <div className="rounded-xl overflow-hidden">
-              <img
-                src={IMGS.floorPlan2}
-                alt="배치 도면 예시 2"
-                className="w-full object-cover"
-                style={{ aspectRatio: "1/1" }}
-              />
-            </div>
+            <ImgPlaceholder num="①" label="소개 이미지 1" aspectRatio="1/1" />
+            <ImgPlaceholder num="②" label="소개 이미지 2" aspectRatio="1/1" />
           </div>
 
           <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-3">
@@ -158,12 +148,7 @@ export default function StylingTypeFurniture() {
           {/* 도면 초안 카드 */}
           <div className="flex flex-col items-center gap-2 mb-5">
             <div className="bg-gray-50 rounded-xl p-4 flex flex-col items-center gap-2 w-full max-w-[200px]">
-              <img
-                src={IMGS.floorPlan1}
-                alt="도면 초안"
-                className="w-full rounded-lg object-contain"
-                style={{ maxHeight: 160 }}
-              />
+              <ImgPlaceholder num="③" label="도면 초안" aspectRatio="1/1" />
               <span className="text-gray-700 text-[13px] font-medium text-center">도면 초안</span>
               <span className="text-gray-400 text-[11px] text-center">(온라인 전송)</span>
             </div>
@@ -180,7 +165,6 @@ export default function StylingTypeFurniture() {
             <StepBadge num="02" />
           </div>
 
-          {/* 섹션 헤더 */}
           <div className="mt-6 mb-6">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
               기존가구 정보 전달
@@ -223,16 +207,9 @@ export default function StylingTypeFurniture() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                {/* 가구 사진 */}
-                <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
-                  <img
-                    src={IMGS.furniturePhoto}
-                    alt="가구 사진 예시"
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "112px" }}
-                  />
+                <div className="w-28 shrink-0 rounded-lg overflow-hidden">
+                  <ImgPlaceholder num="④" label="가구 사진" aspectRatio="1/1" />
                 </div>
-                {/* 사이즈 정보 */}
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-2">사이즈 정보</p>
                   <div className="space-y-1.5">
@@ -258,16 +235,9 @@ export default function StylingTypeFurniture() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                {/* 공간 사진 */}
-                <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
-                  <img
-                    src={IMGS.roomPhoto}
-                    alt="공간 전체 사진 예시"
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "128px" }}
-                  />
+                <div className="w-28 shrink-0 rounded-lg overflow-hidden">
+                  <ImgPlaceholder num="⑤" label="공간 사진" aspectRatio="1/1" />
                 </div>
-                {/* 불릿 리스트 */}
                 <ul className="flex-1 space-y-2.5 pt-1">
                   {[
                     "제품이 제대로 보이지 않는 사진",
@@ -292,7 +262,6 @@ export default function StylingTypeFurniture() {
             <StepBadge num="03" />
           </div>
 
-          {/* 제목 + 설명 + 알림박스 */}
           <div className="mt-6 mb-5">
             <h3 className="text-gray-900 font-bold text-[20px] leading-snug mb-2">
               입력해주신 정보들로<br />최적의 배치를 잡아드려요!
@@ -303,14 +272,9 @@ export default function StylingTypeFurniture() {
             <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 1~3가지로 달라질 수 있어요" />
           </div>
 
-          {/* 배치안 이미지 2장 */}
           <div className="flex flex-col gap-3">
-            <div className="bg-gray-100 rounded-xl overflow-hidden">
-              <img src={IMGS.plan1} alt="배치안 예시 1" className="w-full object-cover" />
-            </div>
-            <div className="bg-gray-100 rounded-xl overflow-hidden">
-              <img src={IMGS.plan2} alt="배치안 예시 2" className="w-full object-cover" />
-            </div>
+            <ImgPlaceholder num="⑥" label="배치안 예시 1" aspectRatio="4/3" />
+            <ImgPlaceholder num="⑦" label="배치안 예시 2" aspectRatio="4/3" />
           </div>
         </section>
 
@@ -327,13 +291,8 @@ export default function StylingTypeFurniture() {
             <NoticeBox text="최대 2회 수정이 가능하기 때문에 자세하게 말씀 주실수록 좋아요" />
           </div>
 
-          {/* 곰 캐릭터 이미지 */}
           <div className="flex justify-center mt-4">
-            <img
-              src={IMGS.bearCharacter}
-              alt="피드백 안내 캐릭터"
-              className="w-full max-w-xs object-contain"
-            />
+            <ImgPlaceholder num="⑧" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -349,19 +308,11 @@ export default function StylingTypeFurniture() {
             </h3>
           </div>
 
-          {/* 3D 배치 도면 이미지 */}
-          <div className="bg-gray-100 rounded-xl overflow-hidden mb-4">
-            <img src={IMGS.finalPlan} alt="최종 배치안 3D 도면" className="w-full object-cover" />
-          </div>
+          <ImgPlaceholder num="⑨" label="최종 배치안 이미지" aspectRatio="4/3" className="mb-4" />
 
-          {/* 추천 제품 1개 */}
           <div className="flex gap-3 items-start">
-            <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-              <img
-                src={IMGS.product1}
-                alt="추천 제품"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0">
+              <ImgPlaceholder num="⑩" label="제품" aspectRatio="1/1" />
             </div>
             <div className="flex-1 pt-1">
               <p className="text-gray-400 text-[11px] mb-0.5">서랍형 · 옵션</p>

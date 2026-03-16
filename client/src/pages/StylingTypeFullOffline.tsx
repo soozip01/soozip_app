@@ -1,33 +1,14 @@
 /* 수집 풀 스타일링(오프라인) 페이지
  * - 배치솔루션과 동일한 레이아웃 구조
- * - 상단 이미지: 오프라인 방문 스타일링 사진 2장
+ * - 상단 이미지: 플레이스홀더 (추후 오프라인 방문 사례 이미지 교체 예정)
  * - STEP 01: 방문 상담 및 실측 (패키지 발송 없음)
  * - STEP 02~05: 배치솔루션과 동일한 구조
  */
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, XCircle, Bell, ImageIcon } from "lucide-react";
 
 const TERRACOTTA = "#d31400";
-const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663406277448/XB7s4BudnCsvwTPgLTz9RH";
-
-const IMGS = {
-  // 소개 섹션
-  offlineRoom1: `${CDN}/offline_room1_new_9f5eb071.png`,
-  offlineRoom2: `${CDN}/offline_room2_new_82d37f6e.png`,
-  // STEP 01 (방문 상담 - 곰 캐릭터)
-  bearVisit: `${CDN}/bear_character_100aff40.png`,
-  // STEP 02 (실제 사진)
-  furniturePhoto: `${CDN}/step02-furniture-photo_1fe0b617.png`,
-  roomPhoto: `${CDN}/step02-room-photo_743991b0.png`,
-  // STEP 03 (배치안 이미지)
-  plan1: `${CDN}/step03-plan1_d49cbf7c.jpg`,
-  plan2: `${CDN}/step03-plan2_06f2dfaf.jpg`,
-  // STEP 04 (곰 캐릭터)
-  bearCharacter: `${CDN}/bear_character_100aff40.png`,
-  // STEP 05
-  product1: `${CDN}/step05-product1_db1c2d26.png`,
-};
 
 const STEP_LABELS = [
   "1. 방문 상담 및 실측",
@@ -36,6 +17,30 @@ const STEP_LABELS = [
   "4. 수시 신청하기",
   "5. 최종 제품받기",
 ];
+
+/* ── 이미지 플레이스홀더 컴포넌트 ── */
+function ImgPlaceholder({
+  num,
+  label,
+  aspectRatio = "4/3",
+  className = "",
+}: {
+  num: string | number;
+  label?: string;
+  aspectRatio?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`w-full rounded-xl flex flex-col items-center justify-center gap-2 bg-gray-100 border-2 border-dashed border-gray-300 ${className}`}
+      style={{ aspectRatio }}
+    >
+      <ImageIcon size={28} className="text-gray-400" />
+      <span className="text-gray-500 font-bold text-[22px]">{num}</span>
+      {label && <span className="text-gray-400 text-[12px] text-center px-2">{label}</span>}
+    </div>
+  );
+}
 
 export default function StylingTypeFullOffline() {
   const [, navigate] = useLocation();
@@ -74,24 +79,12 @@ export default function StylingTypeFullOffline() {
         <section className="px-4 pt-6 pb-6">
           <div className="grid grid-cols-2 gap-4 mb-5">
             <div className="flex flex-col items-center">
-              <div className="w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }}>
-                <img
-                  src={IMGS.offlineRoom1}
-                  alt="오프라인 스타일링 사례 1"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="text-gray-500 text-[11px] text-center mt-1.5">수 님 스타일링</p>
+              <ImgPlaceholder num="①" label="사례 이미지 1" aspectRatio="3/4" />
+              <p className="text-gray-500 text-[11px] text-center mt-1.5">사례 이미지 1</p>
             </div>
             <div className="flex flex-col items-center">
-              <div className="w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }}>
-                <img
-                  src={IMGS.offlineRoom2}
-                  alt="오프라인 스타일링 사례 2"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="text-gray-500 text-[11px] text-center mt-1.5">스타일링 사례</p>
+              <ImgPlaceholder num="②" label="사례 이미지 2" aspectRatio="3/4" />
+              <p className="text-gray-500 text-[11px] text-center mt-1.5">사례 이미지 2</p>
             </div>
           </div>
 
@@ -158,13 +151,9 @@ export default function StylingTypeFullOffline() {
             조율한 일정에 맞춰 담당자가 실측을 진행해요
           </p>
 
-          {/* 방문 상담 곰 캐릭터 이미지 */}
+          {/* 방문 상담 이미지 플레이스홀더 */}
           <div className="flex justify-center">
-            <img
-              src={IMGS.bearVisit}
-              alt="방문 상담 안내 캐릭터"
-              className="w-full max-w-xs object-contain"
-            />
+            <ImgPlaceholder num="③" label="방문 상담 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -216,13 +205,8 @@ export default function StylingTypeFullOffline() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
-                  <img
-                    src={IMGS.furniturePhoto}
-                    alt="가구 사진 예시"
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "112px" }}
-                  />
+                <div className="w-28 shrink-0 rounded-lg overflow-hidden">
+                  <ImgPlaceholder num="④" label="가구 사진" aspectRatio="1/1" />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-2">사이즈 정보</p>
@@ -249,13 +233,8 @@ export default function StylingTypeFullOffline() {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
-                <div className="w-28 shrink-0 rounded-lg overflow-hidden bg-white">
-                  <img
-                    src={IMGS.roomPhoto}
-                    alt="공간 전체 사진 예시"
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "128px" }}
-                  />
+                <div className="w-28 shrink-0 rounded-lg overflow-hidden">
+                  <ImgPlaceholder num="⑤" label="공간 사진" aspectRatio="1/1" />
                 </div>
                 <ul className="flex-1 space-y-2.5 pt-1">
                   {[
@@ -292,12 +271,8 @@ export default function StylingTypeFullOffline() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="bg-gray-100 rounded-xl overflow-hidden">
-              <img src={IMGS.plan1} alt="배치안 예시 1" className="w-full object-cover" />
-            </div>
-            <div className="bg-gray-100 rounded-xl overflow-hidden">
-              <img src={IMGS.plan2} alt="배치안 예시 2" className="w-full object-cover" />
-            </div>
+            <ImgPlaceholder num="⑥" label="배치안 예시 1" aspectRatio="4/3" />
+            <ImgPlaceholder num="⑦" label="배치안 예시 2" aspectRatio="4/3" />
           </div>
         </section>
 
@@ -315,11 +290,7 @@ export default function StylingTypeFullOffline() {
           </div>
 
           <div className="flex justify-center mt-4">
-            <img
-              src={IMGS.bearCharacter}
-              alt="피드백 안내 캐릭터"
-              className="w-full max-w-xs object-contain"
-            />
+            <ImgPlaceholder num="⑧" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -335,17 +306,11 @@ export default function StylingTypeFullOffline() {
             </h3>
           </div>
 
-          <div className="bg-gray-100 rounded-xl overflow-hidden mb-4">
-            <img src={IMGS.plan1} alt="최종 배치안" className="w-full object-cover" />
-          </div>
+          <ImgPlaceholder num="⑨" label="최종 배치안 이미지" aspectRatio="4/3" className="mb-4" />
 
           <div className="flex gap-3 items-start">
-            <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-              <img
-                src={IMGS.product1}
-                alt="추천 제품"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0">
+              <ImgPlaceholder num="⑩" label="제품" aspectRatio="1/1" />
             </div>
             <div className="flex-1 pt-1">
               <p className="text-gray-400 text-[11px] mb-0.5">서랍형 · 옵션</p>
