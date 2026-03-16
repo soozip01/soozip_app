@@ -150,8 +150,8 @@ export default function StylingTypeFurniture() {
             </p>
           </div>
 
-          {/* ③ 도면 초안 — 좌우 여백 없이 전체 폭 */}
-          <div className="w-full mb-5">
+          {/* ③ 도면 초안 — 좌우 여백 2배(px-8) */}
+          <div className="px-8 mb-5">
             <img
               src={IMG[3]}
               alt="도면 초안"
@@ -161,8 +161,32 @@ export default function StylingTypeFurniture() {
 
           <div className="px-4">
             <h3 className="text-gray-900 font-bold text-[16px] leading-snug mb-3">
-              발송드린 온라인 도면에<br />실측값을 작성해주세요
+              줄자들을 활용하여 발송드린 온라인 도면에<br />실측값을 작성해주세요
             </h3>
+          </div>
+
+          {/* STEP 01 추가 이미지 — 좌우 2장 플레이스홀더 */}
+          <div className="px-4 mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-300">
+              <div className="text-gray-400 mb-1">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <span className="text-gray-400 text-[13px] font-semibold">이미지 11</span>
+            </div>
+            <div className="rounded-xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-300">
+              <div className="text-gray-400 mb-1">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <span className="text-gray-400 text-[13px] font-semibold">이미지 12</span>
+            </div>
           </div>
         </section>
 
