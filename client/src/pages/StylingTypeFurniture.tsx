@@ -93,60 +93,41 @@ export default function StylingTypeFurniture() {
       {/* ── sticky STEP 진행 박스 ── */}
       <div className="sticky top-[57px] z-10 bg-white border-b border-gray-100 shadow-sm">
         <div className="px-4 py-3">
-          {/* 활성 STEP 버튼 좌우에 빨간 선이 뻗는 레이아웃 */}
-          <div className="flex items-center">
-            {/* 왼쪽 비활성 번호들 + 선 */}
-            {STEP_LABELS.slice(0, activeStep).map((_, idx) => (
-              <div key={`left-${idx}`} className="flex items-center shrink-0">
-                <button
-                  onClick={() => scrollToStep(idx)}
-                  className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300"
-                  style={{ background: "#e5e7eb", color: "#9ca3af" }}
-                >
-                  {String(idx + 1).padStart(2, "0")}
-                </button>
-                <div className="shrink-0 mx-1" style={{ width: "12px", height: "2.5px", background: "#d31400", borderRadius: "1px" }} />
-              </div>
-            ))}
-
-            {/* 활성 STEP 버튼 (좌우 선 포함) */}
-            <div className="flex items-center flex-1 min-w-0">
-              {activeStep > 0 && (
-                <div className="flex-1 mr-1.5" style={{ height: "2.5px", background: "#d31400", borderRadius: "1px" }} />
-              )}
-              <button
-                onClick={() => scrollToStep(activeStep)}
-                className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all duration-300"
-                style={{ background: TERRACOTTA }}
-              >
-                <span className="text-[11px] font-bold text-white whitespace-nowrap">
-                  STEP {String(activeStep + 1).padStart(2, "0")}
-                </span>
-                <span className="text-[11px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] text-white">
-                  {STEP_LABELS[activeStep].replace(/^\d+\.\s*/, "")}
-                </span>
-              </button>
-              {activeStep < STEP_LABELS.length - 1 && (
-                <div className="flex-1 ml-1.5" style={{ height: "2.5px", background: "#d31400", borderRadius: "1px" }} />
-              )}
-            </div>
-
-            {/* 오른쪽 비활성 번호들 + 선 */}
-            {STEP_LABELS.slice(activeStep + 1).map((_, i) => {
-              const idx = activeStep + 1 + i;
+          <div className="flex items-center gap-1">
+            {STEP_LABELS.map((label, idx) => {
+              const isActive = idx === activeStep;
+              const isPast = idx < activeStep;
               return (
-                <div key={`right-${idx}`} className="flex items-center shrink-0">
-                  {i > 0 && (
-                    <div className="shrink-0 mx-1" style={{ width: "12px", height: "2.5px", background: "#d31400", borderRadius: "1px" }} />
-                  )}
-                  <button
-                    onClick={() => scrollToStep(idx)}
+                <button
+                  key={idx}
+                  onClick={() => scrollToStep(idx)}
+                  className="flex items-center gap-1 transition-all duration-300"
+                  style={{ flex: isActive ? "1 1 auto" : "0 0 auto" }}
+                >
+                  {/* 원형 번호 */}
+                  <div
                     className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300"
-                    style={{ background: "#f3f4f6", color: "#9ca3af" }}
+                    style={{
+                      background: isActive ? TERRACOTTA : isPast ? "#e5e7eb" : "#f3f4f6",
+                      color: isActive ? "white" : isPast ? "#9ca3af" : "#9ca3af",
+                    }}
                   >
                     {String(idx + 1).padStart(2, "0")}
-                  </button>
-                </div>
+                  </div>
+                  {/* 활성 단계일 때만 레이블 표시 */}
+                  {isActive && (
+                    <span
+                      className="text-[12px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] transition-all duration-300"
+                      style={{ color: TERRACOTTA }}
+                    >
+                      {label.replace(/^\d+\.\s*/, "")}
+                    </span>
+                  )}
+                  {/* 구분선 (마지막 제외) */}
+                  {idx < STEP_LABELS.length - 1 && !isActive && (
+                    <div className="w-2 h-px bg-gray-200 shrink-0 mx-0.5" />
+                  )}
+                </button>
               );
             })}
           </div>
@@ -472,14 +453,14 @@ export default function StylingTypeFurniture() {
 function StepBadge({ num }: { num: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex-1" style={{ height: "2px", background: "#d31400", borderRadius: "1px" }} />
       <div
         className="text-white font-bold text-[13px] px-4 py-1.5 rounded-full shrink-0"
         style={{ background: "#d31400" }}
       >
         STEP {num}
       </div>
-      <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex-1" style={{ height: "2px", background: "#d31400", borderRadius: "1px" }} />
     </div>
   );
 }
