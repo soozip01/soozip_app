@@ -749,7 +749,7 @@ export const appRouter = router({
         if (input.userId) {
           const { data, error } = await supabase
             .from("survey_submissions")
-            .select("id, name, styling_type, styling_state, created_at")
+            .select("id, name, styling_type, styling_state, step1, step2, step3, step4, step5, step6, step7, admin_note, styling_status, created_at")
             .eq("user_id", input.userId)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -761,6 +761,15 @@ export const appRouter = router({
               name: data.name as string,
               stylingType: data.styling_type as string,
               stylingState: (data.styling_state as number) ?? 1,
+              step1: (data.step1 as string) ?? 'pending',
+              step2: (data.step2 as string) ?? 'pending',
+              step3: (data.step3 as string) ?? 'pending',
+              step4: (data.step4 as string) ?? 'pending',
+              step5: (data.step5 as string) ?? 'pending',
+              step6: (data.step6 as string) ?? 'pending',
+              step7: (data.step7 as string) ?? 'pending',
+              adminNote: (data.admin_note as string) ?? null,
+              stylingStatus: (data.styling_status as string) ?? 'active',
               createdAt: data.created_at as string,
             };
           }
@@ -770,7 +779,7 @@ export const appRouter = router({
         if (input.nickname) {
           const { data, error } = await supabase
             .from("survey_submissions")
-            .select("id, name, styling_type, styling_state, created_at")
+            .select("id, name, styling_type, styling_state, step1, step2, step3, step4, step5, step6, step7, admin_note, styling_status, created_at")
             .eq("name", input.nickname)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -782,6 +791,15 @@ export const appRouter = router({
               name: data.name as string,
               stylingType: data.styling_type as string,
               stylingState: (data.styling_state as number) ?? 1,
+              step1: (data.step1 as string) ?? 'pending',
+              step2: (data.step2 as string) ?? 'pending',
+              step3: (data.step3 as string) ?? 'pending',
+              step4: (data.step4 as string) ?? 'pending',
+              step5: (data.step5 as string) ?? 'pending',
+              step6: (data.step6 as string) ?? 'pending',
+              step7: (data.step7 as string) ?? 'pending',
+              adminNote: (data.admin_note as string) ?? null,
+              stylingStatus: (data.styling_status as string) ?? 'active',
               createdAt: data.created_at as string,
             };
           }

@@ -214,16 +214,29 @@ export const stylingProgress = mysqlTable("styling_progress", {
   id: int("id").autoincrement().primaryKey(),
   // 사용자 식별 (닉네임 기반 - 소셜/이메일 통합)
   userNickname: varchar("userNickname", { length: 50 }).notNull(),
+  // Supabase Auth userId (카카오/네이버/이메일 로그인 연동)
+  userId: varchar("userId", { length: 128 }),
   // 신청 유형
   stylingType: mysqlEnum("stylingType", ["배치솔루션", "풀스타일링(온라인)", "풀스타일링(오프라인)"]).notNull(),
-  // 현재 진행 단계 (1부터 시작)
+  // 현재 진행 단계 (1부터 시작, 하위 호환 유지)
   currentStep: int("currentStep").default(1).notNull(),
   // 전체 단계 수 (배치솔루션:5, 풀온라인:6, 풀오프라인:7)
   totalSteps: int("totalSteps").notNull(),
+  // STEP별 개별 완료 여부 (관리자가 각 단계를 독립적으로 완료 처리)
+  // 배치솔루션: step1~step5 사용, 풀온라인: step1~step6, 풀오프라인: step1~step7
+  step1: mysqlEnum("step1", ["pending", "in_progress", "done"]).default("pending").notNull(),
+  step2: mysqlEnum("step2", ["pending", "in_progress", "done"]).default("pending").notNull(),
+  step3: mysqlEnum("step3", ["pending", "in_progress", "done"]).default("pending").notNull(),
+  step4: mysqlEnum("step4", ["pending", "in_progress", "done"]).default("pending").notNull(),
+  step5: mysqlEnum("step5", ["pending", "in_progress", "done"]).default("pending").notNull(),
+  step6: mysqlEnum("step6", ["pending", "in_progress", "done"]).default("pending").notNull(),
+  step7: mysqlEnum("step7", ["pending", "in_progress", "done"]).default("pending").notNull(),
   // 서비스 상태
   status: mysqlEnum("status", ["active", "completed", "cancelled"]).default("active").notNull(),
   // 신청 예약 ID (stylingBookings 연결)
   bookingId: int("bookingId"),
+  // 메모 (관리자 내부 메모)
+  adminNote: text("adminNote"),
   // 신청일
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

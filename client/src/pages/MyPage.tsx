@@ -200,9 +200,25 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
   }
 
   const steps = STEPS_MAP[mappedType] ?? STEPS_FURNITURE;
-  // styling_state: 1부터 시작, 현재 진행 단계 = styling_state
-  const currentStepIdx = Math.max(0, (surveyData.stylingState ?? 1) - 1);
   const totalSteps = steps.length;
+
+  // step1~step7 컬럼 기반 완료 상태 계산
+  // 관리자가 각 step 컬럼을 'completed'로 설정하면 완료로 표시
+  const stepStatuses: Record<number, string> = {
+    1: (surveyData as any).step1 ?? 'pending',
+    2: (surveyData as any).step2 ?? 'pending',
+    3: (surveyData as any).step3 ?? 'pending',
+    4: (surveyData as any).step4 ?? 'pending',
+    5: (surveyData as any).step5 ?? 'pending',
+    6: (surveyData as any).step6 ?? 'pending',
+    7: (surveyData as any).step7 ?? 'pending',
+  };
+
+  // 완료된 단계 수 계산 (현재 진행 단계 = 마지막 완료 단계 + 1)
+  const completedCount = steps.filter((s) => stepStatuses[s.id] === 'completed').length;
+  const currentStepIdx = completedCount; // 0-based: completedCount번째 인덱스가 현재 진행 중
+  // 진행 바 계산용 (styling_state 폴백)
+  const progressState = completedCount > 0 ? completedCount + 1 : (surveyData.stylingState ?? 1);
 
   return (
     <div className="pb-6">
@@ -238,7 +254,7 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500">진행 단계</span>
             <span className="text-xs font-semibold" style={{ color: TERRACOTTA }}>
-              {surveyData.stylingState} / {totalSteps}
+              {completedCount} / {totalSteps}
             </span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -246,7 +262,7 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
               className="h-1.5 rounded-full transition-all duration-500"
               style={{
                 background: TERRACOTTA,
-                width: `${((surveyData.stylingState - 1) / Math.max(totalSteps - 1, 1)) * 100}%`,
+                width: `${(completedCount / Math.max(totalSteps, 1)) * 100}%`,
               }}
             />
           </div>
@@ -256,9 +272,13 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
       {/* STEP 카드 리스트 */}
       <div className="px-4 space-y-3">
         {steps.map((step, idx) => {
-          const isDone = idx < currentStepIdx;
-          const isActive = idx === currentStepIdx;
-          const isPending = idx > currentStepIdx;
+          // step1~step7 컬럼 기반 상태 판단
+          const stepStatus = stepStatuses[step.id] ?? 'pending';
+          const isDone = stepStatus === 'completed';
+          // 모든 이전 단계가 완료되고 현재 단계가 pending/in_progress인 경우 활성
+          const allPrevDone = steps.slice(0, idx).every((s) => (stepStatuses[s.id] ?? 'pending') === 'completed');
+          const isActive = !isDone && allPrevDone;
+          const isPending = !isDone && !isActive;
 
           return (
             <div
