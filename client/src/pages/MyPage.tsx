@@ -113,10 +113,10 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
     );
   }
 
-  // Supabase 설문조사 신청 데이터 조회 (userId 기반 우선, 폴백: 닉네임)
+  // Supabase 설문조사 신청 데이터 조회 (로그인 사용자 userId로만 조회)
   const { data: surveyData, isLoading } = trpc.survey.mySubmission.useQuery(
-    { userId: userId || undefined, nickname: nickname || undefined },
-    { enabled: isLoggedIn && (!!userId || !!nickname) }
+    { userId: userId || undefined },
+    { enabled: isLoggedIn && !!userId }
   );
 
   if (isLoading) {
@@ -143,6 +143,13 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
             <p className="font-bold text-gray-800 text-[16px]">아직 신청한 스타일링이 없어요</p>
             <p className="text-sm text-gray-400 mt-2 leading-relaxed">
               배치 솔루션, 풀 스타일링 등<br />다양한 서비스를 신청해보세요
+            </p>
+          </div>
+          {/* 비로그인 신청자 안내 */}
+          <div className="mt-2 px-4 py-3 rounded-xl text-center" style={{ background: "#fff8f0", border: "1px solid #ffe0cc" }}>
+            <p className="text-xs text-orange-700 leading-relaxed">
+              로그인 전에 신청하셨나요? 관리자가 확인 후 진행 현황을 연동해드릴 예정이에요.<br />
+              <span className="font-semibold">닉네임과 신청 성함이 일치하는지 확인해주세요.</span>
             </p>
           </div>
         </div>

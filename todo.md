@@ -205,3 +205,9 @@
 - [x] StylingStep1 파일 업로드 시 "신청 내역을 찾을 수 없습니다" 오류 수정
 - [x] uploadStepFile/deleteStepFile/updateStepText: userId 없으면 nickname(name 컨럼)으로 폴백 조회
 - [x] StylingStep1.tsx + StylingStepUpload.tsx: nickname 파라미터 함께 전달
+
+## 33차 작업 (로그인/비로그인 신청자 분리)
+- [x] uploadStepFile/deleteStepFile/updateStepText: nickname 폴백 제거, user_id로만 조회
+- [x] mySubmission 프로시저: nickname 폴백 제거, user_id로만 조회
+- [x] 마이페이지 스타일링 탭: 로그인 사용자이지만 신청 내역 없을 때 비로그인 신청자 안내 메시지 표시
+- [x] StylingStep1.tsx + StylingStepUpload.tsx: nickname 파라미터 제거

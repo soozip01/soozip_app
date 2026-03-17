@@ -36,8 +36,8 @@ export default function StylingStep1() {
   // 내 신청 데이터 조회 (step1_m 도면 URL 포함)
   const userId = user?.id ? String(user.id) : undefined;
   const { data: surveyData, isLoading: surveyLoading } = trpc.survey.mySubmission.useQuery(
-    { userId: userId, nickname: user?.nickname || undefined },
-    { enabled: isLoggedIn && (!!user?.id || !!user?.nickname) }
+    { userId: userId },
+    { enabled: isLoggedIn && !!user?.id }
   );
 
   // 파일 업로드 mutation
@@ -134,7 +134,6 @@ export default function StylingStep1() {
       // 서버에 업로드
       uploadMutation.mutate({
         userId: userIdStr,
-        nickname: user?.nickname || undefined,
         stepKey: "step1",
         fileBase64: base64,
         fileName: file.name,
@@ -163,7 +162,7 @@ export default function StylingStep1() {
       setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
       return;
     }
-    deleteMutation.mutate({ userId: String(user.id), nickname: user?.nickname || undefined, stepKey: "step1", fileUrl });
+    deleteMutation.mutate({ userId: String(user.id), stepKey: "step1", fileUrl });
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 

@@ -183,8 +183,8 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
 
   // 내 신청 데이터 조회
   const { data: surveyData, isLoading: surveyLoading, refetch } = trpc.survey.mySubmission.useQuery(
-    { userId, nickname: user?.nickname || undefined },
-    { enabled: isLoggedIn && (!!user?.id || !!user?.nickname) }
+    { userId },
+    { enabled: isLoggedIn && !!user?.id }
   );
 
   // 파일 업로드 mutation
@@ -283,7 +283,6 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
 
       uploadMutation.mutate({
         userId: String(user.id),
-        nickname: user?.nickname || undefined,
         stepKey,
         fileBase64: base64,
         fileName: file.name,
@@ -307,7 +306,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
       setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
       return;
     }
-    deleteMutation.mutate({ userId: String(user.id), nickname: user?.nickname || undefined, stepKey, fileUrl });
+    deleteMutation.mutate({ userId: String(user.id), stepKey, fileUrl });
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
@@ -317,7 +316,6 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
     setIsSavingText(true);
     updateTextMutation.mutate({
       userId: String(user.id),
-      nickname: user?.nickname || undefined,
       stepKey,
       text: textContent,
     });
@@ -557,7 +555,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
                       <button
                         onClick={() => {
                           if (user?.id) {
-                            deleteMutation.mutate({ userId: String(user.id), nickname: user?.nickname || undefined, stepKey, fileUrl: url });
+                            deleteMutation.mutate({ userId: String(user.id), stepKey, fileUrl: url });
                           }
                         }}
                         className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
