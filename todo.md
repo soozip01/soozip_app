@@ -165,3 +165,14 @@
   - [x] 실측 팁 안내 섹션
 - [x] App.tsx에 /styling/step1 라우트 등록
 - [x] MyPage.tsx STEP 01 카드 actionRoute → /styling/step1 연결
+
+## 29차 작업 (신청서 성함 고정 + 프로필 편집 페이지)
+- [x] StylingRequestForm: 로그인 사용자의 성함 필드를 닉네임으로 자동 입력 및 수정 불가 처리
+- [x] 프로필 편집 페이지 구현 (/profile/edit) - 오늘의집 스타일
+  - [x] 프로필 이미지 업로드/변경 (S3 저장)
+  - [x] 닉네임 수정 (중복 확인 포함)
+  - [x] 이메일 표시 (수정 불가)
+  - [x] 저장 버튼
+- [x] 마이페이지 프로필 탭에서 프로필 편집 버튼 → /profile/edit 연결
+- [x] App.tsx /profile/edit 라우트 등록
+- [x] 닉네임 변경 tRPC 프로시저 추가 (DB 업데이트)

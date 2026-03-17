@@ -457,7 +457,7 @@ function ProfileTab({ user }: {
 
       <div className="px-5 flex gap-2">
         <button
-          onClick={() => toast.info("프로필 편집 기능이 준비 중입니다.")}
+          onClick={() => navigate("/profile/edit")}
           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors"
         >
           <PenLine size={15} />

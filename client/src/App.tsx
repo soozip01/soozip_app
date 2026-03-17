@@ -43,6 +43,7 @@ import StylingRequestList from "./pages/StylingRequestList";
 import StylingRequestEmbed from "./pages/StylingRequestEmbed";
 import FurnitureInfoForm from "./pages/FurnitureInfoForm";
 import StylingStep1 from "./pages/StylingStep1";
+import ProfileEdit from "./pages/ProfileEdit";
 
 function Router() {
   return (
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/styling-requests" component={StylingRequestList} />
       <Route path="/styling/furniture-info" component={FurnitureInfoForm} />
       <Route path="/styling/step1" component={StylingStep1} />
+      <Route path="/profile/edit" component={ProfileEdit} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

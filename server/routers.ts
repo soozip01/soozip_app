@@ -377,11 +377,71 @@ export const appRouter = router({
           throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        await db.update(emailUsers).set({ lastSignedIn: new Date() }).where(eq(emailUsers.email, input.email));
+         await db.update(emailUsers).set({ lastSignedIn: new Date() }).where(eq(emailUsers.email, input.email));
         return { success: true, userId: user[0].id, nickname: user[0].nickname };
       }),
-  }),
 
+    /**
+     * 프로필 업데이트 (닉네임 + 프로필 이미지)
+     * - provider: kakao | naver | email
+     * - userId: 해당 테이블의 id
+     */
+    updateProfile: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        provider: z.enum(["kakao", "naver", "email"]),
+        nickname: z.string().min(2).max(20).optional(),
+        profileImageBase64: z.string().optional(), // base64 encoded image
+        profileImageMime: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const updates: Record<string, unknown> = {};
+
+        // 닉네임 변경 처리
+        if (input.nickname) {
+          const taken = await isNicknameTaken(input.nickname);
+          if (taken) throw new Error("이미 사용 중인 닉네임입니다.");
+          updates.nickname = input.nickname;
+        }
+
+        // 프로필 이미지 업로드 처리
+        if (input.profileImageBase64 && input.profileImageMime) {
+          const buffer = Buffer.from(input.profileImageBase64, "base64");
+          const ext = input.profileImageMime.split("/")[1] ?? "jpg";
+          const fileKey = `profile-images/${input.provider}-${input.userId}-${Date.now()}.${ext}`;
+          const { url } = await storagePut(fileKey, buffer, input.profileImageMime);
+          updates.profileImageUrl = url;
+        }
+
+        if (Object.keys(updates).length === 0) {
+          throw new Error("변경할 내용이 없습니다.");
+        }
+
+        // 각 테이블에 업데이트
+        if (input.provider === "kakao") {
+          await db.update(kakaoUsers).set(updates as Partial<typeof kakaoUsers.$inferInsert>).where(eq(kakaoUsers.id, input.userId));
+          const updated = await db.select().from(kakaoUsers).where(eq(kakaoUsers.id, input.userId)).limit(1);
+          return { success: true, nickname: updated[0]?.nickname, profileImageUrl: updated[0]?.profileImageUrl ?? null };
+        } else if (input.provider === "naver") {
+          await db.update(naverUsers).set(updates as Partial<typeof naverUsers.$inferInsert>).where(eq(naverUsers.id, input.userId));
+          const updated = await db.select().from(naverUsers).where(eq(naverUsers.id, input.userId)).limit(1);
+          return { success: true, nickname: updated[0]?.nickname, profileImageUrl: updated[0]?.profileImageUrl ?? null };
+        } else {
+          // emailUsers는 profileImageUrl 콼럼이 없으므로 nickname만 업데이트
+          const emailUpdates: Record<string, unknown> = {};
+          if (updates.nickname) emailUpdates.nickname = updates.nickname;
+          if (Object.keys(emailUpdates).length > 0) {
+            await db.update(emailUsers).set(emailUpdates as Partial<typeof emailUsers.$inferInsert>).where(eq(emailUsers.id, input.userId));
+          }
+          const updated = await db.select().from(emailUsers).where(eq(emailUsers.id, input.userId)).limit(1);
+          return { success: true, nickname: updated[0]?.nickname, profileImageUrl: null };
+        }
+      }),
+
+  }),
   // ─── 디자이너 라우터 ───────────────────────────────────────────────
   designer: router({
     /**

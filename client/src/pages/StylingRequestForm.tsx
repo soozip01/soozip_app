@@ -192,21 +192,47 @@ export default function StylingRequestForm() {
               <p className="text-xs text-muted-foreground">선택한 타입에 따라 진행 단계가 달라집니다</p>
             </div>
 
-            {/* 로그인 사용자 정보 표시 */}
-            <div
-              className="flex items-center gap-3 p-3 rounded-xl"
-              style={{ background: "oklch(0.97 0.02 32)" }}
-            >
+            {/* 신청인 성함 = 닉네임 고정 표시 */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-gray-700">신청인 성함</label>
+                <button
+                  type="button"
+                  onClick={() => navigate("/profile/edit")}
+                  className="text-[11px] underline"
+                  style={{ color: TERRACOTTA }}
+                >
+                  닉네임 변경하기
+                </button>
+              </div>
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold shrink-0"
-                style={{ background: TERRACOTTA }}
+                className="flex items-center gap-3 p-3.5 rounded-xl border"
+                style={{ background: "oklch(0.97 0.02 32)", borderColor: "oklch(0.90 0.05 32)" }}
               >
-                {userName.slice(0, 1)}
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold shrink-0 text-sm"
+                  style={{ background: TERRACOTTA }}
+                >
+                  {userName.slice(0, 1)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-bold text-gray-900">{userName}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">닉네임이 신청서 성함으로 자동 사용됩니다</p>
+                </div>
+                <div
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold shrink-0"
+                  style={{ background: "oklch(0.88 0.08 32)", color: TERRACOTTA }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  수정 불가
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{userName}</p>
-                <p className="text-xs text-muted-foreground">로그인 상태로 신청서가 자동 연동됩니다</p>
-              </div>
+              <p className="text-[11px] text-gray-400 leading-relaxed">
+                닉네임을 변경하려면 우측 상단의 '닉네임 변경하기'를 눌러주세요
+              </p>
             </div>
 
             <div className="space-y-3">
