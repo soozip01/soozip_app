@@ -749,7 +749,7 @@ export const appRouter = router({
         if (input.userId) {
           const { data, error } = await supabase
             .from("survey_submissions")
-            .select("id, name, styling_type, styling_state, step1, step2, step3, step4, step5, step6, step7, admin_note, styling_status, created_at")
+            .select("id, name, styling_type, styling_state, step1, step2, step3, step4, step5, step6, step7, step1_m, step2_m, step3_m, step4_m, step5_m, step6_m, step7_m, admin_note, styling_status, created_at")
             .eq("user_id", input.userId)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -768,6 +768,13 @@ export const appRouter = router({
               step5: (data.step5 as string) ?? 'pending',
               step6: (data.step6 as string) ?? 'pending',
               step7: (data.step7 as string) ?? 'pending',
+              step1m: (data.step1_m as string) ?? null,
+              step2m: (data.step2_m as string) ?? null,
+              step3m: (data.step3_m as string) ?? null,
+              step4m: (data.step4_m as string) ?? null,
+              step5m: (data.step5_m as string) ?? null,
+              step6m: (data.step6_m as string) ?? null,
+              step7m: (data.step7_m as string) ?? null,
               adminNote: (data.admin_note as string) ?? null,
               stylingStatus: (data.styling_status as string) ?? 'active',
               createdAt: data.created_at as string,
@@ -779,7 +786,7 @@ export const appRouter = router({
         if (input.nickname) {
           const { data, error } = await supabase
             .from("survey_submissions")
-            .select("id, name, styling_type, styling_state, step1, step2, step3, step4, step5, step6, step7, admin_note, styling_status, created_at")
+            .select("id, name, styling_type, styling_state, step1, step2, step3, step4, step5, step6, step7, step1_m, step2_m, step3_m, step4_m, step5_m, step6_m, step7_m, admin_note, styling_status, created_at")
             .eq("name", input.nickname)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -798,6 +805,13 @@ export const appRouter = router({
               step5: (data.step5 as string) ?? 'pending',
               step6: (data.step6 as string) ?? 'pending',
               step7: (data.step7 as string) ?? 'pending',
+              step1m: (data.step1_m as string) ?? null,
+              step2m: (data.step2_m as string) ?? null,
+              step3m: (data.step3_m as string) ?? null,
+              step4m: (data.step4_m as string) ?? null,
+              step5m: (data.step5_m as string) ?? null,
+              step6m: (data.step6_m as string) ?? null,
+              step7m: (data.step7_m as string) ?? null,
               adminNote: (data.admin_note as string) ?? null,
               stylingStatus: (data.styling_status as string) ?? 'active',
               createdAt: data.created_at as string,
@@ -806,6 +820,98 @@ export const appRouter = router({
         }
 
         return null;
+      }),
+
+    /**
+     * STEP 1 사용자 파일 업로드 - S3에 저장 후 Supabase step1 컬럼에 URL 배열 저장
+     */
+    uploadStepFile: publicProcedure
+      .input(z.object({
+        userId: z.string(),
+        stepKey: z.enum(['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7']),
+        fileBase64: z.string(),   // base64 인코딩된 파일
+        fileName: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+
+        // 현재 step 값 조회
+        const { data: existing, error: fetchErr } = await supabase
+          .from("survey_submissions")
+          .select(`id, ${input.stepKey}`)
+          .eq("user_id", input.userId)
+          .limit(1)
+          .single();
+
+        if (fetchErr || !existing) {
+          throw new Error("신청 내역을 찾을 수 없습니다.");
+        }
+
+        // S3에 파일 업로드
+        const buffer = Buffer.from(input.fileBase64, 'base64');
+        const suffix = Date.now();
+        const fileKey = `styling/${input.userId}/${input.stepKey}/${suffix}-${input.fileName}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+
+        // 기존 URL 배열에 추가
+        let existingUrls: string[] = [];
+        const raw = (existing as Record<string, unknown>)[input.stepKey];
+        if (typeof raw === 'string' && raw !== 'pending' && raw !== 'completed') {
+          try { existingUrls = JSON.parse(raw); } catch { existingUrls = [raw]; }
+        } else if (Array.isArray(raw)) {
+          existingUrls = raw;
+        }
+        const updatedUrls = [...existingUrls, url];
+
+        const { error: updateErr } = await supabase
+          .from("survey_submissions")
+          .update({ [input.stepKey]: JSON.stringify(updatedUrls) })
+          .eq("user_id", input.userId);
+
+        if (updateErr) throw new Error("파일 저장에 실패했습니다.");
+
+        return { success: true, url, urls: updatedUrls };
+      }),
+
+    /**
+     * STEP 파일 삭제 - 특정 URL을 배열에서 제거
+     */
+    deleteStepFile: publicProcedure
+      .input(z.object({
+        userId: z.string(),
+        stepKey: z.enum(['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7']),
+        fileUrl: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+
+        const { data: existing, error: fetchErr } = await supabase
+          .from("survey_submissions")
+          .select(`id, ${input.stepKey}`)
+          .eq("user_id", input.userId)
+          .limit(1)
+          .single();
+
+        if (fetchErr || !existing) throw new Error("신청 내역을 찾을 수 없습니다.");
+
+        let existingUrls: string[] = [];
+        const raw = (existing as Record<string, unknown>)[input.stepKey];
+        if (typeof raw === 'string') {
+          try { existingUrls = JSON.parse(raw); } catch { existingUrls = []; }
+        } else if (Array.isArray(raw)) {
+          existingUrls = raw;
+        }
+        const updatedUrls = existingUrls.filter(u => u !== input.fileUrl);
+
+        const { error: updateErr } = await supabase
+          .from("survey_submissions")
+          .update({ [input.stepKey]: updatedUrls.length > 0 ? JSON.stringify(updatedUrls) : 'pending' })
+          .eq("user_id", input.userId);
+
+        if (updateErr) throw new Error("파일 삭제에 실패했습니다.");
+
+        return { success: true, urls: updatedUrls };
       }),
 
     /**

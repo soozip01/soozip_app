@@ -151,3 +151,17 @@
 - [ ] 예약 캘린더 페이지 + 설문 연동 최종 완료 흐름
 - [ ] 디자이너 입점 신청 페이지
 - [ ] StylingMain 예약하기 버튼 연결
+
+## 28차 작업 (STEP 01 공간 실측 페이지 구현)
+- [x] survey_submissions 테이블에 step1_m~step7_m 컬럼 추가 (관리자 파일 업로드용)
+- [x] survey.mySubmission 쿼리에 step1_m~step7_m 컬럼 포함
+- [x] survey.uploadStepFile 프로시저 추가 (S3 업로드 후 Supabase step1~step7 컬럼에 URL 배열 저장)
+- [x] survey.deleteStepFile 프로시저 추가 (특정 URL 배열에서 제거)
+- [x] StylingStep1.tsx 페이지 구현 (/styling/step1)
+  - [x] 관리자 도면 초안(step1_m) 다운로드 버튼
+  - [x] 다중 파일 업로드 (드래그앤드롭 + 파일 선택, + 버튼)
+  - [x] 업로드 상태 표시 (업로드 중/완료/오류)
+  - [x] 기존 업로드 파일 표시 및 삭제 기능
+  - [x] 실측 팁 안내 섹션
+- [x] App.tsx에 /styling/step1 라우트 등록
+- [x] MyPage.tsx STEP 01 카드 actionRoute → /styling/step1 연결

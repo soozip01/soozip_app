@@ -49,7 +49,7 @@ interface StepDef {
 }
 
 const STEPS_FURNITURE: StepDef[] = [
-  { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기" },
+  { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기", actionRoute: "/styling/step1" },
   { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
   { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
   { id: 4, label: "피드백 및 수정", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
@@ -57,7 +57,7 @@ const STEPS_FURNITURE: StepDef[] = [
 ];
 
 const STEPS_FULL_ONLINE: StepDef[] = [
-  { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기" },
+  { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기", actionRoute: "/styling/step1" },
   { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
   { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
   { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인" },
