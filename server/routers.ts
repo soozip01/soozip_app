@@ -1001,12 +1001,13 @@ export const appRouter = router({
       }),
 
     /**
-     * 신청서 제출 - Supabase survey_submissions에 직접 저장 (userId 포함)
+     * 신청서 제출 - Supabase survey_submissions에 직접 저장 (userId + login_provider 포함)
      */
     submit: publicProcedure
       .input(z.object({
         userId: z.string(),          // soozip 로그인 사용자 ID
         name: z.string(),             // 닉네임
+        loginProvider: z.enum(["kakao", "naver", "email"]),  // 로그인 방식
         stylingType: z.string(),      // 희망 스타일링 타입
         housingType: z.string().optional(),
         roomSize: z.string().optional(),
@@ -1019,7 +1020,8 @@ export const appRouter = router({
         buyFurniture: z.array(z.string()).optional(),
       }))
       .mutation(async ({ input }) => {
-        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+        // Service Role Key로 클라이언트 생성 (RLS 우회)
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseServiceRoleKey);
 
         // 이미 동일 userId로 신청한 내역이 있는지 확인
         const { data: existing } = await supabase
@@ -1038,6 +1040,7 @@ export const appRouter = router({
           .insert({
             user_id: input.userId,
             name: input.name,
+            login_provider: input.loginProvider,
             styling_type: input.stylingType,
             housing_type: input.housingType ?? null,
             room_size: input.roomSize ?? null,
@@ -1057,6 +1060,76 @@ export const appRouter = router({
         }
 
         return { success: true };
+      }),
+
+    /**
+     * 로그인 사용자 정보 동기화
+     * - 로그인 후 기존 신청서(name 기반)에 user_id, login_provider 업데이트
+     * - 닉네임이 변경된 경우 name 컬럼도 최신 닉네임으로 업데이트
+     * - 이미 user_id가 있는 경우 name만 최신 닉네임으로 업데이트
+     */
+    syncUserInfo: publicProcedure
+      .input(z.object({
+        userId: z.string(),
+        nickname: z.string(),
+        loginProvider: z.enum(["kakao", "naver", "email"]),
+      }))
+      .mutation(async ({ input }) => {
+        // Service Role Key로 클라이언트 생성 (RLS 우회)
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseServiceRoleKey);
+
+        // 1) 이미 userId로 연결된 신청서가 있는지 확인
+        const { data: existingByUserId } = await supabase
+          .from("survey_submissions")
+          .select("id, name, login_provider")
+          .eq("user_id", input.userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (existingByUserId) {
+          // 이미 연결된 신청서가 있으면 name과 login_provider만 최신값으로 업데이트
+          const updates: Record<string, string> = {};
+          if (existingByUserId.name !== input.nickname) {
+            updates.name = input.nickname;
+          }
+          if (!existingByUserId.login_provider) {
+            updates.login_provider = input.loginProvider;
+          }
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("survey_submissions")
+              .update(updates)
+              .eq("user_id", input.userId);
+          }
+          return { synced: true, action: "updated" };
+        }
+
+        // 2) userId가 없는 신청서 중 닉네임이 일치하는 것 찾기 (비로그인 신청자 연결)
+        const { data: existingByName } = await supabase
+          .from("survey_submissions")
+          .select("id, name, user_id")
+          .eq("name", input.nickname)
+          .is("user_id", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (existingByName) {
+          // 닉네임 일치하는 비로그인 신청서에 user_id와 login_provider 연결
+          await supabase
+            .from("survey_submissions")
+            .update({
+              user_id: input.userId,
+              login_provider: input.loginProvider,
+              name: input.nickname, // 닉네임으로 name 업데이트
+            })
+            .eq("id", existingByName.id);
+          return { synced: true, action: "linked" };
+        }
+
+        // 3) 연결할 신청서 없음 (신규 사용자 또는 미신청)
+        return { synced: false, action: "none" };
       }),
   }),
 

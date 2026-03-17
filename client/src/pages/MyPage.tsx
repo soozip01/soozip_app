@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useSoozipAuth } from "@/contexts/AuthContext";
 import { trpc } from "@/lib/trpc";
@@ -88,8 +88,24 @@ const SERVICE_ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 /* ─── 스타일링 탭 ─── */
-function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname: string; isLoggedIn: boolean }) {
+function StylingTab({ userId, nickname, loginProvider, isLoggedIn }: { userId: string; nickname: string; loginProvider: string; isLoggedIn: boolean }) {
   const [, navigate] = useLocation();
+
+  // 로그인 사용자 정보 동기화 mutation
+  const syncMutation = trpc.survey.syncUserInfo.useMutation();
+  const syncCalledRef = useRef(false);
+
+  // 로그인 시 user_id, login_provider, name 동기화 (최초 1회)
+  useEffect(() => {
+    if (isLoggedIn && userId && nickname && !syncCalledRef.current) {
+      syncCalledRef.current = true;
+      syncMutation.mutate({
+        userId,
+        nickname,
+        loginProvider: (loginProvider || "email") as "kakao" | "naver" | "email",
+      });
+    }
+  }, [isLoggedIn, userId, nickname, loginProvider]);
 
   // 로그인 안 된 경우
   if (!isLoggedIn) {
@@ -635,6 +651,7 @@ export default function MyPage() {
           <StylingTab
             userId={user ? String(user.id) : ""}
             nickname={user?.nickname ?? ""}
+            loginProvider={user?.provider ?? "email"}
             isLoggedIn={isLoggedIn}
           />
         )}

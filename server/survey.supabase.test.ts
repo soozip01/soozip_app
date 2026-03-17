@@ -60,3 +60,25 @@ describe("survey Supabase 연동", () => {
     expect(STEP_MAP["풀 스타일링(오프라인)"].length).toBe(7);
   });
 });
+
+describe("Supabase Service Role Key 유효성", () => {
+  it("SURVEY_SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되어 있어야 한다", () => {
+    const key = process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY;
+    expect(key).toBeDefined();
+    expect(key!.length).toBeGreaterThan(50);
+  });
+
+  it("Service Role Key로 survey_submissions 조회 가능해야 함", async () => {
+    const url = process.env.SURVEY_SUPABASE_URL ?? "";
+    const serviceKey = process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY ?? "";
+    const res = await fetch(`${url}/rest/v1/survey_submissions?limit=1&select=id,login_provider`, {
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+    });
+    expect(res.ok).toBe(true);
+    const data = await res.json();
+    expect(Array.isArray(data)).toBe(true);
+  });
+});

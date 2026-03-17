@@ -211,3 +211,9 @@
 - [x] mySubmission 프로시저: nickname 폴백 제거, user_id로만 조회
 - [x] 마이페이지 스타일링 탭: 로그인 사용자이지만 신청 내역 없을 때 비로그인 신청자 안내 메시지 표시
 - [x] StylingStep1.tsx + StylingStepUpload.tsx: nickname 파라미터 제거
+
+## 34차 작업 (Supabase login_provider 컬럼 추가 + 로그인 시 user_id/name 자동 등록)
+- [x] Supabase survey_submissions 테이블에 login_provider 컬럼 추가 (kakao/naver/email/null)
+- [x] 로그인 완료 시 survey_submissions에서 동일 name을 가진 비로그인 신청서에 user_id + login_provider 자동 등록
+- [x] 로그인 완료 시 name 컬럼을 닉네임으로 업데이트 (닉네임 우선순위)
+- [x] 신규 로그인 사용자가 신청서 제출 시 user_id + login_provider + name(닉네임) 자동 저장

@@ -62,6 +62,7 @@ export default function StylingRequestForm() {
     submitSurvey.mutate({
       userId,
       name: userName,
+      loginProvider: (user?.provider ?? "email") as "kakao" | "naver" | "email",
       stylingType: form.stylingType,
       housingType: form.housingType || undefined,
       roomSize: form.roomSize || undefined,

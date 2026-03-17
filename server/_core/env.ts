@@ -18,6 +18,7 @@ export const ENV = {
   // Supabase (설문조사 전용 프로젝트)
   surveySupabaseUrl: process.env.SURVEY_SUPABASE_URL ?? "",
   surveySupabaseAnonKey: process.env.SURVEY_SUPABASE_ANON_KEY ?? "",
+  surveySupabaseServiceRoleKey: process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY ?? "",
   // SMTP (이메일 발송)
   smtpHost: process.env.SMTP_HOST ?? "",
   smtpPort: parseInt(process.env.SMTP_PORT ?? "587"),
