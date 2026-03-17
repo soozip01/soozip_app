@@ -7,13 +7,15 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, X, Search, FileText } from "lucide-react";
+import SurveyOverlay from "@/components/SurveyOverlay";
 
 export default function StylingMain() {
   const [, navigate] = useLocation();
   const [showReservationModal, setShowReservationModal] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
 
   const handleSurvey = () => {
-    window.open("https://soozipland-j3tut3mq.manus.space/", "_blank");
+    setShowSurvey(true);
   };
 
   const handleKakaoChat = () => {
@@ -30,6 +32,14 @@ export default function StylingMain() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-lg mx-auto">
+      {/* soozipland 설문 오버레이 */}
+      {showSurvey && (
+        <SurveyOverlay
+          url="https://soozipland-j3tut3mq.manus.space/"
+          title="스타일링 신청서"
+          onClose={() => setShowSurvey(false)}
+        />
+      )}
       {/* 예약 방식 선택 모달 */}
       {showReservationModal && (
         <div

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import SurveyOverlay from "@/components/SurveyOverlay";
 
 const TERRACOTTA = "oklch(0.55 0.22 32)";
 
@@ -24,37 +25,17 @@ export default function BookingComplete() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  if (showSurvey && surveyUrl) {
-    return (
-      <div className="fixed inset-0 bg-background z-50 flex flex-col">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-          <button
-            onClick={() => setShowSurvey(false)}
-            className="text-sm text-muted-foreground"
-          >
-            ← 돌아가기
-          </button>
-          <h1 className="font-bold text-sm flex-1 text-center">스타일링 신청 설문</h1>
-          <a
-            href={surveyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1"
-          >
-            <ExternalLink size={16} className="text-muted-foreground" />
-          </a>
-        </div>
-        <iframe
-          src={surveyUrl}
-          className="flex-1 w-full border-none"
-          title="스타일링 신청 설문"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+      {/* SurveyOverlay - 앱 내부 전체화면 iframe */}
+      {showSurvey && surveyUrl && (
+        <SurveyOverlay
+          url={surveyUrl}
+          title="스타일링 신청 설문"
+          onClose={() => setShowSurvey(false)}
+        />
+      )}
+
       <div
         className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
         style={{ background: surveyDone ? "oklch(0.92 0.08 150)" : "oklch(0.95 0.05 32)" }}

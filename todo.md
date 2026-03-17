@@ -176,3 +176,15 @@
 - [x] 마이페이지 프로필 탭에서 프로필 편집 버튼 → /profile/edit 연결
 - [x] App.tsx /profile/edit 라우트 등록
 - [x] 닉네임 변경 tRPC 프로시저 추가 (DB 업데이트)
+
+## 30차 작업 (soozipland 링크 → 앱 내부 iframe 전체화면으로 전환)
+- [x] SurveyOverlay 공통 컴포넌트 생성 (전체화면 iframe, 뒤로가기 헤더)
+- [x] StylingMain.tsx: handleSurvey → SurveyOverlay 열기
+- [x] StylingTypeFurniture.tsx: 하단 버튼 → SurveyOverlay 열기
+- [x] StylingTypeFullOnline.tsx: 하단 버튼 → SurveyOverlay 열기
+- [x] StylingTypeFullOffline.tsx: 하단 버튼 → SurveyOverlay 열기
+- [x] StylingTypeOnline.tsx: 하단 버튼 → SurveyOverlay 열기
+- [x] StylingTypeOffline.tsx: 하단 버튼 → SurveyOverlay 열기
+- [x] BookingCalendar.tsx: 예약 완료 후 SurveyOverlay로 설문 열기 (BookingComplete에서)
+- [x] Home.tsx: showStylingModal iframe → SurveyOverlay
+- [x] StylingRequestEmbed.tsx: 직접 iframe → SurveyOverlay

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 import { useApprovedProducts } from "@/hooks/useProducts";
 import { useSoozipAuth } from "@/contexts/AuthContext";
+import SurveyOverlay from "@/components/SurveyOverlay";
 
 const TERRACOTTA = "oklch(0.55 0.22 32)"; // 선명한 오렌지-레드 (#E84B1A 계열)
 
@@ -644,28 +645,11 @@ export default function Home() {
 
       {/* ── 홈 스타일링 신청 iframe 모달 ── */}
       {showStylingModal && (
-        <div
-          className="fixed inset-0 z-50 bg-background flex flex-col"
-          style={{ animation: "slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1)" }}
-        >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
-            <button
-              onClick={() => setShowStylingModal(false)}
-              className="p-1.5 hover:bg-secondary rounded-md transition-colors"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 12H5M12 5l-7 7 7 7"/>
-              </svg>
-            </button>
-            <span className="text-sm font-bold text-foreground">홈 스타일링 신청</span>
-            <div className="w-8" />
-          </div>
-          <iframe
-            src="https://soozipland-j3tut3mq.manus.space/"
-            className="flex-1 w-full border-none"
-            title="홈 스타일링 신청"
-          />
-        </div>
+        <SurveyOverlay
+          url="https://soozipland-j3tut3mq.manus.space/"
+          title="홈 스타일링 신청"
+          onClose={() => setShowStylingModal(false)}
+        />
       )}
 
       {/* ── AI 스타일링 iframe 모달 ── */}

@@ -7,6 +7,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, CheckCircle2, XCircle, Bell, ImageIcon } from "lucide-react";
+import SurveyOverlay from "@/components/SurveyOverlay";
 
 const TERRACOTTA = "#d31400";
 
@@ -46,6 +47,7 @@ function ImgPlaceholder({
 export default function StylingTypeFullOnline() {
   const [, navigate] = useLocation();
   const [activeStep, setActiveStep] = useState(0);
+  const [showSurvey, setShowSurvey] = useState(false);
   const stepSectionRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -78,6 +80,13 @@ export default function StylingTypeFullOnline() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-lg mx-auto">
+      {showSurvey && (
+        <SurveyOverlay
+          url="https://soozipland-j3tut3mq.manus.space/"
+          title="풀 스타일링(온라인) 신청서"
+          onClose={() => setShowSurvey(false)}
+        />
+      )}
       {/* 헤더 */}
       <header className="flex items-center px-4 py-4 border-b border-gray-100 sticky top-0 bg-white z-20">
         <button
@@ -355,7 +364,7 @@ export default function StylingTypeFullOnline() {
         {/* 하단 CTA */}
         <section className="px-4 pb-10 pt-4">
           <button
-            onClick={() => window.open("https://soozipland-j3tut3mq.manus.space/", "_blank")}
+            onClick={() => setShowSurvey(true)}
             className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all mb-3"
             style={{ background: "#111111" }}
           >
