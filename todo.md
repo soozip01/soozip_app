@@ -188,3 +188,15 @@
 - [x] BookingCalendar.tsx: 예약 완료 후 SurveyOverlay로 설문 열기 (BookingComplete에서)
 - [x] Home.tsx: showStylingModal iframe → SurveyOverlay
 - [x] StylingRequestEmbed.tsx: 직접 iframe → SurveyOverlay
+
+## 31차 작업 (STEP별 파일 업로드 - Supabase Storage 연동)
+- [x] Supabase survey_submissions 테이블 step1~7 컨럼 구조 파악
+- [x] Supabase Storage 'soozip_styling_step' 버킷 확인/생성
+- [x] tRPC 프로시저: getStepData (step1~7 현재 데이터 조회)
+- [x] tRPC 프로시저: uploadStepFile (파일 → Supabase Storage 업로드 → URL → step 컨럼 저장)
+- [x] tRPC 프로시저: deleteStepFile (특정 파일 URL 제거)
+- [x] tRPC 프로시저: updateStepText (텍스트 저장)
+- [x] 마이페이지 STEP 카드: actionRoute 연결 (/styling/step2~7)
+- [x] StylingStep1 페이지: 실제 Supabase Storage 연동
+- [x] STEP2~7 전용 업로드 페이지 구현 (각 단계별 안내 + 파일/텍스트 업로드)
+- [x] App.tsx 라우트 등록 (/styling/step2 ~ /styling/step7)

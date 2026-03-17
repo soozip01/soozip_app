@@ -883,7 +883,7 @@ export const appRouter = router({
       }),
 
     /**
-     * STEP 1 사용자 파일 업로드 - S3에 저장 후 Supabase step1 컬럼에 URL 배열 저장
+     * STEP 사용자 파일 업로드 - Supabase Storage 'soozip_styling_step' 버킷에 저장 후 URL을 step 컬럼에 저장
      */
     uploadStepFile: publicProcedure
       .input(z.object({
@@ -908,13 +908,32 @@ export const appRouter = router({
           throw new Error("신청 내역을 찾을 수 없습니다.");
         }
 
-        // S3에 파일 업로드
+        // Supabase Storage 'soozip_styling_step' 버킷에 파일 업로드
         const buffer = Buffer.from(input.fileBase64, 'base64');
         const suffix = Date.now();
-        const fileKey = `styling/${input.userId}/${input.stepKey}/${suffix}-${input.fileName}`;
-        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        const safeFileName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileKey = `${input.userId}/${input.stepKey}/${suffix}-${safeFileName}`;
 
-        // 기존 URL 배열에 추가
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('soozip_styling_step')
+          .upload(fileKey, buffer, { contentType: input.mimeType, upsert: false });
+
+        let fileUrl: string;
+        if (uploadError) {
+          // Supabase Storage 업로드 실패 시 Manus S3 폴백
+          console.warn('[uploadStepFile] Supabase Storage 업로드 실패, S3 폴백:', uploadError.message);
+          const s3Key = `styling-step/${input.userId}/${input.stepKey}/${suffix}-${safeFileName}`;
+          const { url: s3Url } = await storagePut(s3Key, buffer, input.mimeType);
+          fileUrl = s3Url;
+        } else {
+          // Supabase Storage 공개 URL 생성
+          const { data: publicUrlData } = supabase.storage
+            .from('soozip_styling_step')
+            .getPublicUrl(fileKey);
+          fileUrl = publicUrlData.publicUrl;
+        }
+
+        // 기존 URL 배열에 추가 (text:: 항목 제외한 파일 URL만)
         let existingUrls: string[] = [];
         const raw = (existing as Record<string, unknown>)[input.stepKey];
         if (typeof raw === 'string' && raw !== 'pending' && raw !== 'completed') {
@@ -922,7 +941,7 @@ export const appRouter = router({
         } else if (Array.isArray(raw)) {
           existingUrls = raw;
         }
-        const updatedUrls = [...existingUrls, url];
+        const updatedUrls = [...existingUrls, fileUrl];
 
         const { error: updateErr } = await supabase
           .from("survey_submissions")
@@ -931,7 +950,7 @@ export const appRouter = router({
 
         if (updateErr) throw new Error("파일 저장에 실패했습니다.");
 
-        return { success: true, url, urls: updatedUrls };
+        return { success: true, url: fileUrl, urls: updatedUrls };
       }),
 
     /**
@@ -972,6 +991,47 @@ export const appRouter = router({
         if (updateErr) throw new Error("파일 삭제에 실패했습니다.");
 
         return { success: true, urls: updatedUrls };
+      }),
+
+    /**
+     * STEP 텍스트 저장 - step 컬럼에 텍스트 내용 저장 ("text::내용" 형식)
+     */
+    updateStepText: publicProcedure
+      .input(z.object({
+        userId: z.string(),
+        stepKey: z.enum(['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7']),
+        text: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+        const { data: existing, error: fetchErr } = await supabase
+          .from("survey_submissions")
+          .select(`id, ${input.stepKey}`)
+          .eq("user_id", input.userId)
+          .limit(1)
+          .single();
+        if (fetchErr || !existing) throw new Error("신청 내역을 찾을 수 없습니다.");
+        // 기존 파일 URL 배열 유지하면서 텍스트 교체
+        const raw = (existing as Record<string, unknown>)[input.stepKey];
+        let existingItems: string[] = [];
+        if (typeof raw === 'string' && raw !== 'pending' && raw !== 'completed') {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) existingItems = parsed;
+          } catch { existingItems = []; }
+        }
+        // 파일 URL만 유지 (text:: 항목 제거)
+        const filesOnly = existingItems.filter(u => !u.startsWith('text::'));
+        // 새 텍스트 추가
+        const updatedData = input.text.trim()
+          ? [...filesOnly, `text::${input.text}`]
+          : filesOnly;
+        const { error: updateErr } = await supabase
+          .from("survey_submissions")
+          .update({ [input.stepKey]: updatedData.length > 0 ? JSON.stringify(updatedData) : 'pending' })
+          .eq("user_id", input.userId);
+        if (updateErr) throw new Error("텍스트 저장에 실패했습니다.");
+        return { success: true, data: updatedData };
       }),
 
     /**

@@ -43,6 +43,12 @@ import StylingRequestList from "./pages/StylingRequestList";
 import StylingRequestEmbed from "./pages/StylingRequestEmbed";
 import FurnitureInfoForm from "./pages/FurnitureInfoForm";
 import StylingStep1 from "./pages/StylingStep1";
+import StylingStep2 from "./pages/StylingStep2";
+import StylingStep3 from "./pages/StylingStep3";
+import StylingStep4 from "./pages/StylingStep4";
+import StylingStep5 from "./pages/StylingStep5";
+import StylingStep6 from "./pages/StylingStep6";
+import StylingStep7 from "./pages/StylingStep7";
 import ProfileEdit from "./pages/ProfileEdit";
 
 function Router() {
@@ -89,6 +95,12 @@ function Router() {
       <Route path="/styling-requests" component={StylingRequestList} />
       <Route path="/styling/furniture-info" component={FurnitureInfoForm} />
       <Route path="/styling/step1" component={StylingStep1} />
+      <Route path="/styling/step2" component={StylingStep2} />
+      <Route path="/styling/step3" component={StylingStep3} />
+      <Route path="/styling/step4" component={StylingStep4} />
+      <Route path="/styling/step5" component={StylingStep5} />
+      <Route path="/styling/step6" component={StylingStep6} />
+      <Route path="/styling/step7" component={StylingStep7} />
       <Route path="/profile/edit" component={ProfileEdit} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

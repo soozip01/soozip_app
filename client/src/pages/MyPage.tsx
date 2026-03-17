@@ -50,29 +50,29 @@ interface StepDef {
 
 const STEPS_FURNITURE: StepDef[] = [
   { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기", actionRoute: "/styling/step1" },
-  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
-  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
-  { id: 4, label: "피드백 및 수정", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
-  { id: 5, label: "최종 시안 전달", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
+  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/step2" },
+  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
+  { id: 4, label: "피드백 및 수정", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step4" },
+  { id: 5, label: "최종 시안 전달", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기", actionRoute: "/styling/step5" },
 ];
 
 const STEPS_FULL_ONLINE: StepDef[] = [
   { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기", actionRoute: "/styling/step1" },
-  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
-  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
-  { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인" },
-  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
-  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
+  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/step2" },
+  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
+  { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인", actionRoute: "/styling/step4" },
+  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step5" },
+  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기", actionRoute: "/styling/step6" },
 ];
 
 const STEPS_FULL_OFFLINE: StepDef[] = [
-  { id: 1, label: "방문 상담 및 공간 실측", desc: "방문 상담 및 실측을 위한 일정을 조율해주세요", actionLabel: "일정 확인하기" },
-  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
-  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
-  { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인" },
-  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
-  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
-  { id: 7, label: "가구 및 소품 세팅", desc: "선정된 가구와 소품 세팅이 진행됩니다", actionLabel: "세팅 현황 확인" },
+  { id: 1, label: "방문 상담 및 공간 실측", desc: "방문 상담 및 실측을 위한 일정을 조율해주세요", actionLabel: "일정 확인하기", actionRoute: "/styling/step1" },
+  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/step2" },
+  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
+  { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인", actionRoute: "/styling/step4" },
+  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step5" },
+  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기", actionRoute: "/styling/step6" },
+  { id: 7, label: "가구 및 소품 세팅", desc: "선정된 가구와 소품 세팅이 진행됩니다", actionLabel: "세팅 현황 확인", actionRoute: "/styling/step7" },
 ];
 
 const STEPS_MAP: Record<string, StepDef[]> = {
