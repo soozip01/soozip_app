@@ -49,30 +49,30 @@ interface StepDef {
 }
 
 const STEPS_FURNITURE: StepDef[] = [
-  { id: 1, label: "신청 완료", desc: "서비스 신청이 완료되었어요", actionLabel: "신청 내역 확인" },
-  { id: 2, label: "기존 가구 정보 입력", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
-  { id: 3, label: "실측 패키지 수령", desc: "실측 패키지를 수령한 후 확인해주세요", actionLabel: "수령 확인" },
-  { id: 4, label: "배치안 확인", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
-  { id: 5, label: "최종안 전달 완료", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종안 확인하기" },
+  { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기" },
+  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
+  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
+  { id: 4, label: "피드백 및 수정", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
+  { id: 5, label: "최종 시안 전달", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
 ];
 
 const STEPS_FULL_ONLINE: StepDef[] = [
-  { id: 1, label: "신청 완료", desc: "서비스 신청이 완료되었어요", actionLabel: "신청 내역 확인" },
-  { id: 2, label: "공간 실측 정보 전달", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기" },
-  { id: 3, label: "기존 가구 정보 입력", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
-  { id: 4, label: "배치 솔루션 확인", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
-  { id: 5, label: "피드백 전달", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
-  { id: 6, label: "최종 시안 전달 완료", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
+  { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기" },
+  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
+  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
+  { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인" },
+  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
+  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
 ];
 
 const STEPS_FULL_OFFLINE: StepDef[] = [
-  { id: 1, label: "신청 완료", desc: "서비스 신청이 완료되었어요", actionLabel: "신청 내역 확인" },
-  { id: 2, label: "방문 상담 일정 조율", desc: "방문 상담 및 실측을 위한 일정을 조율해주세요", actionLabel: "일정 확인하기" },
-  { id: 3, label: "기존 가구 정보 입력", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
-  { id: 4, label: "배치 솔루션 확인", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
-  { id: 5, label: "피드백 전달", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
-  { id: 6, label: "최종 시안 전달 완료", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
-  { id: 7, label: "가구 세팅 완료", desc: "선정된 가구와 소품 세팅이 완료되었어요", actionLabel: "완료 확인하기" },
+  { id: 1, label: "방문 상담 및 공간 실측", desc: "방문 상담 및 실측을 위한 일정을 조율해주세요", actionLabel: "일정 확인하기" },
+  { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/furniture-info" },
+  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기" },
+  { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인" },
+  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기" },
+  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기" },
+  { id: 7, label: "가구 및 소품 세팅", desc: "선정된 가구와 소품 세팅이 진행됩니다", actionLabel: "세팅 현황 확인" },
 ];
 
 const STEPS_MAP: Record<string, StepDef[]> = {
@@ -270,54 +270,49 @@ function StylingTab({ userId, nickname, isLoggedIn }: { userId: string; nickname
               }}
             >
               <div className="px-4 py-4">
-                {/* STEP 번호 + 상태 */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                      style={{
-                        background: isActive ? TERRACOTTA : isDone ? "#e5e7eb" : "#f3f4f6",
-                      }}
-                    >
-                      {isDone ? (
-                        <CheckCircle2 size={14} className="text-gray-500" />
-                      ) : (
+                {/* STEP 번호 + 단계명 + 상태 - 한 줄 표시 */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {/* 완료 시 체크 아이콘, 진행/대기 시 STEP 번호 */}
+                    {isDone ? (
+                      <CheckCircle2
+                        size={16}
+                        style={{ color: "#9ca3af", flexShrink: 0 }}
+                      />
+                    ) : (
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: isActive ? TERRACOTTA : "#f3f4f6" }}
+                      >
                         <span
-                          className="text-[11px] font-bold"
+                          className="text-[9px] font-bold leading-none"
                           style={{ color: isActive ? "white" : "#9ca3af" }}
                         >
                           {String(step.id).padStart(2, "0")}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                    {/* STEP 01 단계명 */}
                     <span
-                      className="text-[13px] font-bold"
+                      className="text-[14px] font-bold truncate"
                       style={{
                         color: isActive ? TERRACOTTA : isDone ? "#9ca3af" : "#c4c4c4",
                       }}
                     >
-                      STEP {String(step.id).padStart(2, "0")}
+                      STEP {String(step.id).padStart(2, "0")} {step.label}
                     </span>
                   </div>
-                  {isDone && <span className="text-[11px] text-gray-400 font-medium">완료</span>}
-                  {isPending && <span className="text-[11px] text-gray-300 font-medium">대기중</span>}
+                  {isDone && <span className="text-[11px] text-gray-400 font-medium shrink-0 ml-2">완료</span>}
+                  {isPending && <span className="text-[11px] text-gray-300 font-medium shrink-0 ml-2">대기중</span>}
                   {isActive && (
                     <span
-                      className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white"
+                      className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white shrink-0 ml-2"
                       style={{ background: TERRACOTTA }}
                     >
                       진행중
                     </span>
                   )}
                 </div>
-
-                {/* 단계 제목 */}
-                <p
-                  className="text-[15px] font-bold mb-1"
-                  style={{ color: isPending ? "#c4c4c4" : "#111" }}
-                >
-                  {step.label}
-                </p>
 
                 {/* 설명 (활성 단계만) */}
                 {isActive && (
