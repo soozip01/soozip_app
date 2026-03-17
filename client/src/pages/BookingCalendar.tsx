@@ -45,9 +45,8 @@ export default function BookingCalendar() {
 
   const createBooking = trpc.stylingBooking.create.useMutation({
     onSuccess: (data) => {
-      // 예약 생성 후 설문으로 이동
-      const surveyUrl = `https://soozipland-j3tut3mq.manus.space/survey?bookingId=${data.bookingId}&nickname=${encodeURIComponent(form.bookerNickname)}&type=${encodeURIComponent(form.stylingType)}`;
-      navigate(`/booking/complete?surveyUrl=${encodeURIComponent(surveyUrl)}`);
+      // 예약 생성 후 내부 신청서 페이지로 이동
+      navigate(`/booking/complete?bookingId=${data.bookingId}&type=${encodeURIComponent(form.stylingType)}`);
     },
     onError: (err) => toast.error(err.message),
   });

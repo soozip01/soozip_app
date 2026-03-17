@@ -355,7 +355,7 @@ export default function StylingTypeFullOnline() {
         {/* 하단 CTA */}
         <section className="px-4 pb-10 pt-4">
           <button
-            onClick={() => window.open("https://soozipland-j3tut3mq.manus.space/", "_blank")}
+            onClick={() => navigate("/styling/request")}
             className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all mb-3"
             style={{ background: "#111111" }}
           >

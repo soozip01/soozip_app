@@ -13,7 +13,7 @@ export default function StylingMain() {
   const [showReservationModal, setShowReservationModal] = useState(false);
 
   const handleSurvey = () => {
-    window.open("https://soozipland-j3tut3mq.manus.space/", "_blank");
+    navigate("/styling/request");
   };
 
   const handleKakaoChat = () => {
