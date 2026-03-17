@@ -134,6 +134,7 @@ export default function StylingStep1() {
       // 서버에 업로드
       uploadMutation.mutate({
         userId: userIdStr,
+        nickname: user?.nickname || undefined,
         stepKey: "step1",
         fileBase64: base64,
         fileName: file.name,
@@ -162,7 +163,7 @@ export default function StylingStep1() {
       setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
       return;
     }
-    deleteMutation.mutate({ userId: String(user.id), stepKey: "step1", fileUrl });
+    deleteMutation.mutate({ userId: String(user.id), nickname: user?.nickname || undefined, stepKey: "step1", fileUrl });
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 

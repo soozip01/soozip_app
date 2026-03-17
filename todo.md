@@ -200,3 +200,8 @@
 - [x] StylingStep1 페이지: 실제 Supabase Storage 연동
 - [x] STEP2~7 전용 업로드 페이지 구현 (각 단계별 안내 + 파일/텍스트 업로드)
 - [x] App.tsx 라우트 등록 (/styling/step2 ~ /styling/step7)
+
+## 32차 작업 (STEP 파일 업로드 오류 수정)
+- [x] StylingStep1 파일 업로드 시 "신청 내역을 찾을 수 없습니다" 오류 수정
+- [x] uploadStepFile/deleteStepFile/updateStepText: userId 없으면 nickname(name 컨럼)으로 폴백 조회
+- [x] StylingStep1.tsx + StylingStepUpload.tsx: nickname 파라미터 함께 전달
