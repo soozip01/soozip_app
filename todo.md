@@ -228,3 +228,8 @@
 - [x] StylingStep1.tsx - 담당자 메시지 및 첨부파일 섹선 재구현 (항상 표시)
 - [x] StylingStepUpload.tsx - 담당자 메시지 섹선 항상 노출, 텍스트+파일 혼합 파싱
 - [x] 파일이 없을 때도 "아직 등록된 내용이 없어요" 안내 메시지 표시
+
+## 36차 작업 (Supabase Storage 버킷 공개 설정 문제 해결)
+- [x] 실제 저장된 파일 URL 및 버킷명 확인
+- [x] soozip_styling_step 버킷을 public으로 변경 (HTTP 200 확인)
+- [x] 파일 미리보기 및 다운로드 정상 동작 확인
