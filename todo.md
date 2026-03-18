@@ -258,3 +258,7 @@
 - [x] STEP 3: allowText 활성화 (피드백 선택 입력 가능)
 - [x] STEP 5: allowText 활성화 (확인 메모 선택 입력 가능)
 - [x] 모든 STEP completeStep mutation 호출 후 마이페이지 이동
+
+## 41차 작업 (STEP 2 로그인 필요 에러 수정)
+- [x] 원인: uploadStepFile/deleteStepFile/updateStepText에서 anon key 사용 → Supabase RLS에 의해 조회 차단
+- [x] 해결: 세 프로시저 모두 service role key로 변경 (RLS 우회)

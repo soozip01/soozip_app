@@ -851,7 +851,7 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ input }) => {
-        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseServiceRoleKey);
 
         // user_id로만 조회 (비로그인 신청자는 파일 업로드 불가)
         const { data: existing } = await supabase
@@ -922,7 +922,7 @@ export const appRouter = router({
         fileUrl: z.string(),
       }))
       .mutation(async ({ input }) => {
-        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseServiceRoleKey);
 
         const { data: existing } = await supabase
           .from("survey_submissions")
@@ -954,7 +954,7 @@ export const appRouter = router({
       }),
 
     /**
-     * STEP 텍스트 저장 - step 컬럼에 텍스트 내용 저장 ("text::내용" 형식)
+     * STEP 텍스트 저장 - step 컨럼에 텍스트 내용 저장 ("text::내용" 형식)
      */
     updateStepText: publicProcedure
       .input(z.object({
@@ -963,7 +963,7 @@ export const appRouter = router({
         text: z.string(),
       }))
       .mutation(async ({ input }) => {
-        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseServiceRoleKey);
 
         const { data: existing } = await supabase
           .from("survey_submissions")
