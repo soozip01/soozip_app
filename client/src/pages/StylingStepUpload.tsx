@@ -16,7 +16,7 @@ import { useSoozipAuth } from "@/contexts/AuthContext";
 
 const TERRACOTTA = "#d31400";
 
-type StepKey = 'step1' | 'step2' | 'step3' | 'step4' | 'step5' | 'step6' | 'step7';
+type StepKey = 'step1' | 'step2' | 'step4' | 'step5' | 'step6' | 'step7';
 
 interface UploadedFile {
   id: string;
@@ -80,24 +80,6 @@ const STEP_CONFIGS: Record<StepKey, StepConfig> = {
       "가구 사진을 찍어 업로드하면 더 정확한 제안이 가능해요",
     ],
     progressPercent: 28,
-  },
-  step3: {
-    stepKey: 'step3',
-    stepNumber: 3,
-    title: "배치 솔루션 제안",
-    subtitle: "STEP 03",
-    description: "담당 디자이너가 제안한 배치안을 확인하고, 첨부된 파일을 다운로드해주세요.",
-    allowText: true,
-    allowFiles: false,
-    requiresAdminFile: true,
-    textLabel: "피드백 작성 (선택)",
-    textPlaceholder: "제안된 배치안에 대한 의견을 남겨주세요...",
-    fileLabel: "",
-    tips: [
-      "제안된 배치안을 꼼꼼히 검토해주세요",
-      "다음 단계에서 피드백을 남길 수 있어요",
-    ],
-    progressPercent: 43,
   },
   step4: {
     stepKey: 'step4',
