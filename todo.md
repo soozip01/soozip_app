@@ -262,3 +262,9 @@
 ## 41차 작업 (STEP 2 로그인 필요 에러 수정)
 - [x] 원인: uploadStepFile/deleteStepFile/updateStepText에서 anon key 사용 → Supabase RLS에 의해 조회 차단
 - [x] 해결: 세 프로시저 모두 service role key로 변경 (RLS 우회)
+
+## 42차 작업 (STEP 2 에러 완전 해결 + 기존 데이터 불러오기)
+- [x] 에러 근본 원인: StylingStep2가 Manus OAuth useAuth를 사용 → user가 null이라 "로그인이 필요합니다" 오류 발생
+- [x] 해결: useAuth → useSoozipAuth로 교체 (SOOZIP 자체 인증 시스템 사용)
+- [x] 기존 입력 데이터 불러오기: mySubmission 쿼리로 step2 데이터 로드, 링크/사진 방식 자동 파싱
+- [x] 페이지 재진입 시 이전 입력 데이터 자동 복원 + "이전 입력 불러옴" 배지 표시

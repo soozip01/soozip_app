@@ -2,8 +2,9 @@
  * - 제품 링크 방식: URL + 옵션 입력
  * - 사진+사이즈 방식: 사진 업로드 + 가로/깊이/높이 입력
  * - 저장: survey_submissions.step2 컬럼 (JSON 배열)
+ * - 기존 입력 데이터 자동 불러오기 지원
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft, Link2, Camera, Plus, Trash2,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useSoozipAuth } from "@/contexts/AuthContext";
 
 const TERRACOTTA = "#d31400";
 
@@ -38,6 +39,66 @@ interface PhotoItem {
 
 function generateId() {
   return Math.random().toString(36).slice(2, 9);
+}
+
+/* ─── 저장된 step2 데이터 파싱 ─── */
+function parseStep2Data(raw: string | null): { mode: InputMode; linkItems: LinkItem[]; photoItems: PhotoItem[] } | null {
+  if (!raw || raw === 'pending' || raw === 'completed') return null;
+
+  try {
+    // JSON 배열 형태로 저장된 경우
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // text:: 형태의 텍스트 항목 찾기
+      const textItems = parsed.filter((u: string) => typeof u === 'string' && u.startsWith('text::'));
+      if (textItems.length > 0) {
+        const text = textItems[0].replace('text::', '');
+        // 링크 방식인지 사진 방식인지 판단
+        if (text.includes('링크:')) {
+          const lines = text.split('\n').filter(Boolean);
+          const linkItems: LinkItem[] = lines.map((line: string) => {
+            const linkMatch = line.match(/링크:\s*(\S+)/);
+            const optionMatch = line.match(/옵션:\s*(.+)/);
+            return {
+              id: generateId(),
+              productLink: linkMatch?.[1] ?? '',
+              productOption: optionMatch?.[1] ?? '',
+            };
+          }).filter((item: LinkItem) => item.productLink);
+          if (linkItems.length > 0) {
+            return { mode: 'link', linkItems, photoItems: [] };
+          }
+        } else if (text.includes('제품명:') || text.includes('사이즈:')) {
+          const lines = text.split('\n').filter(Boolean);
+          const photoItems: PhotoItem[] = lines.map((line: string) => {
+            const nameMatch = line.match(/제품명:\s*([^/]+)/);
+            const sizeMatch = line.match(/사이즈:\s*([^/]+)/);
+            const wMatch = sizeMatch?.[1]?.match(/W(\d+)/);
+            const dMatch = sizeMatch?.[1]?.match(/D(\d+)/);
+            const hMatch = sizeMatch?.[1]?.match(/H(\d+)/);
+            const notesMatch = line.match(/특이사항:\s*(.+)/);
+            return {
+              id: generateId(),
+              photoPreview: '',
+              photoUrl: '',
+              productName: nameMatch?.[1]?.trim() ?? '',
+              width: wMatch?.[1] ?? '',
+              depth: dMatch?.[1] ?? '',
+              height: hMatch?.[1] ?? '',
+              notes: notesMatch?.[1]?.trim() ?? '',
+              uploading: false,
+              uploadError: '',
+            };
+          }).filter((item: PhotoItem) => item.productName || item.width);
+          if (photoItems.length > 0) {
+            return { mode: 'photo', linkItems: [], photoItems };
+          }
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
+  return null;
 }
 
 /* ─── 제품 링크 아이템 ─── */
@@ -281,7 +342,7 @@ function PhotoItemCard({
 /* ─── 메인 컴포넌트 ─── */
 export default function StylingStep2() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, isLoggedIn } = useSoozipAuth();
   const [mode, setMode] = useState<InputMode>("link");
   const [linkItems, setLinkItems] = useState<LinkItem[]>([
     { id: generateId(), productLink: "", productOption: "" },
@@ -290,10 +351,34 @@ export default function StylingStep2() {
     { id: generateId(), photoPreview: "", photoUrl: "", productName: "", width: "", depth: "", height: "", notes: "", uploading: false, uploadError: "" },
   ]);
   const [submitting, setSubmitting] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const uploadFileMutation = trpc.survey.uploadStepFile.useMutation();
   const updateTextMutation = trpc.survey.updateStepText.useMutation();
   const completeStepMutation = trpc.survey.completeStep.useMutation();
+
+  // 기존 신청 데이터 조회
+  const { data: submission, isLoading: submissionLoading } = trpc.survey.mySubmission.useQuery(
+    { userId: user ? String(user.id) : undefined },
+    { enabled: isLoggedIn && !!user }
+  );
+
+  // 기존 step2 데이터 불러오기
+  useEffect(() => {
+    if (dataLoaded || submissionLoading) return;
+    if (!submission) return;
+
+    const parsed = parseStep2Data(submission.step2);
+    if (parsed) {
+      setMode(parsed.mode);
+      if (parsed.mode === 'link' && parsed.linkItems.length > 0) {
+        setLinkItems(parsed.linkItems);
+      } else if (parsed.mode === 'photo' && parsed.photoItems.length > 0) {
+        setPhotoItems(parsed.photoItems);
+      }
+    }
+    setDataLoaded(true);
+  }, [submission, submissionLoading, dataLoaded]);
 
   /* ─── 링크 핸들러 ─── */
   const handleLinkChange = useCallback((id: string, field: keyof LinkItem, value: string) => {
@@ -314,6 +399,11 @@ export default function StylingStep2() {
   }, []);
 
   const handlePhotoUpload = useCallback(async (id: string, file: File) => {
+    if (!user) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+
     // 미리보기 설정
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -332,7 +422,7 @@ export default function StylingStep2() {
       });
 
       const result = await uploadFileMutation.mutateAsync({
-        userId: String(user?.id ?? ""),
+        userId: String(user.id),
         stepKey: "step2",
         fileBase64: base64,
         fileName: file.name,
@@ -355,10 +445,13 @@ export default function StylingStep2() {
 
   /* ─── 제출 ─── */
   const handleSubmit = async () => {
-    if (!user) {
+    if (!isLoggedIn || !user) {
       toast.error("로그인이 필요합니다.");
+      navigate("/login");
       return;
     }
+
+    const userId = String(user.id);
 
     if (mode === "link") {
       const valid = linkItems.filter((i) => i.productLink.trim());
@@ -373,16 +466,17 @@ export default function StylingStep2() {
           `[가구 ${idx + 1}] 링크: ${item.productLink}${item.productOption ? ` / 옵션: ${item.productOption}` : ""}`
         ).join("\n");
         await updateTextMutation.mutateAsync({
-          userId: String(user.id),
+          userId,
           stepKey: "step2",
           text,
         });
         // step2 완료 처리
-        try { await completeStepMutation.mutateAsync({ userId: String(user.id), stepKey: 'step2' }); } catch {}
+        try { await completeStepMutation.mutateAsync({ userId, stepKey: 'step2' }); } catch { /* ignore */ }
         toast.success("가구 정보가 저장되었습니다!");
         setTimeout(() => navigate("/styling/step3"), 1000);
-      } catch {
-        toast.error("저장에 실패했습니다. 다시 시도해주세요.");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "저장에 실패했습니다.";
+        toast.error(msg);
       } finally {
         setSubmitting(false);
       }
@@ -409,21 +503,31 @@ export default function StylingStep2() {
           return parts.join(" / ");
         }).join("\n");
         await updateTextMutation.mutateAsync({
-          userId: String(user.id),
+          userId,
           stepKey: "step2",
           text,
         });
         // step2 완료 처리
-        try { await completeStepMutation.mutateAsync({ userId: String(user.id), stepKey: 'step2' }); } catch {}
+        try { await completeStepMutation.mutateAsync({ userId, stepKey: 'step2' }); } catch { /* ignore */ }
         toast.success("가구 정보가 저장되었습니다!");
         setTimeout(() => navigate("/styling/step3"), 1000);
-      } catch {
-        toast.error("저장에 실패했습니다. 다시 시도해주세요.");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "저장에 실패했습니다.";
+        toast.error(msg);
       } finally {
         setSubmitting(false);
       }
     }
   };
+
+  // 로딩 상태
+  if (submissionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-28 max-w-lg mx-auto">
@@ -440,6 +544,12 @@ export default function StylingStep2() {
             <p className="text-xs text-muted-foreground">STEP 02</p>
             <h1 className="text-base font-bold text-foreground">기존 가구 정보 전달</h1>
           </div>
+          {/* 기존 데이터 불러온 경우 배지 표시 */}
+          {dataLoaded && submission?.step2 && submission.step2 !== 'pending' && (
+            <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full text-white font-medium" style={{ background: TERRACOTTA }}>
+              이전 입력 불러옴
+            </span>
+          )}
         </div>
       </header>
 
