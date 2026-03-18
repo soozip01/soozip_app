@@ -276,3 +276,9 @@
 - [x] 기존 데이터 불러오기 (mySubmission 쿼리로 step3 데이터 파싱)
 - [x] StylingStepUpload.tsx에서 STEP 3 설정 제거 (STEP 4~7만 유지)
 - [x] StepKey 타입에서 'step3' 제거
+
+## 44차 작업 (STEP 3 배치안 이미지 여러 장 표시 버그 수정)
+- [x] 문제 원인 파악: step3_m 컬럼에 줄바꿈으로 구분된 3개 URL이 저장되어 있음
+- [x] parseUrls 함수 개선: JSON 배열 → 줄바꿈 구분 URL → 단일 URL 순서로 파싱
+- [x] 줄바꿈 분리 로직 추가: split('\n') 후 http로 시작하는 라인만 필터링
+- [x] 배치안 이미지 3장 모두 정상 표시 확인

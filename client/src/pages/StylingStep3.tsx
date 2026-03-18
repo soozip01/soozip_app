@@ -70,14 +70,20 @@ export default function StylingStep3() {
 
   // 디자이너 업로드 파일 파싱
   const parseUrls = (raw: string | null | undefined): string[] => {
-    if (!raw) return [];
+    if (!raw || raw === 'pending' || raw === 'completed') return [];
+    
+    // 1. JSON 배열 형식 시도
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-      return [raw];
-    } catch {
-      return raw !== 'pending' && raw !== 'completed' ? [raw] : [];
-    }
+      if (Array.isArray(parsed)) return parsed.filter(url => typeof url === 'string' && url.trim());
+    } catch { /* JSON 파싱 실패, 다음 단계로 */ }
+    
+    // 2. 줄바꿈으로 구분된 URL 형식 (step3_m 컬럼의 실제 저장 형식)
+    const lines = raw.split('\n').map(line => line.trim()).filter(line => line && line.startsWith('http'));
+    if (lines.length > 0) return lines;
+    
+    // 3. 단일 URL
+    return [raw];
   };
 
   const step3mKey = 'step3m' as const;
