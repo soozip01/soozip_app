@@ -450,78 +450,103 @@ export default function StylingStep1() {
             </div>
           )}
 
-          {/* 드래그 앤 드롭 업로드 영역 */}
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-2xl border-2 border-dashed p-6 flex flex-col items-center gap-3 cursor-pointer transition-all"
-            style={{
-              borderColor: isDragOver ? TERRACOTTA : "#e5e7eb",
-              background: isDragOver ? "#fff5f5" : "#fafafa",
-            }}
-          >
+          {/* 담당자 파일 없으면 업로드 비활성화 */}
+          {!hasAdminContent ? (
+            <div className="rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center gap-2 text-center bg-gray-50">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                <Upload size={18} className="text-gray-400" />
+              </div>
+              <p className="text-[13px] font-semibold text-gray-400">담당자가 도면 초안을 등록한 후 업로드할 수 있어요</p>
+              <p className="text-[11px] text-gray-400">도면 초안 다운로드 → 실측값 기입 → 업로드 순서로 진행해주세요</p>
+            </div>
+          ) : (
+            /* 드래그 앤 드롭 업로드 영역 */
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ background: isDragOver ? TERRACOTTA : "#f3f4f6" }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-2xl border-2 border-dashed p-6 flex flex-col items-center gap-3 cursor-pointer transition-all"
+              style={{
+                borderColor: isDragOver ? TERRACOTTA : "#e5e7eb",
+                background: isDragOver ? "#fff5f5" : "#fafafa",
+              }}
             >
-              {isDragOver ? (
-                <Upload size={20} className="text-white" />
-              ) : (
-                <Plus size={20} className="text-gray-400" />
-              )}
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ background: isDragOver ? TERRACOTTA : "#f3f4f6" }}
+              >
+                {isDragOver ? (
+                  <Upload size={20} className="text-white" />
+                ) : (
+                  <Plus size={20} className="text-gray-400" />
+                )}
+              </div>
+              <div className="text-center">
+                <p className="text-[13px] font-semibold text-gray-700">
+                  {isDragOver ? "여기에 놓으세요" : "도면 파일 추가하기"}
+                </p>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  JPG, PNG, PDF · 최대 10MB · 여러 장 가능
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-[13px] font-semibold text-gray-700">
-                {isDragOver ? "여기에 놓으세요" : "도면 파일 추가하기"}
-              </p>
-              <p className="text-[11px] text-gray-400 mt-1">
-                JPG, PNG, PDF · 최대 10MB · 여러 장 가능
-              </p>
-            </div>
-          </div>
+          )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                handleFiles(e.target.files);
-                e.target.value = "";
-              }
-            }}
-          />
+          {hasAdminContent && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleFiles(e.target.files);
+                  e.target.value = "";
+                }
+              }}
+            />
+          )}
         </section>
 
-        {/* 업로드 완료 확인 버튼 */}
-        {(uploadedFiles.some(f => f.status === "done") || existingUserFiles.length > 0) && (
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                toast.success("실측 도면이 저장되었습니다. 담당자가 확인 후 다음 단계로 안내드릴게요.");
-                setTimeout(() => navigate("/mypage"), 1500);
-              }}
-              className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
-              style={{ background: TERRACOTTA }}
-            >
-              제출 완료
-            </button>
-            <p className="text-center text-[11px] text-gray-400 mt-2">
-              제출 후에도 추가 업로드가 가능해요
-            </p>
-          </div>
-        )}
+        {/* 다음 단계 이동 버튼 - 파일 1개 이상 업로드 시 활성화 */}
+        {(() => {
+          const hasUserFile = uploadedFiles.some(f => f.status === "done") || existingUserFiles.length > 0;
+          return (
+            <div className="pt-2 space-y-2">
+              {hasUserFile ? (
+                <button
+                  onClick={() => navigate("/styling/step2")}
+                  className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
+                  style={{ background: TERRACOTTA }}
+                >
+                  STEP 2로 이동 →
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-4 rounded-full text-gray-400 font-bold text-[15px] bg-gray-100 cursor-not-allowed"
+                >
+                  도면을 업로드하면 다음 단계로 이동할 수 있어요
+                </button>
+              )}
+              <button
+                onClick={() => navigate("/mypage")}
+                className="w-full py-3 rounded-full text-gray-500 font-medium text-[14px] border border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all"
+              >
+                마이페이지로 돌아가기
+              </button>
+            </div>
+          );
+        })()}
 
         {/* 도움말 */}
         <div className="rounded-2xl border border-gray-100 p-4 bg-gray-50">
           <p className="text-[12px] font-semibold text-gray-700 mb-2">실측 팁</p>
           <ul className="space-y-1.5">
             {[
-              "줄자나 레이저 측정기로 가로·세로·높이를 cm 단위로 측정해주세요",
+              "줄자나 레이저 줄자로 공간의 사이즈를 측정해주세요",
               "창문과 문의 위치, 크기도 함께 기입해주세요",
               "콘센트, 에어컨 배관 등 고정 설비 위치도 표시해주시면 좋아요",
               "방이 여러 개인 경우 각 방마다 별도 도면을 업로드해주세요",
