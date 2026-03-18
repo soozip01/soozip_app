@@ -1159,6 +1159,125 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── 스타일링 패키지 라우터 (Supabase styling_packages + styling_package_items) ────────────────────────────
+  stylingPackage: router({
+    /**
+     * 사용자의 survey_id(설문 제출 ID)로 패키지 목록 조회
+     * styling_packages → styling_package_items JOIN
+     */
+    getBySubmissionId: publicProcedure
+      .input(z.object({
+        surveyId: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey);
+
+        // 1) 해당 survey_id에 연결된 패키지 조회
+        const { data: packages, error: pkgError } = await supabase
+          .from("styling_packages")
+          .select("*")
+          .eq("survey_id", input.surveyId)
+          .order("created_at", { ascending: false });
+
+        if (pkgError || !packages || packages.length === 0) {
+          return [];
+        }
+
+        // 2) 각 패키지의 아이템 조회
+        const result = [];
+        for (const pkg of packages) {
+          const { data: items, error: itemError } = await supabase
+            .from("styling_package_items")
+            .select("*")
+            .eq("package_id", pkg.id)
+            .order("sort_order", { ascending: true });
+
+          result.push({
+            id: pkg.id as string,
+            surveyId: pkg.survey_id as string,
+            surveyName: pkg.survey_name as string,
+            packageName: pkg.package_name as string,
+            stylingType: pkg.styling_type as string,
+            designerName: (pkg.designer_name as string) ?? null,
+            memo: (pkg.memo as string) ?? null,
+            status: pkg.status as string,
+            createdAt: pkg.created_at as string,
+            updatedAt: pkg.updated_at as string,
+            items: (items ?? []).map((item: Record<string, unknown>) => ({
+              id: item.id as string,
+              packageId: item.package_id as string,
+              productId: item.product_id as string,
+              productName: item.product_name as string,
+              brandName: item.brand_name as string,
+              mainCategory: (item.main_category as string) ?? null,
+              subCategory: (item.sub_category as string) ?? null,
+              salePrice: Number(item.sale_price ?? 0),
+              originalPrice: Number(item.original_price ?? 0),
+              imageUrl: (item.image_url as string) ?? null,
+              quantity: Number(item.quantity ?? 1),
+              memo: (item.memo as string) ?? null,
+              sortOrder: Number(item.sort_order ?? 0),
+            })),
+          });
+        }
+
+        return result;
+      }),
+
+    /**
+     * 패키지 ID로 단일 패키지 + 아이템 조회
+     */
+    getById: publicProcedure
+      .input(z.object({
+        packageId: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey);
+
+        const { data: pkg, error: pkgError } = await supabase
+          .from("styling_packages")
+          .select("*")
+          .eq("id", input.packageId)
+          .single();
+
+        if (pkgError || !pkg) return null;
+
+        const { data: items } = await supabase
+          .from("styling_package_items")
+          .select("*")
+          .eq("package_id", pkg.id)
+          .order("sort_order", { ascending: true });
+
+        return {
+          id: pkg.id as string,
+          surveyId: pkg.survey_id as string,
+          surveyName: pkg.survey_name as string,
+          packageName: pkg.package_name as string,
+          stylingType: pkg.styling_type as string,
+          designerName: (pkg.designer_name as string) ?? null,
+          memo: (pkg.memo as string) ?? null,
+          status: pkg.status as string,
+          createdAt: pkg.created_at as string,
+          updatedAt: pkg.updated_at as string,
+          items: (items ?? []).map((item: Record<string, unknown>) => ({
+            id: item.id as string,
+            packageId: item.package_id as string,
+            productId: item.product_id as string,
+            productName: item.product_name as string,
+            brandName: item.brand_name as string,
+            mainCategory: (item.main_category as string) ?? null,
+            subCategory: (item.sub_category as string) ?? null,
+            salePrice: Number(item.sale_price ?? 0),
+            originalPrice: Number(item.original_price ?? 0),
+            imageUrl: (item.image_url as string) ?? null,
+            quantity: Number(item.quantity ?? 1),
+            memo: (item.memo as string) ?? null,
+            sortOrder: Number(item.sort_order ?? 0),
+          })),
+        };
+      }),
+  }),
+
   // ─── 가구 정보 입력 라우터 ────────────────────────────
   furnitureInfo: router({
     /**

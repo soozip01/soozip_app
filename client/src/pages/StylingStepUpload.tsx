@@ -4,7 +4,7 @@
  * - 사용자가 파일 또는 텍스트를 업로드하여 Supabase step1~7 컬럼에 저장
  * - Supabase Storage 'soozip_styling_step' 버킷에 파일 저장 후 URL로 변환
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft, Download, Upload, X, Plus, FileImage,
@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
+import StylingPackageProducts from "@/components/StylingPackageProducts";
 
 const TERRACOTTA = "#d31400";
 
@@ -209,6 +210,15 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
 
   // STEP 완료 mutation
   const completeStepMutation = trpc.survey.completeStep.useMutation();
+
+  // 패키지 제품 조회 (step5, step6에서만 활성화)
+  const showPackageProducts = stepKey === 'step5' || stepKey === 'step6';
+  const submissionId = surveyData?.id ? String(surveyData.id) : undefined;
+  const { data: packageData, isLoading: packageLoading } = trpc.stylingPackage.getBySubmissionId.useQuery(
+    { surveyId: submissionId ?? '' },
+    { enabled: showPackageProducts && !!submissionId }
+  );
+  const stablePackages = useMemo(() => packageData ?? [], [packageData]);
 
   // 텍스트 저장 mutation
   const updateTextMutation = trpc.survey.updateStepText.useMutation({
@@ -505,6 +515,25 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
             </div>
           )}
         </section>
+
+        {/* 섹션 1.5: 패키지 제품 목록 (step5, step6에서만 표시) */}
+        {showPackageProducts && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                style={{ background: TERRACOTTA }}
+              >
+                <span className="text-[9px] font-bold text-white">🛒</span>
+              </div>
+              <h2 className="text-[14px] font-bold text-gray-800">추천 제품 패키지</h2>
+            </div>
+            <StylingPackageProducts
+              packages={stablePackages}
+              isLoading={surveyLoading || packageLoading}
+            />
+          </section>
+        )}
 
         {/* 섹션 2: 텍스트 입력 */}
         {config.allowText && (!config.requiresAdminFile || hasAdminContent) && (
