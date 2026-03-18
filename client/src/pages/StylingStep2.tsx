@@ -293,6 +293,7 @@ export default function StylingStep2() {
 
   const uploadFileMutation = trpc.survey.uploadStepFile.useMutation();
   const updateTextMutation = trpc.survey.updateStepText.useMutation();
+  const completeStepMutation = trpc.survey.completeStep.useMutation();
 
   /* ─── 링크 핸들러 ─── */
   const handleLinkChange = useCallback((id: string, field: keyof LinkItem, value: string) => {
@@ -376,6 +377,8 @@ export default function StylingStep2() {
           stepKey: "step2",
           text,
         });
+        // step2 완료 처리
+        try { await completeStepMutation.mutateAsync({ userId: String(user.id), stepKey: 'step2' }); } catch {}
         toast.success("가구 정보가 저장되었습니다!");
         setTimeout(() => navigate("/styling/step3"), 1000);
       } catch {
@@ -410,6 +413,8 @@ export default function StylingStep2() {
           stepKey: "step2",
           text,
         });
+        // step2 완료 처리
+        try { await completeStepMutation.mutateAsync({ userId: String(user.id), stepKey: 'step2' }); } catch {}
         toast.success("가구 정보가 저장되었습니다!");
         setTimeout(() => navigate("/styling/step3"), 1000);
       } catch {

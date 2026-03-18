@@ -1131,6 +1131,32 @@ export const appRouter = router({
         // 3) 연결할 신청서 없음 (신규 사용자 또는 미신청)
         return { synced: false, action: "none" };
       }),
+    /**
+     * STEP 완료 처리 - 해당 step 컬럼을 'completed'로 업데이트
+     * 마이페이지 스타일링 탭 진행 상태 UI와 동기화
+     */
+    completeStep: publicProcedure
+      .input(z.object({
+        userId: z.string(),
+        stepKey: z.enum(['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7']),
+      }))
+      .mutation(async ({ input }) => {
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseServiceRoleKey);
+        const { data: existing } = await supabase
+          .from("survey_submissions")
+          .select("id")
+          .eq("user_id", input.userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (!existing) throw new Error("신청 내역을 찾을 수 없습니다.");
+        const { error } = await supabase
+          .from("survey_submissions")
+          .update({ [input.stepKey]: 'completed' })
+          .eq("id", (existing as { id: number }).id);
+        if (error) throw new Error("STEP 완료 처리에 실패했습니다.");
+        return { success: true };
+      }),
   }),
 
   // ─── 가구 정보 입력 라우터 ────────────────────────────

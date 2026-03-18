@@ -243,3 +243,10 @@
 ## 38차 작업 (STEP 2 담당자 메시지 UI 제거 및 이전 구성 복원)
 - [x] StylingStep2.tsx에서 담당자 메시지(StylingStepUpload) 섹션 제거
 - [x] 이전 구성 복원: 기존 제품 링크+옵션 업로드 또는 제품 사진+사이즈 정보 입력 UI (survey_submissions.step2 저장)
+
+## 39차 작업 (STEP 1 버튼 텍스트 변경 + STEP 이동 시 진행 상태 UI 동기화)
+- [x] StylingStep1.tsx: "STEP 2로 이동 →" → "제출하기"로 버튼 텍스트 변경
+- [x] survey.completeStep 프로시저 추가 - STEP 제출 시 step1/step2 컨럼을 'completed'로 업데이트
+- [x] StylingStep1.tsx: 제출 시 completeStep 호출 후 STEP 2로 이동
+- [x] StylingStep2.tsx: 저장 성공 시 completeStep 호출 후 STEP 3으로 이동
+- [x] 마이페이지 스타일링 탭 STEP 진행 상태 UI가 실제 DB 값 기준으로 표시됨 (이미 step1~step7 컨럼 'completed' 값 기준)

@@ -40,6 +40,9 @@ export default function StylingStep1() {
     { enabled: isLoggedIn && !!user?.id }
   );
 
+  // STEP 완료 처리 mutation
+  const completeStepMutation = trpc.survey.completeStep.useMutation();
+
   // 파일 업로드 mutation
   const uploadMutation = trpc.survey.uploadStepFile.useMutation({
     onSuccess: (data, variables) => {
@@ -517,11 +520,24 @@ export default function StylingStep1() {
             <div className="pt-2 space-y-2">
               {hasUserFile ? (
                 <button
-                  onClick={() => navigate("/styling/step2")}
-                  className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
+                  onClick={async () => {
+                    if (user?.id) {
+                      try {
+                        await completeStepMutation.mutateAsync({
+                          userId: String(user.id),
+                          stepKey: 'step1',
+                        });
+                      } catch {
+                        // 완료 처리 실패해도 이동은 허용
+                      }
+                    }
+                    navigate("/styling/step2");
+                  }}
+                  disabled={completeStepMutation.isPending}
+                  className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-70"
                   style={{ background: TERRACOTTA }}
                 >
-                  STEP 2로 이동 →
+                  {completeStepMutation.isPending ? "처리 중..." : "제출하기"}
                 </button>
               ) : (
                 <button
