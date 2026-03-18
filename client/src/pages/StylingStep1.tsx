@@ -5,7 +5,7 @@
  */
 import { useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Download, Upload, X, Plus, FileImage, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Upload, X, Plus, FileImage, AlertCircle, CheckCircle2, Loader2, MessageSquare, File } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
@@ -178,19 +178,27 @@ export default function StylingStep1() {
   };
 
   // 관리자 업로드 도면 URL 파싱
-  const parseAdminFiles = (raw: string | null | undefined): string[] => {
-    if (!raw) return [];
+  // step1_m 파싱: 텍스트와 파일 URL이 줄바꿈으로 혼합 저장됨
+  const parseAdminContent = (raw: string | null | undefined): { texts: string[]; files: string[] } => {
+    if (!raw) return { texts: [], files: [] };
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-      return [raw];
-    } catch {
-      return [raw];
-    }
+      if (Array.isArray(parsed)) {
+        return {
+          files: parsed.filter((s: string) => s.startsWith('http')),
+          texts: parsed.filter((s: string) => !s.startsWith('http')),
+        };
+      }
+    } catch { /* not JSON */ }
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    return {
+      files: lines.filter(l => l.startsWith('http')),
+      texts: lines.filter(l => !l.startsWith('http')),
+    };
   };
 
-  const adminFiles = parseAdminFiles(surveyData?.step1m);
-  const hasAdminFiles = adminFiles.length > 0;
+  const { texts: adminTexts, files: adminFiles } = parseAdminContent(surveyData?.step1m);
+  const hasAdminContent = adminFiles.length > 0 || adminTexts.length > 0;
 
   // 기존 업로드된 파일 파싱 (step1 컬럼)
   const parseUserFiles = (raw: string | null | undefined): string[] => {
@@ -267,7 +275,7 @@ export default function StylingStep1() {
           </div>
         </div>
 
-        {/* 섹션 1: 도면 초안 다운로드 */}
+        {/* 섹션 1: 담당자 메시지 및 체부파일 (항상 표시) */}
         <section>
           <div className="flex items-center gap-2 mb-3">
             <div
@@ -276,7 +284,7 @@ export default function StylingStep1() {
             >
               <span className="text-[9px] font-bold text-white">1</span>
             </div>
-            <h2 className="text-[14px] font-bold text-gray-800">도면 초안 다운로드</h2>
+            <h2 className="text-[14px] font-bold text-gray-800">담당자 메시지</h2>
           </div>
 
           {surveyLoading ? (
@@ -284,47 +292,65 @@ export default function StylingStep1() {
               <Loader2 size={18} className="animate-spin text-gray-400" />
               <span className="text-sm text-gray-400">불러오는 중...</span>
             </div>
-          ) : hasAdminFiles ? (
-            <div className="space-y-2.5">
-              {adminFiles.map((fileUrl, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "#f3f4f6" }}
-                  >
-                    <FileImage size={18} className="text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-gray-800 truncate">
-                      도면 초안 {idx + 1}
-                    </p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">관리자가 첨부한 도면입니다</p>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadAdminFile(fileUrl, idx)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-[12px] font-bold transition-opacity hover:opacity-90 shrink-0"
-                    style={{ background: TERRACOTTA }}
-                  >
-                    <Download size={14} />
-                    다운로드
-                  </button>
-                </div>
-              ))}
+          ) : !hasAdminContent ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 p-5 flex flex-col items-center gap-2 text-center">
+              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                <MessageSquare size={16} className="text-gray-400" />
+              </div>
+              <p className="text-[13px] font-medium text-gray-500">아직 등록된 내용이 없어요</p>
+              <p className="text-[11px] text-gray-400 leading-relaxed">담당자가 메시지나 도면을 등록하면<br />여기서 확인할 수 있어요</p>
             </div>
           ) : (
-            <div
-              className="rounded-2xl border border-dashed border-gray-200 p-6 flex flex-col items-center gap-2 text-center"
-            >
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <FileImage size={18} className="text-gray-400" />
-              </div>
-              <p className="text-[13px] font-medium text-gray-500">아직 도면 초안이 없어요</p>
-              <p className="text-[11px] text-gray-400 leading-relaxed">
-                담당자가 도면 초안을 업로드하면<br />여기서 다운로드할 수 있어요
-              </p>
+            <div className="space-y-3">
+              {/* 텍스트 메시지 */}
+              {adminTexts.length > 0 && (
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                  <p className="text-[11px] font-semibold text-blue-500 mb-2 flex items-center gap-1">
+                    <MessageSquare size={11} /> 담당자 메시지
+                  </p>
+                  <p className="text-[13px] text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {adminTexts.join('\n')}
+                  </p>
+                </div>
+              )}
+              {/* 체부 파일 */}
+              {adminFiles.map((fileUrl, idx) => {
+                const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(fileUrl);
+                const fileName = decodeURIComponent(fileUrl.split('/').pop()?.split('?')[0] ?? `파일 ${idx + 1}`);
+                return (
+                  <div key={idx} className="rounded-2xl border border-gray-200 bg-white p-4">
+                    {isImage && (
+                      <div className="w-full rounded-xl overflow-hidden bg-gray-100 mb-3" style={{ maxHeight: 200 }}>
+                        <img src={fileUrl} alt={`첨부 ${idx + 1}`} className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
+                        {isImage ? (
+                          <img src={fileUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <File size={16} className="text-gray-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-gray-800 truncate">{fileName}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">담당자 첨부 파일</p>
+                      </div>
+                      <a
+                        href={fileUrl}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-[12px] font-bold transition-opacity hover:opacity-90 shrink-0"
+                        style={{ background: TERRACOTTA }}
+                      >
+                        <Download size={13} />
+                        다운로드
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

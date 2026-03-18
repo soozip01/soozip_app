@@ -217,3 +217,14 @@
 - [x] 로그인 완료 시 survey_submissions에서 동일 name을 가진 비로그인 신청서에 user_id + login_provider 자동 등록
 - [x] 로그인 완료 시 name 컬럼을 닉네임으로 업데이트 (닉네임 우선순위)
 - [x] 신규 로그인 사용자가 신청서 제출 시 user_id + login_provider + name(닉네임) 자동 저장
+
+## 35차 작업 (디자이너 등록 STEP 첨부파일 표시 수정)
+- [ ] step1_m~step7_m 컬럼 데이터가 mySubmission 쿼리에 포함되는지 확인
+- [ ] StylingStep1.tsx 및 StylingStepUpload.tsx에서 step_m 파일 렌더링 로직 확인/수정
+- [ ] 디자이너 첨부파일 다운로드/미리보기 UI 표시 구현
+
+## 35차 작업 (디자이너 등록 STEP 첨부파일/텍스트 사용자 화면 표시)
+- [x] step_m 컨럼 데이터 형태 파악 (텍스트+URL 줄바꿈 혼합 형태)
+- [x] StylingStep1.tsx - 담당자 메시지 및 첨부파일 섹선 재구현 (항상 표시)
+- [x] StylingStepUpload.tsx - 담당자 메시지 섹선 항상 노출, 텍스트+파일 혼합 파싱
+- [x] 파일이 없을 때도 "아직 등록된 내용이 없어요" 안내 메시지 표시

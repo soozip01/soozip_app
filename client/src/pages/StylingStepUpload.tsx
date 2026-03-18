@@ -321,7 +321,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
     });
   };
 
-  // 관리자 업로드 파일 파싱
+  // 사용자 업로드 파일 파싱 (JSON 배열 또는 단일 URL)
   const parseUrls = (raw: string | null | undefined): string[] => {
     if (!raw) return [];
     try {
@@ -333,10 +333,31 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
     }
   };
 
-  // step_m 컬럼명 (step1 → step1m)
+  // step_m 컬럼 파싱: 텍스트와 파일 URL이 줄바꿈으로 혼합 저장됨
+  // 예: "안녕하세요\n\nhttps://...jpg"
   const stepMKey = `${stepKey}m` as keyof typeof surveyData;
-  const adminFiles = parseUrls(surveyData ? (surveyData[stepMKey] as string | null) : null);
-  const hasAdminFiles = adminFiles.length > 0;
+  const rawAdminData = surveyData ? (surveyData[stepMKey] as string | null) : null;
+
+  const parseAdminContent = (raw: string | null | undefined): { texts: string[]; files: string[] } => {
+    if (!raw) return { texts: [], files: [] };
+    // JSON 배열 형태인 경우 (기존 방식)
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const files = parsed.filter((s: string) => s.startsWith('http'));
+        const texts = parsed.filter((s: string) => !s.startsWith('http'));
+        return { texts, files };
+      }
+    } catch { /* not JSON */ }
+    // 줄바꿈으로 구분된 텍스트+URL 혼합 형태
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const files = lines.filter(l => l.startsWith('http'));
+    const texts = lines.filter(l => !l.startsWith('http'));
+    return { texts, files };
+  };
+
+  const { texts: adminTexts, files: adminFiles } = parseAdminContent(rawAdminData);
+  const hasAdminContent = adminFiles.length > 0 || adminTexts.length > 0;
 
   // 사용자 업로드 파일 파싱 (text:: 항목과 파일 URL 분리)
   const rawStepData = surveyData ? (surveyData[stepKey as keyof typeof surveyData] as string | null) : null;
@@ -408,46 +429,70 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
           </div>
         </div>
 
-        {/* 섹션 1: 관리자 업로드 파일 다운로드 */}
-        {(hasAdminFiles || surveyLoading) && (
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                style={{ background: TERRACOTTA }}
-              >
-                <span className="text-[9px] font-bold text-white">↓</span>
-              </div>
-              <h2 className="text-[14px] font-bold text-gray-800">담당자 첨부 파일</h2>
+        {/* 섹션 1: 담당자 메시지 및 첨부파일 (항상 표시) */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: TERRACOTTA }}
+            >
+              <span className="text-[9px] font-bold text-white">↓</span>
             </div>
+            <h2 className="text-[14px] font-bold text-gray-800">담당자 메시지</h2>
+          </div>
 
-            {surveyLoading ? (
-              <div className="rounded-2xl border border-gray-100 p-6 flex items-center justify-center gap-2">
-                <Loader2 size={18} className="animate-spin text-gray-400" />
-                <span className="text-sm text-gray-400">불러오는 중...</span>
+          {surveyLoading ? (
+            <div className="rounded-2xl border border-gray-100 p-6 flex items-center justify-center gap-2">
+              <Loader2 size={18} className="animate-spin text-gray-400" />
+              <span className="text-sm text-gray-400">불러오는 중...</span>
+            </div>
+          ) : !hasAdminContent ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 p-5 flex flex-col items-center gap-2 text-center">
+              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                <MessageSquare size={16} className="text-gray-400" />
               </div>
-            ) : (
-              <div className="space-y-2.5">
-                {adminFiles.map((fileUrl, idx) => {
-                  const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(fileUrl);
-                  const fileName = fileUrl.split('/').pop()?.split('?')[0] ?? `파일 ${idx + 1}`;
-                  return (
-                    <div
-                      key={idx}
-                      className="rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
-                    >
-                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
+              <p className="text-[13px] font-medium text-gray-500">아직 등록된 내용이 없어요</p>
+              <p className="text-[11px] text-gray-400 leading-relaxed">담당자가 메시지나 파일을 등록하면<br />여기에서 확인할 수 있어요</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* 텍스트 메시지 */}
+              {adminTexts.length > 0 && (
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                  <p className="text-[11px] font-semibold text-blue-500 mb-2 flex items-center gap-1">
+                    <MessageSquare size={11} /> 담당자 메시지
+                  </p>
+                  <p className="text-[13px] text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {adminTexts.join('\n')}
+                  </p>
+                </div>
+              )}
+              {/* 첨부 파일 */}
+              {adminFiles.map((fileUrl, idx) => {
+                const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(fileUrl);
+                const fileName = decodeURIComponent(fileUrl.split('/').pop()?.split('?')[0] ?? `파일 ${idx + 1}`);
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-2xl border border-gray-200 bg-white p-4"
+                  >
+                    {/* 이미지 미리보기 */}
+                    {isImage && (
+                      <div className="w-full rounded-xl overflow-hidden bg-gray-100 mb-3" style={{ maxHeight: 200 }}>
+                        <img src={fileUrl} alt={`첨부 ${idx + 1}`} className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
                         {isImage ? (
-                          <img src={fileUrl} alt={`첨부 ${idx + 1}`} className="w-full h-full object-cover" />
+                          <img src={fileUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <File size={18} className="text-gray-500" />
+                          <File size={16} className="text-gray-500" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-gray-800 truncate">
-                          {fileName}
-                        </p>
-                        <p className="text-[11px] text-gray-400 mt-0.5">담당자가 첨부한 파일</p>
+                        <p className="text-[12px] font-semibold text-gray-800 truncate">{fileName}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">담당자 첨부 파일</p>
                       </div>
                       <a
                         href={fileUrl}
@@ -457,16 +502,16 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-[12px] font-bold transition-opacity hover:opacity-90 shrink-0"
                         style={{ background: TERRACOTTA }}
                       >
-                        <Download size={14} />
+                        <Download size={13} />
                         다운로드
                       </a>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* 섹션 2: 텍스트 입력 */}
         {config.allowText && (
