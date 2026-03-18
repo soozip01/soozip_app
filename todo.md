@@ -250,3 +250,11 @@
 - [x] StylingStep1.tsx: 제출 시 completeStep 호출 후 STEP 2로 이동
 - [x] StylingStep2.tsx: 저장 성공 시 completeStep 호출 후 STEP 3으로 이동
 - [x] 마이페이지 스타일링 탭 STEP 진행 상태 UI가 실제 DB 값 기준으로 표시됨 (이미 step1~step7 컨럼 'completed' 값 기준)
+
+## 40차 작업 (STEP 버튼 "제출완료" 통일 + 디자이너 파일 필수 STEP 잠금)
+- [x] 모든 STEP 다음 단계 버튼 텍스트를 "제출완료"로 통일 (STEP 1/2/3~7)
+- [x] StylingStepUpload.tsx - requiresAdminFile 플래그 추가, STEP 3/4/5에 적용
+- [x] STEP 3/4/5: 디자이너 파일 없으면 텍스트/파일 입력 영역 잠금 + 버튼 비활성화
+- [x] STEP 3: allowText 활성화 (피드백 선택 입력 가능)
+- [x] STEP 5: allowText 활성화 (확인 메모 선택 입력 가능)
+- [x] 모든 STEP completeStep mutation 호출 후 마이페이지 이동

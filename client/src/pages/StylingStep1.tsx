@@ -537,7 +537,7 @@ export default function StylingStep1() {
                   className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-70"
                   style={{ background: TERRACOTTA }}
                 >
-                  {completeStepMutation.isPending ? "처리 중..." : "제출하기"}
+                  {completeStepMutation.isPending ? "처리 중..." : "제출완료"}
                 </button>
               ) : (
                 <button

@@ -35,6 +35,7 @@ interface StepConfig {
   description: string;
   allowText: boolean;
   allowFiles: boolean;
+  requiresAdminFile?: boolean; // true: 디자이너 파일 없으면 사용자 입력 잠금
   textPlaceholder?: string;
   textLabel?: string;
   fileLabel?: string;
@@ -86,8 +87,11 @@ const STEP_CONFIGS: Record<StepKey, StepConfig> = {
     title: "배치 솔루션 제안",
     subtitle: "STEP 03",
     description: "담당 디자이너가 제안한 배치안을 확인하고, 첨부된 파일을 다운로드해주세요.",
-    allowText: false,
+    allowText: true,
     allowFiles: false,
+    requiresAdminFile: true,
+    textLabel: "피드백 작성 (선택)",
+    textPlaceholder: "제안된 배치안에 대한 의견을 남겨주세요...",
     fileLabel: "",
     tips: [
       "제안된 배치안을 꼼꼼히 검토해주세요",
@@ -103,8 +107,9 @@ const STEP_CONFIGS: Record<StepKey, StepConfig> = {
     description: "배치안에 대한 피드백을 남겨주세요. 수정을 원하는 부분이나 추가 요청사항을 자세히 작성해주세요.",
     allowText: true,
     allowFiles: true,
+    requiresAdminFile: true,
     textLabel: "피드백 작성",
-    textPlaceholder: "예) 소파 위치를 창문 쪽으로 옮겨주세요. 식탁은 현재 제안대로 좋습니다. 책상은 좀 더 벽 쪽으로...",
+    textPlaceholder: "예) 소파 위치를 창문 쪽으로 옵겨주세요. 식탁은 현재 제안대로 좋습니다. 책상은 좀 더 벽 쪽으로...",
     fileLabel: "참고 이미지 업로드 (선택)",
     tips: [
       "구체적인 피드백일수록 더 정확한 수정이 가능해요",
@@ -119,8 +124,11 @@ const STEP_CONFIGS: Record<StepKey, StepConfig> = {
     title: "최종 시안 전달",
     subtitle: "STEP 05",
     description: "최종 배치안과 제품 링크를 확인해주세요. 담당 디자이너가 첨부한 파일을 다운로드하세요.",
-    allowText: false,
+    allowText: true,
     allowFiles: false,
+    requiresAdminFile: true,
+    textLabel: "확인 메모 (선택)",
+    textPlaceholder: "최종 시안에 대한 의견이나 확인 사항을 남겨주세요...",
     fileLabel: "",
     tips: [
       "최종 시안을 꼼꼼히 검토해주세요",
@@ -216,6 +224,9 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
       toast.error("파일 삭제에 실패했습니다.");
     },
   });
+
+  // STEP 완료 mutation
+  const completeStepMutation = trpc.survey.completeStep.useMutation();
 
   // 텍스트 저장 mutation
   const updateTextMutation = trpc.survey.updateStepText.useMutation({
@@ -514,7 +525,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
         </section>
 
         {/* 섹션 2: 텍스트 입력 */}
-        {config.allowText && (
+        {config.allowText && (!config.requiresAdminFile || hasAdminContent) && (
           <section>
             <div className="flex items-center gap-2 mb-3">
               <div
@@ -561,7 +572,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
         )}
 
         {/* 섹션 3: 파일 업로드 */}
-        {config.allowFiles && (
+        {config.allowFiles && (!config.requiresAdminFile || hasAdminContent) && (
           <section>
             <div className="flex items-center gap-2 mb-3">
               <div
@@ -727,31 +738,33 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
           </div>
         )}
 
-        {/* 완료 버튼 */}
-        {(config.allowFiles || config.allowText) && (
+        {/* 완료 버튼 - 디자이너 파일 필수 STEP에서 파일 없으면 잠금 */}
+        {config.requiresAdminFile && !hasAdminContent ? (
           <div className="pt-2">
             <button
-              onClick={() => {
-                toast.success("저장되었습니다. 담당자가 확인 후 다음 단계로 안내드릴게요.");
-                setTimeout(() => navigate("/mypage"), 1500);
-              }}
-              className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
-              style={{ background: TERRACOTTA }}
+              disabled
+              className="w-full py-4 rounded-full text-gray-400 font-bold text-[15px] bg-gray-100 cursor-not-allowed"
             >
-              마이페이지로 돌아가기
+              담당자 파일 등록 후 진행 가능해요
             </button>
           </div>
-        )}
-
-        {/* 조회 전용 단계 (allowFiles/allowText 모두 false) */}
-        {!config.allowFiles && !config.allowText && (
+        ) : (
           <div className="pt-2">
             <button
-              onClick={() => navigate("/mypage")}
-              className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
-              style={{ background: "#111111" }}
+              onClick={async () => {
+                if (user?.id) {
+                  try {
+                    await completeStepMutation.mutateAsync({ userId: String(user.id), stepKey });
+                  } catch { /* 완료 처리 실패해도 이동 허용 */ }
+                }
+                toast.success("제출이 완료되었습니다!");
+                setTimeout(() => navigate("/mypage"), 1200);
+              }}
+              disabled={completeStepMutation.isPending}
+              className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-70"
+              style={{ background: TERRACOTTA }}
             >
-              마이페이지로 돌아가기
+              {completeStepMutation.isPending ? "처리 중..." : "제출완료"}
             </button>
           </div>
         )}

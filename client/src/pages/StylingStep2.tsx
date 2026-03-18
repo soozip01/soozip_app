@@ -550,10 +550,10 @@ export default function StylingStep2() {
           {submitting ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              저장 중...
+              처리 중...
             </>
           ) : (
-            "저장하고 STEP 3으로 이동 →"
+            "제출완료"
           )}
         </button>
       </div>
