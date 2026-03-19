@@ -1170,7 +1170,7 @@ export const appRouter = router({
         surveyId: z.string(),
       }))
       .query(async ({ input }) => {
-        const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey);
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
 
         // 1) 해당 survey_id에 연결된 패키지 조회
         const { data: packages, error: pkgError } = await supabase
@@ -1232,7 +1232,7 @@ export const appRouter = router({
         packageId: z.string(),
       }))
       .query(async ({ input }) => {
-        const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey);
+        const supabase = createClient(ENV.surveySupabaseUrl, ENV.surveySupabaseAnonKey);
 
         const { data: pkg, error: pkgError } = await supabase
           .from("styling_packages")

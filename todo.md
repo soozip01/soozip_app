@@ -50,4 +50,6 @@
 - [x] Step5 패키지 제품 목록 UI 구현 - URL surveyId 파라미터 직접 사용으로 쿼리 즉시 실행 수정
 - [x] BUG: 일반 Supabase(rrtbkrewrgqobyjhkolw) 프로젝트 삭제됨 → supabase.ts URL을 Survey Supabase로 통일
 - [x] BUG: VITE_SUPABASE_URL 환경변수를 Survey Supabase URL로 업데이트 (VITE_SURVEY_SUPABASE_URL 우선 사용으로 코드 수정)
-- [ ] BUG: 배포된 서버에 stylingPackage.getBySubmissionId 라우터 404 → 재배포 필요
+- [x] BUG: 배포된 서버에 stylingPackage.getBySubmissionId 라우터 404 → 체크포인트 6fe49ff4 저장 후 재배포 필요
+- [ ] BUG: fetchApprovedProducts 에러 방어 코드 강화 (Supabase 연결 실패 시 빈 배열 반환)
+- [x] BUG: stylingPackage.getBySubmissionId/getById 라우터에서 삭제된 일반 Supabase(ENV.supabaseUrl) 대신 Survey Supabase(ENV.surveySupabaseUrl) 사용하도록 수정
