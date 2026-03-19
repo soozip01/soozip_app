@@ -59,7 +59,7 @@ export default function InquiryPage() {
     <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate("/")} className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
+          <button onClick={() => navigate(-1 as unknown as string)} className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
             <ArrowLeft size={20} />
           </button>
           <span className="font-semibold text-sm">1:1 문의하기</span>
