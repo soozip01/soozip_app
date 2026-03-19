@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://rrtbkrewrgqobyjhkolw.supabase.co";
+// soozip 단일 프로젝트로 통합 (2026-03-19)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://lrozgykdsydvoppqnjdl.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJydGJrcmV3cmdxb2J5amhrb2x3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTEyMDcsImV4cCI6MjA4ODQ2NzIwN30.l0u_0oV41PpiDgw3eX0loYa4V1_PE43YDCymDK3cQMY";
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxyb3pneWtkc3lkdm9wcHFuamRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNDc0MjgsImV4cCI6MjA4NzkyMzQyOH0.tW0xv9j5R1jnsgkGC5VxZvry8j4VGg-BUR13SCOu01I";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

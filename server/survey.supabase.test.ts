@@ -20,11 +20,11 @@ describe("survey Supabase 연동", () => {
     expect(key!.length).toBeGreaterThan(50);
   });
 
-  it("설문조사 전용 Supabase URL이 메인 Supabase URL과 달라야 한다", () => {
+  it("설문조사 Supabase URL이 유효한 supabase.co URL이어야 한다", () => {
     const surveyUrl = process.env.SURVEY_SUPABASE_URL;
-    const mainUrl = process.env.SUPABASE_URL;
-    // 두 URL이 다른 프로젝트를 가리켜야 함
-    expect(surveyUrl).not.toEqual(mainUrl);
+    // DB 통합 후 soozip 단일 프로젝트 사용 가능
+    expect(surveyUrl).toBeDefined();
+    expect(surveyUrl).toContain("supabase.co");
   });
 
   it("styling_type 매핑 - 배치솔루션은 5단계를 반환해야 한다", () => {

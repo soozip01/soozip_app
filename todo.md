@@ -36,3 +36,8 @@
 - [x] StylingPackageProducts "패키지 전체 담기" 버튼 useCart 직접 연동 수정
 - [x] BUG: 제품 장바구니 담기 후 CartPage에 표시되지 않는 문제 수정 (ProductDetail 담기 버튼 CartContext 실제 연동)
 - [x] BUG: Step5에서 관리자가 전송한 패키지가 보이지 않는 문제 수정 (TiDB 누락 테이블 생성 - kakao_users, naver_users 등 11개 테이블 추가)
+- [x] DB 통합: soozip product 테이블 구조 파악
+- [x] DB 통합: soozip 프로젝트에 product 관련 테이블 10개 생성 완료
+- [x] DB 통합: soozip product → soozip 데이터 이전 완료 (products, product_images, styling_packages, styling_package_items 등)
+- [x] DB 통합: user_id 동기화 구조 설계 (survey_submissions.user_id ↔ users.id 연결 구조 완료)
+- [x] DB 통합: soozip_app_v2 서버/클라이언트 코드 단일 Supabase URL로 통합 (client/src/lib/supabase.ts 수정)
