@@ -2,18 +2,18 @@
  * 최종 시안 전달 페이지
  * - 디자이너가 업로드한 최종안 파일 표시
  * - Supabase styling_packages + styling_package_items에서 패키지 제품 데이터 조회
- * - 사용자가 제품을 확인하고 구매할 수 있음
+ * - 사용자가 제품을 확인하고 장바구니에 담아 구매할 수 있음
  */
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import {
-  ArrowLeft, Download, ShoppingCart, AlertCircle,
-  Loader2, FileImage, Package, ExternalLink, CheckCircle2
+  ArrowLeft, Download, ShoppingCart,
+  Loader2, FileImage, Package, CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
 import StylingPackageProducts, { type PackageItem } from "@/components/StylingPackageProducts";
 
 const TERRACOTTA = "#d31400";
@@ -21,6 +21,7 @@ const TERRACOTTA = "#d31400";
 export default function FinalStylingDelivery() {
   const [, navigate] = useLocation();
   const { user, isLoggedIn } = useSoozipAuth();
+  const cart = useCart();
 
   // 사용자 제출 데이터 조회
   const { data: submission, isLoading: submissionLoading } = trpc.survey.mySubmission.useQuery(
@@ -64,26 +65,41 @@ export default function FinalStylingDelivery() {
     return files;
   }, [submission]);
 
-  // 장바구니 상태 (로컬)
-  const [cartItems, setCartItems] = useState<Map<string, { item: PackageItem; quantity: number }>>(new Map());
-
-  const handleAddToCart = (item: PackageItem) => {
-    setCartItems(prev => {
-      const next = new Map(prev);
-      const existing = next.get(item.id);
-      if (existing) {
-        next.set(item.id, { ...existing, quantity: existing.quantity + 1 });
-      } else {
-        next.set(item.id, { item, quantity: 1 });
-      }
-      return next;
+  // 장바구니 담기 핸들러
+  const handleAddToCart = useCallback((item: PackageItem) => {
+    cart.addItem({
+      id: item.id,
+      productId: item.productId,
+      productName: item.productName,
+      brandName: item.brandName,
+      mainCategory: item.mainCategory,
+      subCategory: item.subCategory,
+      salePrice: item.salePrice,
+      originalPrice: item.originalPrice,
+      imageUrl: item.imageUrl,
+      memo: item.memo,
+      source: "package",
+      packageId: item.packageId,
     });
-  };
+  }, [cart]);
 
-  const cartItemCount = Array.from(cartItems.values()).reduce((sum, ci) => sum + ci.quantity, 0);
-  const totalCartPrice = Array.from(cartItems.values()).reduce(
-    (sum, ci) => sum + ci.item.salePrice * ci.quantity, 0
-  );
+  const handleAddAllToCart = useCallback((items: PackageItem[]) => {
+    cart.addAllPackageItems(
+      items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        brandName: item.brandName,
+        mainCategory: item.mainCategory,
+        subCategory: item.subCategory,
+        salePrice: item.salePrice,
+        originalPrice: item.originalPrice,
+        imageUrl: item.imageUrl,
+        memo: item.memo,
+        packageId: item.packageId,
+      }))
+    );
+  }, [cart]);
 
   const isLoading = submissionLoading || packageLoading;
 
@@ -120,7 +136,6 @@ export default function FinalStylingDelivery() {
             <h1 className="text-[16px] font-bold text-gray-900 leading-tight">최종 시안 전달</h1>
           </div>
         </div>
-        {/* 진행 표시 바 */}
         <div className="h-0.5 bg-gray-100">
           <div
             className="h-full transition-all duration-500"
@@ -178,7 +193,6 @@ export default function FinalStylingDelivery() {
 
                   return (
                     <div key={idx} className="rounded-2xl border border-gray-200 bg-white p-4">
-                      {/* 이미지 미리보기 */}
                       {isImage && (
                         <div className="w-full rounded-xl overflow-hidden bg-gray-100 mb-3" style={{ maxHeight: 240 }}>
                           <img src={fileUrl} alt={`시안 ${idx + 1}`} className="w-full h-full object-contain" />
@@ -231,6 +245,7 @@ export default function FinalStylingDelivery() {
               packages={stablePackages}
               isLoading={packageLoading}
               onAddToCart={handleAddToCart}
+              onAddAllToCart={handleAddAllToCart}
             />
           </section>
 
@@ -238,19 +253,16 @@ export default function FinalStylingDelivery() {
       )}
 
       {/* 하단 고정 바 - 장바구니 요약 */}
-      {cartItemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-3 z-50">
+      {cart.totalItems > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-3 z-50 max-w-lg mx-auto">
           <div className="flex-1">
-            <p className="text-[11px] text-gray-400 mb-0.5">총 {cartItemCount}개 제품</p>
+            <p className="text-[11px] text-gray-400 mb-0.5">총 {cart.totalItems}개 제품</p>
             <p className="text-[16px] font-bold" style={{ color: TERRACOTTA }}>
-              ₩{totalCartPrice.toLocaleString("ko-KR")}
+              ₩{cart.totalPrice.toLocaleString("ko-KR")}
             </p>
           </div>
           <button
-            onClick={() => {
-              navigate("/cart");
-              toast.info("장바구니 기능은 추후 업데이트 예정입니다.");
-            }}
+            onClick={() => navigate("/cart")}
             className="px-6 py-3 rounded-xl text-white text-[13px] font-bold flex items-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]"
             style={{ background: TERRACOTTA }}
           >
@@ -261,8 +273,8 @@ export default function FinalStylingDelivery() {
       )}
 
       {/* 장바구니가 비어있을 때 하단 안내 */}
-      {cartItemCount === 0 && !isLoading && stablePackages.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 px-4 py-3 z-50">
+      {cart.totalItems === 0 && !isLoading && stablePackages.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 px-4 py-3 z-50 max-w-lg mx-auto">
           <p className="text-[12px] text-gray-400 text-center">
             마음에 드는 제품을 장바구니에 담아보세요
           </p>

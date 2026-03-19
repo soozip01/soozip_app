@@ -13,7 +13,8 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
-import StylingPackageProducts from "@/components/StylingPackageProducts";
+import StylingPackageProducts, { type PackageItem } from "@/components/StylingPackageProducts";
+import { useCart } from "@/contexts/CartContext";
 
 const TERRACOTTA = "#d31400";
 
@@ -163,6 +164,43 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
   const [, navigate] = useLocation();
   const { user, isLoggedIn } = useSoozipAuth();
   const config = STEP_CONFIGS[stepKey];
+  const cart = useCart();
+
+  // 패키지 제품 → 장바구니 담기
+  const handleAddToCart = useCallback((item: PackageItem) => {
+    cart.addItem({
+      id: item.id,
+      productId: item.productId,
+      productName: item.productName,
+      brandName: item.brandName,
+      mainCategory: item.mainCategory,
+      subCategory: item.subCategory,
+      salePrice: item.salePrice,
+      originalPrice: item.originalPrice,
+      imageUrl: item.imageUrl,
+      memo: item.memo,
+      source: "package",
+      packageId: item.packageId,
+    });
+  }, [cart]);
+
+  const handleAddAllToCart = useCallback((items: PackageItem[]) => {
+    cart.addAllPackageItems(
+      items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        brandName: item.brandName,
+        mainCategory: item.mainCategory,
+        subCategory: item.subCategory,
+        salePrice: item.salePrice,
+        originalPrice: item.originalPrice,
+        imageUrl: item.imageUrl,
+        memo: item.memo,
+        packageId: item.packageId,
+      }))
+    );
+  }, [cart]);
 
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -531,6 +569,8 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
             <StylingPackageProducts
               packages={stablePackages}
               isLoading={surveyLoading || packageLoading}
+              onAddToCart={handleAddToCart}
+              onAddAllToCart={handleAddAllToCart}
             />
           </section>
         )}

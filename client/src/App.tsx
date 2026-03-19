@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SoozipAuthProvider } from "./contexts/AuthContext";
+import { CartProvider } from "./contexts/CartContext";
 import SplashScreen from "./components/SplashScreen";
 import Home from "./pages/Home";
 import ProductList from "./pages/ProductList";
@@ -118,11 +119,13 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <SoozipAuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
-            <Router />
-          </TooltipProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
+              <Router />
+            </TooltipProvider>
+          </CartProvider>
         </SoozipAuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

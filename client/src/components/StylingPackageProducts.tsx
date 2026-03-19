@@ -2,11 +2,11 @@
  * 스타일링 패키지 제품 목록 컴포넌트
  * - Supabase styling_packages + styling_package_items 데이터를 표시
  * - 디자이너가 선정한 제품들을 카드 형태로 보여줌
- * - 외부 구매 링크 또는 장바구니 담기 기능 제공
+ * - 장바구니 담기 기능 제공 (개별 + 전체)
  */
 import { useState, useMemo } from "react";
 import {
-  Package, ShoppingCart, ExternalLink, ChevronDown, ChevronUp,
+  Package, ShoppingCart, ChevronDown, ChevronUp,
   Loader2, Tag, Layers, Info
 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ interface StylingPackageProductsProps {
   packages: StylingPackageData[];
   isLoading: boolean;
   onAddToCart?: (item: PackageItem) => void;
+  onAddAllToCart?: (items: PackageItem[]) => void;
 }
 
 function formatPrice(price: number): string {
@@ -62,12 +63,12 @@ export default function StylingPackageProducts({
   packages,
   isLoading,
   onAddToCart,
+  onAddAllToCart,
 }: StylingPackageProductsProps) {
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(
     new Set(packages.map((p) => p.id))
   );
 
-  // 패키지가 로드되면 모두 펼침
   useMemo(() => {
     if (packages.length > 0) {
       setExpandedPackages(new Set(packages.map((p) => p.id)));
@@ -124,6 +125,9 @@ export default function StylingPackageProducts({
           0
         );
         const totalDiscount = totalOriginalPrice - totalPrice;
+        const displayName = pkg.packageName && pkg.packageName.trim() && pkg.packageName.trim() !== "."
+          ? pkg.packageName
+          : "스타일링 패키지";
 
         return (
           <div
@@ -143,7 +147,7 @@ export default function StylingPackageProducts({
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <p className="text-[13px] font-bold text-gray-900 truncate">
-                  {pkg.packageName || "스타일링 패키지"}
+                  {displayName}
                 </p>
                 <p className="text-[11px] text-gray-400 mt-0.5">
                   {pkg.designerName && `${pkg.designerName} · `}
@@ -261,7 +265,7 @@ export default function StylingPackageProducts({
                         </div>
                       </div>
 
-                      {/* 하단 액션 버튼 */}
+                      {/* 개별 장바구니 담기 버튼 */}
                       {onAddToCart && (
                         <div className="px-3 pb-3">
                           <button
@@ -312,11 +316,47 @@ export default function StylingPackageProducts({
                     )}
                   </div>
                 )}
+
+                {/* 모두 장바구니에 담기 버튼 */}
+                {(onAddToCart || onAddAllToCart) && pkg.items.length > 1 && (
+                  <button
+                    onClick={() => {
+                      if (onAddAllToCart) {
+                        onAddAllToCart(pkg.items);
+                      } else if (onAddToCart) {
+                        pkg.items.forEach((item) => onAddToCart(item));
+                      }
+                      toast.success(
+                        `${displayName}의 ${totalItems}개 제품을 모두 장바구니에 담았습니다.`
+                      );
+                    }}
+                    className="w-full py-3.5 rounded-xl border-2 text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+                    style={{ borderColor: TERRACOTTA, color: TERRACOTTA }}
+                  >
+                    <ShoppingCart size={16} />
+                    패키지 전체 담기 ({totalItems}개)
+                  </button>
+                )}
               </div>
             )}
           </div>
         );
       })}
+
+      {/* 안내사항 */}
+      <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 space-y-2">
+        <p className="text-[12px] font-bold text-gray-600">안내사항</p>
+        <div className="space-y-1.5">
+          <p className="text-[11px] text-gray-500 flex items-start gap-2">
+            <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-[9px] font-bold mt-0.5">1</span>
+            최종 시안을 꼼꼼히 검토해주세요
+          </p>
+          <p className="text-[11px] text-gray-500 flex items-start gap-2">
+            <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-[9px] font-bold mt-0.5">2</span>
+            제품 링크를 통해 가구를 구매하실 수 있어요
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
