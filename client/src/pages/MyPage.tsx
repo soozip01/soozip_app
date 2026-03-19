@@ -597,11 +597,15 @@ export default function MyPage() {
     { key: "styling", label: "스타일링" },
   ];
 
-  const TAB_POSITIONS: Record<string, string> = {
-    profile: "16px",
-    shopping: "76px",
-    styling: "136px",
-  };
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const el = tabRefs.current[activeTab];
+    if (el) {
+      setIndicatorStyle({ left: el.offsetLeft, width: el.offsetWidth });
+    }
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto">
@@ -612,9 +616,12 @@ export default function MyPage() {
             {tabs.map(({ key, label }) => (
               <button
                 key={key}
+                ref={(el) => { tabRefs.current[key] = el; }}
                 onClick={() => setActiveTab(key)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                  activeTab === key ? "text-foreground" : "text-muted-foreground"
+                  activeTab === key
+                    ? "text-[#d31400] bg-[#d31400]/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               >
                 {label}
@@ -639,13 +646,13 @@ export default function MyPage() {
           </div>
         </div>
         {/* 탭 인디케이터 */}
-        <div className="relative h-0.5 bg-transparent">
+        <div className="relative h-[2px] bg-transparent">
           <div
-            className="absolute bottom-0 h-0.5 rounded-full transition-all duration-300"
+            className="absolute bottom-0 h-[2px] rounded-full transition-all duration-300"
             style={{
               background: TERRACOTTA,
-              width: "40px",
-              left: TAB_POSITIONS[activeTab],
+              width: indicatorStyle.width,
+              left: indicatorStyle.left,
             }}
           />
         </div>

@@ -146,7 +146,7 @@ export default function StylingTypeFullOnline() {
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-8 pb-8">
           <div className="mb-7 flex justify-center">
-            <ImgPlaceholder num="①" label="사례 이미지 1" aspectRatio="3/4" className="max-w-xs w-full" />
+            <ImgPlaceholder num="1" label="사례 이미지 1" aspectRatio="3/4" className="max-w-xs w-full" />
           </div>
           <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-4">
             공간 실측부터, 홈 스타일링까지<br />온라인으로 진행되는 타입이에요
@@ -175,7 +175,7 @@ export default function StylingTypeFullOnline() {
             </p>
           </div>
           <div className="px-4 flex justify-center">
-            <ImgPlaceholder num="②" label="공간 실측 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
+            <ImgPlaceholder num="2" label="공간 실측 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -228,7 +228,7 @@ export default function StylingTypeFullOnline() {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <ImgPlaceholder num="③" label="가구 사진" aspectRatio="1/1" />
+                  <ImgPlaceholder num="3" label="가구 사진" aspectRatio="1/1" />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-3">사이즈 정보</p>
@@ -256,7 +256,7 @@ export default function StylingTypeFullOnline() {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <ImgPlaceholder num="④" label="공간 사진" aspectRatio="1/1" />
+                  <ImgPlaceholder num="4" label="공간 사진" aspectRatio="1/1" />
                 </div>
                 <ul className="flex-1 space-y-3 pt-1">
                   {[
@@ -292,8 +292,8 @@ export default function StylingTypeFullOnline() {
             <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 달라질 수 있어요" />
           </div>
           <div className="flex flex-col gap-4">
-            <ImgPlaceholder num="⑤" label="배치안 예시 1" aspectRatio="4/3" />
-            <ImgPlaceholder num="⑥" label="배치안 예시 2" aspectRatio="4/3" />
+            <ImgPlaceholder num="5" label="배치안 예시 1" aspectRatio="4/3" />
+            <ImgPlaceholder num="6" label="배치안 예시 2" aspectRatio="4/3" />
           </div>
         </section>
 
@@ -313,7 +313,7 @@ export default function StylingTypeFullOnline() {
             </p>
           </div>
           <div className="flex justify-center">
-           <ImgPlaceholder num="⑦" label="풀 스타일링 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
+           <ImgPlaceholder num="7" label="풀 스타일링 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -330,7 +330,7 @@ export default function StylingTypeFullOnline() {
             <NoticeBox text="최대 2회 수정이 가능하여, 자세히 말씀 주실수록 좋아요" />
           </div>
           <div className="flex justify-center">
-            <ImgPlaceholder num="⑧" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
+            <ImgPlaceholder num="8" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -345,10 +345,10 @@ export default function StylingTypeFullOnline() {
               최종 시안과 함께 추가된 가구가 있다면<br />링크를 함께 전달드려요
             </h3>
           </div>
-          <ImgPlaceholder num="⑨" label="최종 배치안" aspectRatio="4/3" className="mb-6" />
+          <ImgPlaceholder num="9" label="최종 배치안" aspectRatio="4/3" className="mb-6" />
           <div className="flex gap-3 items-start">
             <div className="w-20 shrink-0 rounded-lg overflow-hidden">
-              <ImgPlaceholder num="⑩" label="제품" aspectRatio="1/1" />
+              <ImgPlaceholder num="10" label="제품" aspectRatio="1/1" />
             </div>
             <div className="flex-1 pt-1">
               <p className="text-gray-400 text-[11px] mb-1">서랍형 · 옵션</p>

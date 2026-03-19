@@ -535,7 +535,7 @@ export default function StylingStep2() {
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => navigate("/styling/step1")}
+            onClick={() => navigate("/mypage?tab=styling")}
             className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
           >
             <ArrowLeft size={20} />
@@ -642,7 +642,7 @@ export default function StylingStep2() {
 
         {/* 마이페이지로 돌아가기 */}
         <button
-          onClick={() => navigate("/mypage")}
+          onClick={() => navigate("/mypage?tab=styling")}
           className="w-full py-3 rounded-full text-gray-500 font-medium text-[14px] border border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all"
         >
           마이페이지로 돌아가기
