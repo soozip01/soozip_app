@@ -4,6 +4,7 @@
  */
 import { useLocation } from "wouter";
 import { useSoozipAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 
 /* ── 아이콘 컴포넌트 ── */
 const HomeIcon = ({ active }: { active: boolean }) => (
@@ -51,12 +52,13 @@ const navItems = [
   { Icon: CategoryIcon, label: "제품", path: "/products" },
   { Icon: StylingShopIcon, label: "스타일링", path: "/styling-shop" },
   { Icon: MyPageIcon, label: "마이", path: "/mypage" },
-  { Icon: CartIcon, label: "장바구니", path: "/cart", badge: 0 },
+  { Icon: CartIcon, label: "장바구니", path: "/cart", showCartBadge: true },
 ];
 
 export default function BottomNav() {
   const [location, navigate] = useLocation();
   const { isLoggedIn } = useSoozipAuth();
+  const { totalItems } = useCart();
 
   const handleNavClick = (path: string) => {
     // 마이 탭: 비로그인 상태면 마이페이지로 이동 (마이페이지 내에서 로그인 유도)
@@ -66,11 +68,13 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
       <div className="flex items-center justify-around h-14">
-        {navItems.map(({ Icon, label, path, badge }) => {
+        {navItems.map(({ Icon, label, path, showCartBadge }) => {
           const isActive =
             path === "/"
               ? location === "/"
               : location === path || location.startsWith(path + "/") || location.startsWith(path + "?");
+
+          const badge = showCartBadge ? totalItems : 0;
 
           return (
             <button
@@ -81,12 +85,12 @@ export default function BottomNav() {
             >
               <div className="relative">
                 <Icon active={isActive} />
-                {badge !== undefined && badge > 0 && (
+                {badge > 0 && (
                   <span
-                    className="absolute -top-1 -right-1.5 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+                    className="absolute -top-1 -right-1.5 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-0.5"
                     style={{ background: "oklch(0.58 0.16 38)" }}
                   >
-                    {badge}
+                    {badge > 99 ? "99+" : badge}
                   </span>
                 )}
               </div>

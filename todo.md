@@ -22,3 +22,15 @@
 - [x] survey_id 기반으로 패키지 데이터 조회 로직 확인 및 수정
 - [x] 패키지 제품 심플 UI 구현 (배치솔루션 Step5, 풀스타일링 Step6)
 - [x] 실제 데이터로 동작 확인
+- [x] 오늘의집 장바구니 UI/UX 분석 및 참고
+- [x] CartContext 구현 (localStorage 기반, 로그인 없이 이용 가능)
+- [x] CartPage 재구현 (브랜드별 그룹핑, 선택/전체선택, 수량조절, 삭제, 무료배송 프로그레스바)
+- [x] 장바구니 localStorage 기반 구현 (DB 없이 클라이언트 사이드)
+- [x] 장바구니 CartContext API 구현 (addItem/removeItem/updateQuantity/clearCart)
+- [x] 패키지 제품 → 실제 제품 정보 매핑 및 장바구니 UI 개선
+- [x] Step5/Step6에서 패키지 제품 장바구니 담기 연동 (AddToCartModal + 전체 담기)
+- [x] 빌드/테스트 및 동작 확인 (9파일 31테스트 통과)
+- [x] 제품 옵션 선택 필수 후 장바구니 담기 플로우 구현 (AddToCartModal 수량 선택)
+- [x] 장바구니 담기 후 "계속 쇼핑/장바구니 보기" 확인 모달 구현 (AddToCartModal 2단계)
+- [x] BottomNav 장바구니 배지 CartContext 연동 (실시간 아이템 수 표시)
+- [x] StylingPackageProducts "패키지 전체 담기" 버튼 useCart 직접 연동 수정

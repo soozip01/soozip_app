@@ -569,8 +569,6 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
             <StylingPackageProducts
               packages={stablePackages}
               isLoading={surveyLoading || packageLoading}
-              onAddToCart={handleAddToCart}
-              onAddAllToCart={handleAddAllToCart}
             />
           </section>
         )}

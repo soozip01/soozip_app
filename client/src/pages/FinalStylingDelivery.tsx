@@ -244,8 +244,6 @@ export default function FinalStylingDelivery() {
             <StylingPackageProducts
               packages={stablePackages}
               isLoading={packageLoading}
-              onAddToCart={handleAddToCart}
-              onAddAllToCart={handleAddAllToCart}
             />
           </section>
 
