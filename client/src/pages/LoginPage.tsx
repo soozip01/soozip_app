@@ -29,11 +29,8 @@ const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID ?? "";
  * - 인앱 브라우저에서 origin이 null/about:blank인 경우 대비
  */
 function getAppBaseUrl(): string {
-  // 환경변수에 베이스 URL이 설정되어 있으면 사용
-  const envBaseUrl = import.meta.env.VITE_APP_BASE_URL;
-  if (envBaseUrl) return envBaseUrl.replace(/\/$/, "");
-
-  // window.location.origin이 유효한지 확인
+  // 항상 현재 도메인(window.location.origin)을 사용 - 멀티 도메인 지원
+  // VITE_APP_BASE_URL 환경변수는 무시 (특정 도메인에 고정되어 문제 발생)
   const origin = window.location.origin;
   if (origin && origin !== "null" && !origin.startsWith("file:")) {
     return origin;
