@@ -3,6 +3,7 @@
  * 구성: 이미지 슬라이더 → 상품 기본정보 → 수량/주문 → 탭(상품정보/배송환불) → 상세이미지
  */
 import { useState, useRef, useCallback } from "react";
+import { useCart } from "@/contexts/CartContext";
 import {
   ArrowLeft,
   Heart,
@@ -74,6 +75,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<TabType>("info");
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addItem } = useCart();
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const tabRef = useRef<HTMLDivElement>(null);
@@ -619,7 +621,23 @@ export default function ProductDetail() {
       <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto z-30">
         <div className="px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border flex gap-2.5">
           <button
-            onClick={() => toast.success("장바구니에 담겼습니다.")}
+            onClick={() => {
+              addItem({
+                id: product.id,
+                productId: product.id,
+                productName: product.product_name,
+                brandName: product.brand_name,
+                mainCategory: product.main_category ?? null,
+                subCategory: product.sub_category ?? null,
+                salePrice: product.sale_price,
+                originalPrice: product.original_price,
+                imageUrl: validImages[0]?.image_url ?? null,
+                memo: null,
+                source: "product",
+                quantity,
+              });
+              toast.success(`장바구니에 담겼습니다. (${quantity}개)`);
+            }}
             className="flex items-center justify-center gap-1.5 flex-1 border border-border text-foreground py-3.5 rounded-xl font-semibold hover:bg-secondary transition-colors text-sm"
           >
             <ShoppingCart size={16} />
