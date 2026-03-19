@@ -14,10 +14,10 @@ const TERRACOTTA = "#d31400";
 const STEP_LABELS = [
   "01 공간 실측",
   "02 기존가구 정보",
-  "03 배치 솔루션 제안",
+  "03 배치 제안",
   "04 풀 스타일링 진행",
   "05 피드백 및 수정",
-  "06 최종 시안 전달",
+  "06 최종안 전달",
 ];
 
 /* ── 이미지 플레이스홀더 컴포넌트 ── */
@@ -145,9 +145,8 @@ export default function StylingTypeFullOnline() {
       <main className="flex-1">
         {/* ── 소개 섹션 ── */}
         <section className="px-4 pt-8 pb-8">
-          <div className="grid grid-cols-2 gap-3 mb-7">
-            <ImgPlaceholder num="①" label="사례 이미지 1" aspectRatio="3/4" />
-            <ImgPlaceholder num="②" label="사례 이미지 2" aspectRatio="3/4" />
+          <div className="mb-7 flex justify-center">
+            <ImgPlaceholder num="①" label="사례 이미지 1" aspectRatio="3/4" className="max-w-xs w-full" />
           </div>
           <h2 className="text-gray-900 font-bold text-[17px] leading-snug mb-4">
             공간 실측부터, 홈 스타일링까지<br />온라인으로 진행되는 타입이에요
@@ -176,7 +175,7 @@ export default function StylingTypeFullOnline() {
             </p>
           </div>
           <div className="px-4 flex justify-center">
-            <ImgPlaceholder num="③" label="공간 실측 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
+            <ImgPlaceholder num="②" label="공간 실측 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -229,7 +228,7 @@ export default function StylingTypeFullOnline() {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <ImgPlaceholder num="④" label="가구 사진" aspectRatio="1/1" />
+                  <ImgPlaceholder num="③" label="가구 사진" aspectRatio="1/1" />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-[14px] mb-3">사이즈 정보</p>
@@ -257,7 +256,7 @@ export default function StylingTypeFullOnline() {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex gap-3">
                 <div className="w-28 shrink-0 rounded-lg overflow-hidden">
-                  <ImgPlaceholder num="⑤" label="공간 사진" aspectRatio="1/1" />
+                  <ImgPlaceholder num="④" label="공간 사진" aspectRatio="1/1" />
                 </div>
                 <ul className="flex-1 space-y-3 pt-1">
                   {[
@@ -293,8 +292,8 @@ export default function StylingTypeFullOnline() {
             <NoticeBox text="공간에 따라 제안되는 시안의 갯수는 달라질 수 있어요" />
           </div>
           <div className="flex flex-col gap-4">
-            <ImgPlaceholder num="⑥" label="배치안 예시 1" aspectRatio="4/3" />
-            <ImgPlaceholder num="⑦" label="배치안 예시 2" aspectRatio="4/3" />
+            <ImgPlaceholder num="⑤" label="배치안 예시 1" aspectRatio="4/3" />
+            <ImgPlaceholder num="⑥" label="배치안 예시 2" aspectRatio="4/3" />
           </div>
         </section>
 
@@ -314,7 +313,7 @@ export default function StylingTypeFullOnline() {
             </p>
           </div>
           <div className="flex justify-center">
-            <ImgPlaceholder num="⑧" label="풀 스타일링 진행 안내" aspectRatio="4/3" className="max-w-xs" />
+           <ImgPlaceholder num="⑦" label="풀 스타일링 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -331,7 +330,7 @@ export default function StylingTypeFullOnline() {
             <NoticeBox text="최대 2회 수정이 가능하여, 자세히 말씀 주실수록 좋아요" />
           </div>
           <div className="flex justify-center">
-            <ImgPlaceholder num="⑨" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
+            <ImgPlaceholder num="⑧" label="피드백 안내 이미지" aspectRatio="4/3" className="max-w-xs" />
           </div>
         </section>
 
@@ -346,10 +345,10 @@ export default function StylingTypeFullOnline() {
               최종 시안과 함께 추가된 가구가 있다면<br />링크를 함께 전달드려요
             </h3>
           </div>
-          <ImgPlaceholder num="⑩" label="최종 배치안" aspectRatio="4/3" className="mb-6" />
+          <ImgPlaceholder num="⑨" label="최종 배치안" aspectRatio="4/3" className="mb-6" />
           <div className="flex gap-3 items-start">
             <div className="w-20 shrink-0 rounded-lg overflow-hidden">
-              <ImgPlaceholder num="⑪" label="제품" aspectRatio="1/1" />
+              <ImgPlaceholder num="⑩" label="제품" aspectRatio="1/1" />
             </div>
             <div className="flex-1 pt-1">
               <p className="text-gray-400 text-[11px] mb-1">서랍형 · 옵션</p>

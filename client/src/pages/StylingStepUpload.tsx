@@ -105,7 +105,7 @@ const STEP_CONFIGS: Record<StepKey, StepConfig> = {
   step5: {
     stepKey: 'step5',
     stepNumber: 5,
-    title: "최종 시안 전달",
+    title: "최종안 전달",
     subtitle: "STEP 05",
     description: "최종 배치안과 제품 링크를 확인해주세요. 담당 디자이너가 첨부한 파일을 다운로드하세요.",
     allowText: true,
@@ -123,7 +123,7 @@ const STEP_CONFIGS: Record<StepKey, StepConfig> = {
   step6: {
     stepKey: 'step6',
     stepNumber: 6,
-    title: "풀 스타일링 진행",
+    title: "최종안 전달",
     subtitle: "STEP 06",
     description: "풀 스타일링 작업이 진행 중입니다. 담당 디자이너가 업로드하는 진행 현황을 확인해주세요.",
     allowText: true,
@@ -444,7 +444,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="px-4 py-3.5 flex items-center gap-3">
           <button
-            onClick={() => navigate("/mypage")}
+            onClick={() => navigate("/mypage?tab=styling")}
             className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft size={20} className="text-gray-700" />
@@ -815,7 +815,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
                   } catch { /* 완료 처리 실패해도 이동 허용 */ }
                 }
                 toast.success("제출이 완료되었습니다!");
-                setTimeout(() => navigate("/mypage"), 1200);
+                setTimeout(() => navigate("/mypage?tab=styling"), 1200);
               }}
               disabled={completeStepMutation.isPending}
               className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-70"

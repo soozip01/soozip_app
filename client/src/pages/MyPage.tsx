@@ -9,7 +9,7 @@ import {
   CheckCircle2, ClipboardList, MessageSquare, FileText, Home,
   Package
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
@@ -51,27 +51,27 @@ interface StepDef {
 const STEPS_FURNITURE: StepDef[] = [
   { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기", actionRoute: "/styling/step1" },
   { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/step2" },
-  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
-  { id: 4, label: "피드백 및 수정", desc: "배치안에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step4" },
-  { id: 5, label: "최종 시안 전달", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기", actionRoute: "/styling/step5" },
+  { id: 3, label: "배치 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
+  { id: 4, label: "피드백 및 수정", desc: "배치안에 대한 피드백을 남겼주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step4" },
+  { id: 5, label: "최종안 전달", desc: "최종 배치안과 제품 링크를 확인해주세요", actionLabel: "최종안 확인하기", actionRoute: "/styling/step5" },
 ];
 
 const STEPS_FULL_ONLINE: StepDef[] = [
   { id: 1, label: "공간 실측", desc: "공간의 가로·세로·높이 치수와 창문, 문 위치 정보를 전달해주세요", actionLabel: "실측 정보 입력하기", actionRoute: "/styling/step1" },
   { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/step2" },
-  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
+  { id: 3, label: "배치 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
   { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인", actionRoute: "/styling/step4" },
-  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step5" },
-  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기", actionRoute: "/styling/step6" },
+  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겼주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step5" },
+  { id: 6, label: "최종안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종안 확인하기", actionRoute: "/styling/step6" },
 ];
 
 const STEPS_FULL_OFFLINE: StepDef[] = [
   { id: 1, label: "방문 상담 및 공간 실측", desc: "방문 상담 및 실측을 위한 일정을 조율해주세요", actionLabel: "일정 확인하기", actionRoute: "/styling/step1" },
   { id: 2, label: "기존 가구 정보 전달", desc: "기존 가구의 제품 링크 또는 사이즈 정보를 입력해주세요", actionLabel: "정보 입력하기", actionRoute: "/styling/step2" },
-  { id: 3, label: "배치 솔루션 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
+  { id: 3, label: "배치 제안", desc: "제안된 배치안을 확인해주세요", actionLabel: "배치안 확인하기", actionRoute: "/styling/step3" },
   { id: 4, label: "풀 스타일링 진행", desc: "풀 스타일링 작업이 진행 중이에요", actionLabel: "진행 현황 확인", actionRoute: "/styling/step4" },
-  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겨주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step5" },
-  { id: 6, label: "최종 시안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종 시안 확인하기", actionRoute: "/styling/step6" },
+  { id: 5, label: "피드백 및 수정", desc: "스타일링 결과에 대한 피드백을 남겼주세요", actionLabel: "피드백 남기기", actionRoute: "/styling/step5" },
+  { id: 6, label: "최종안 전달", desc: "최종 시안과 제품 링크를 확인해주세요", actionLabel: "최종안 확인하기", actionRoute: "/styling/step6" },
   { id: 7, label: "가구 및 소품 세팅", desc: "선정된 가구와 소품 세팅이 진행됩니다", actionLabel: "세팅 현황 확인", actionRoute: "/styling/step7" },
 ];
 
@@ -199,7 +199,7 @@ function StylingTab({ userId, nickname, loginProvider, isLoggedIn }: { userId: s
 
         <div className="px-4 mt-5">
           <button
-            onClick={() => navigate("/styling/request")}
+            onClick={() => { window.location.href = 'https://soozipland-j3tut3mq.manus.space'; }}
             className="w-full py-4 rounded-full text-white font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
             style={{ background: TERRACOTTA }}
           >
@@ -379,10 +379,10 @@ function StylingTab({ userId, nickname, loginProvider, isLoggedIn }: { userId: s
                   </button>
                 )}
 
-                {/* 완료 단계 - 확인 링크 */}
-                {isDone && (
+                {/* 완료 단계 - 읽기전용으로 확인 가능 */}
+                {isDone && step.actionRoute && (
                   <button
-                    onClick={() => toast.info("해당 기능이 준비 중입니다.")}
+                    onClick={() => navigate(`${step.actionRoute}?surveyId=${surveyData.id}&readonly=1`)}
                     className="text-[12px] text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1 mt-1"
                   >
                     {step.actionLabel}
@@ -581,8 +581,15 @@ function ShoppingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
 /* ─── 메인 마이페이지 ─── */
 export default function MyPage() {
   const [, navigate] = useLocation();
+  const searchString = useSearch();
   const { user, isLoggedIn } = useSoozipAuth();
-  const [activeTab, setActiveTab] = useState<"profile" | "shopping" | "styling">("shopping");
+  const initialTab = (() => {
+    const params = new URLSearchParams(searchString);
+    const t = params.get('tab');
+    if (t === 'styling' || t === 'profile' || t === 'shopping') return t as "profile" | "shopping" | "styling";
+    return 'shopping' as const;
+  })();
+  const [activeTab, setActiveTab] = useState<"profile" | "shopping" | "styling">(initialTab);
 
   const tabs: { key: "profile" | "shopping" | "styling"; label: string }[] = [
     { key: "profile", label: "프로필" },

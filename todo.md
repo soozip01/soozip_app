@@ -55,3 +55,9 @@
 - [x] BUG: stylingPackage.getBySubmissionId/getById 라우터에서 삭제된 일반 Supabase(ENV.supabaseUrl) 대신 Survey Supabase(ENV.surveySupabaseUrl) 사용하도록 수정
 - [x] BUG: 카카오/네이버 로그인 후 구버전 도메인(soozipmall-xb7s4bud)으로 리다이렉트되는 문제 수정 - VITE_APP_BASE_URL을 soozip01.manus.space로 업데이트 및 빌드
 - [x] BUG: /api/auth/callback/kakao 404 에러 - registerSocialOAuthRoutes가 서버 메인에 등록되지 않은 문제 수정
+- [x] 배치솔루션 step5, 풀스타일링(온/오프라인) step6 명칭을 '최종안 전달'로 변경
+- [x] 모든 타입의 step3 명칭을 '배치 제안'으로 변경
+- [x] 풀스타일링(온라인) 사례 이미지를 이미지1만 남기고 플레이스홀더 번호 재조정
+- [x] 각 step에서 뒤로가기 시 쿡핑 탭이 아닌 스타일링 탭으로 이동, 이전 step은 읽기전용으로 확인 가능
+- [x] 미로그인 마이페이지 '스타일링 서비스 신청' 버튼 클릭 시 https://soozipland-j3tut3mq.manus.space 로 연결
+- [x] 메인 헤더: 로그인 시 닉네임 숨기고 프로필만 표시, 프로필을 장바구니 왼쪽으로 이동, 검색창 더 길게

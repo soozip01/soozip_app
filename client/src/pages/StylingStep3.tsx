@@ -123,7 +123,7 @@ export default function StylingStep3() {
       try { await completeStepMutation.mutateAsync({ userId, stepKey: 'step3' }); } catch { /* ignore */ }
       
       toast.success("배치안이 선택되었습니다!");
-      setTimeout(() => navigate("/mypage"), 1000);
+      setTimeout(() => navigate("/mypage?tab=styling"), 1000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "저장에 실패했습니다.";
       toast.error(msg);
@@ -147,14 +147,14 @@ export default function StylingStep3() {
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => navigate("/mypage")}
+            onClick={() => navigate("/mypage?tab=styling")}
             className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
             <p className="text-xs text-muted-foreground">STEP 03</p>
-            <h1 className="text-base font-bold text-foreground">배치 솔루션 제안</h1>
+            <h1 className="text-base font-bold text-foreground">배치 제안</h1>
           </div>
         </div>
         {/* 진행 표시 바 */}
@@ -284,10 +284,10 @@ export default function StylingStep3() {
 
         {/* 마이페이지로 돌아가기 */}
         <button
-          onClick={() => navigate("/mypage")}
+          onClick={() => navigate("/mypage?tab=styling")}
           className="w-full py-3 rounded-full text-gray-500 font-medium text-[14px] border border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all"
         >
-          마이페이지로 돌아가기
+          스타일링 탭으로 돌아가기
         </button>
       </main>
 

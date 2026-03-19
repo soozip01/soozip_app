@@ -311,19 +311,18 @@ export default function Home() {
               className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground min-w-0"
             />
           </form>
-          <div className="flex gap-0.5 shrink-0">
+          <div className="flex gap-0.5 shrink-0 items-center">
             {isLoggedIn ? (
               <button
                 onClick={() => navigate("/mypage")}
-                className="flex items-center gap-1 px-2 py-1 hover:bg-secondary rounded-md transition-colors text-xs font-semibold text-foreground"
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
               >
                 <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold"
                   style={{ background: TERRACOTTA }}
                 >
                   {soozipUser?.nickname?.slice(0, 1) ?? "U"}
                 </div>
-                <span className="max-w-[60px] truncate">{soozipUser?.nickname}</span>
               </button>
             ) : (
               <button onClick={() => navigate("/login")} className="p-1.5 hover:bg-secondary rounded-md transition-colors">

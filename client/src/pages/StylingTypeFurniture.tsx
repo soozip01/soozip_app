@@ -29,9 +29,9 @@ const IMG = {
 const STEP_LABELS = [
   "1. 공간 실측",
   "2. 기존 가구 정보 전달",
-  "3. 배치 솔루션 제안",
+  "3. 배치 제안",
   "4. 피드백 및 수정",
-  "5. 최종안 및 제품 링크 전달",
+  "5. 최종안 전달",
 ];
 
 export default function StylingTypeFurniture() {
