@@ -47,3 +47,4 @@
 - [ ] user_id 동기화: styling_packages.survey_id 매핑 로직 수정
 - [x] BUG: 수집 계정 Step5 패키지 미표시 오류 해결 (배포된 버전 코드 업데이트 필요 - 체크포인트 저장 후 재배포)
 - [ ] BUG: 카카오/네이버 소셜 로그인 후 soozip_user localStorage에 저장 안 되는 문제 수정
+- [x] Step5 패키지 제품 목록 UI 구현 - URL surveyId 파라미터 직접 사용으로 쿼리 즉시 실행 수정

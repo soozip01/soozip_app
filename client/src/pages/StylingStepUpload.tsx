@@ -5,7 +5,7 @@
  * - Supabase Storage 'soozip_styling_step' 버킷에 파일 저장 후 URL로 변환
  */
 import { useState, useRef, useCallback, useMemo } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import {
   ArrowLeft, Download, Upload, X, Plus, FileImage,
   AlertCircle, CheckCircle2, Loader2, MessageSquare, File
@@ -250,8 +250,15 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
   const completeStepMutation = trpc.survey.completeStep.useMutation();
 
   // 패키지 제품 조회 (step5, step6에서만 활성화)
+  // URL의 surveyId 파라미터를 직접 사용하여 survey.mySubmission 로딩 대기 없이 즉시 조회
+  const searchString = useSearch();
+  const urlSurveyId = useMemo(() => {
+    const params = new URLSearchParams(searchString);
+    return params.get('surveyId') ?? undefined;
+  }, [searchString]);
   const showPackageProducts = stepKey === 'step5' || stepKey === 'step6';
-  const submissionId = surveyData?.id ? String(surveyData.id) : undefined;
+  // URL surveyId 우선, 없으면 surveyData.id 사용
+  const submissionId = urlSurveyId ?? (surveyData?.id ? String(surveyData.id) : undefined);
   const { data: packageData, isLoading: packageLoading } = trpc.stylingPackage.getBySubmissionId.useQuery(
     { surveyId: submissionId ?? '' },
     { enabled: showPackageProducts && !!submissionId }

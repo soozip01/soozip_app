@@ -1,0 +1,8 @@
+{
+  "query": "SELECT * FROM styling_packages WHERE survey_id = '70' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QNrpLG3xzykTpL.e5b0f2c26cd2 --database NHeMeX7uJ4emwnmzNjhVYY --execute SELECT * FROM styling_packages WHERE survey_id = '70' LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'nhemex7uj4emwnmznjhvyy.styling_packages' doesn't exist"
+  ]
+}
