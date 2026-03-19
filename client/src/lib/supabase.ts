@@ -1,9 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
-// soozip 단일 프로젝트로 통합 (2026-03-19)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://lrozgykdsydvoppqnjdl.supabase.co";
+// soozip 단일 프로젝트로 통합 - Survey Supabase 사용 (2026-03-19)
+// 기존 일반 Supabase(rrtbkrewrgqobyjhkolw)는 삭제됨 → VITE_SURVEY_SUPABASE_URL 우선 사용
+const SUPABASE_URL =
+  import.meta.env.VITE_SURVEY_SUPABASE_URL ||
+  import.meta.env.VITE_SUPABASE_URL ||
+  "https://lrozgykdsydvoppqnjdl.supabase.co";
 const SUPABASE_ANON_KEY =
-  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxyb3pneWtkc3lkdm9wcHFuamRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNDc0MjgsImV4cCI6MjA4NzkyMzQyOH0.tW0xv9j5R1jnsgkGC5VxZvry8j4VGg-BUR13SCOu01I";
+  import.meta.env.VITE_SURVEY_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxyb3pneWtkc3lkdm9wcHFuamRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNDc0MjgsImV4cCI6MjA4NzkyMzQyOH0.tW0xv9j5R1jnsgkGC5VxZvry8j4VGg-BUR13SCOu01I";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
