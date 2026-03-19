@@ -10,6 +10,7 @@
  */
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
+import { useGoBack } from "@/hooks/useGoBack";
 import {
   ShoppingCart, Trash2, Minus, Plus, Package, ChevronLeft, Check,
 } from "lucide-react";
@@ -40,6 +41,7 @@ function groupByBrand(items: CartItem[]): Record<string, CartItem[]> {
 
 export default function CartPage() {
   const [, navigate] = useLocation();
+  const goBack = useGoBack("/");
   const { items, removeItem, updateQuantity, clearCart, totalItems } = useCart();
 
   // 체크박스 선택 상태 (id set) - 초기에 전체 선택
@@ -132,7 +134,7 @@ export default function CartPage() {
         <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
           <div className="flex items-center h-14 px-4 gap-3">
             <button
-              onClick={() => navigate(-1 as unknown as string)}
+              onClick={goBack}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <ChevronLeft size={22} className="text-gray-700" />
@@ -167,7 +169,7 @@ export default function CartPage() {
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="flex items-center h-14 px-4 gap-3">
           <button
-            onClick={() => navigate(-1 as unknown as string)}
+            onClick={goBack}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
           >
             <ChevronLeft size={22} className="text-gray-700" />

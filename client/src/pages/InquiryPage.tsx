@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ArrowLeft, MessageCircle, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { useGoBack } from "@/hooks/useGoBack";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
@@ -9,6 +10,7 @@ const INQUIRY_TYPES = ["상품 문의", "배송 문의", "교환/반품", "입�
 
 export default function InquiryPage() {
   const [, navigate] = useLocation();
+  const goBack = useGoBack("/mypage?tab=shopping");
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     type: "",
@@ -59,7 +61,7 @@ export default function InquiryPage() {
     <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1 as unknown as string)} className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
+          <button onClick={goBack} className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
             <ArrowLeft size={20} />
           </button>
           <span className="font-semibold text-sm">1:1 문의하기</span>
