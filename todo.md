@@ -54,3 +54,4 @@
 - [ ] BUG: fetchApprovedProducts 에러 방어 코드 강화 (Supabase 연결 실패 시 빈 배열 반환)
 - [x] BUG: stylingPackage.getBySubmissionId/getById 라우터에서 삭제된 일반 Supabase(ENV.supabaseUrl) 대신 Survey Supabase(ENV.surveySupabaseUrl) 사용하도록 수정
 - [x] BUG: 카카오/네이버 로그인 후 구버전 도메인(soozipmall-xb7s4bud)으로 리다이렉트되는 문제 수정 - VITE_APP_BASE_URL을 soozip01.manus.space로 업데이트 및 빌드
+- [x] BUG: /api/auth/callback/kakao 404 에러 - registerSocialOAuthRoutes가 서버 메인에 등록되지 않은 문제 수정
