@@ -258,6 +258,7 @@ export default function StylingStepUpload({ stepKey }: StylingStepUploadProps) {
   );
   const stablePackages = useMemo(() => packageData ?? [], [packageData]);
 
+
   // 텍스트 저장 mutation
   const updateTextMutation = trpc.survey.updateStepText.useMutation({
     onSuccess: () => {

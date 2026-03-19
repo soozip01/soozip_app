@@ -41,3 +41,9 @@
 - [x] DB 통합: soozip product → soozip 데이터 이전 완료 (products, product_images, styling_packages, styling_package_items 등)
 - [x] DB 통합: user_id 동기화 구조 설계 (survey_submissions.user_id ↔ users.id 연결 구조 완료)
 - [x] DB 통합: soozip_app_v2 서버/클라이언트 코드 단일 Supabase URL로 통합 (client/src/lib/supabase.ts 수정)
+- [ ] user_id 동기화: 로그인 → user_id 저장 → 패키지 조회 전체 흐름 분석
+- [ ] user_id 동기화: Supabase users 테이블 활성화 (로그인 시 upsert)
+- [ ] user_id 동기화: survey_submissions.user_id ↔ Supabase users.id FK 연결
+- [ ] user_id 동기화: styling_packages.survey_id 매핑 로직 수정
+- [x] BUG: 수집 계정 Step5 패키지 미표시 오류 해결 (배포된 버전 코드 업데이트 필요 - 체크포인트 저장 후 재배포)
+- [ ] BUG: 카카오/네이버 소셜 로그인 후 soozip_user localStorage에 저장 안 되는 문제 수정
