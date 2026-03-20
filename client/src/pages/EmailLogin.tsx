@@ -17,14 +17,16 @@ export default function EmailLogin() {
   const loginMutation = trpc.auth.emailLogin.useMutation({
     onSuccess: (data) => {
       toast.success(`${data.nickname}님, 환영합니다!`);
-      // AuthContext에 로그인 상태 저장
-      login({
-        id: data.userId,
-        nickname: data.nickname,
-        email,
-        provider: "email",
-        profileImageUrl: null,
-      });
+      login(
+        {
+          id: data.userId,
+          nickname: data.nickname,
+          email: data.email ?? email,
+          provider: "email",
+          profileImageUrl: data.profileImageUrl ?? null,
+        },
+        data.accessToken,
+      );
       navigate("/");
     },
     onError: (err) => {

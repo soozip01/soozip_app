@@ -85,13 +85,16 @@ export default function OAuthCallback() {
         navigate(`/auth/social-consent?provider=${data.provider}&tempToken=${(data as any).tempToken}`);
       } else {
         // 기존 회원 → AuthContext에 사용자 정보 저장 후 홈으로
-        login({
-          id: data.userId ?? 0,
-          nickname: (data as any).nickname ?? "",
-          email: (data as any).email ?? null,
-          provider: data.provider as "kakao" | "naver",
-          profileImageUrl: (data as any).profileImageUrl ?? null,
-        });
+        login(
+          {
+            id: data.userId ?? 0,
+            nickname: (data as any).nickname ?? "",
+            email: (data as any).email ?? null,
+            provider: data.provider as "kakao" | "naver",
+            profileImageUrl: (data as any).profileImageUrl ?? null,
+          },
+          (data as any).accessToken ?? "",
+        );
         navigate("/");
       }
     },

@@ -49,9 +49,11 @@ describe("auth.logout", () => {
     const result = await caller.auth.logout();
 
     expect(result).toEqual({ success: true });
-    expect(clearedCookies).toHaveLength(1);
-    expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
-    expect(clearedCookies[0]?.options).toMatchObject({
+    // logout은 Manus 세션 쿠키 + Refresh Token 쿠키 2개를 삭제한다
+    expect(clearedCookies).toHaveLength(2);
+    const sessionCookie = clearedCookies.find(c => c.name === COOKIE_NAME);
+    expect(sessionCookie).toBeDefined();
+    expect(sessionCookie?.options).toMatchObject({
       maxAge: -1,
       secure: true,
       sameSite: "none",

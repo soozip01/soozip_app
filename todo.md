@@ -66,3 +66,20 @@
 - [x] BUG: 쇼핑탭 고객센터 뒤로가기 시 홈이 아닌 이전 화면(쇼핑탭)으로 복귀
 - [x] BUG: 장바구니 진입 시 404 에러 - 배포 미완료로 인한 구버전 JS 문제 (Publish 필요)
 - [x] BUG: 고객센터/장바구니 뒤로가기 시 404 - navigate(-1)이 히스토리 없을 때 실패, 안전한 fallback 로직으로 수정 (useGoBack 훅 생성 및 적용)
+
+## JWT 통합 인증 시스템
+
+- [x] TiDB 스키마: 통합 users 테이블 추가 (provider, providerId, email, passwordHash, nickname 등)
+- [x] TiDB 스키마: refresh_tokens 테이블 추가
+- [x] DB 마이그레이션 실행 (pnpm db:push)
+- [x] 서버: JWT 발급 헬퍼 (accessToken 15분, refreshToken 30일)
+- [x] 서버: auth.emailLogin 뮤테이션 - 이메일 로그인 → 통합 users 테이블 조회 → 토큰 발급
+- [x] 서버: auth.emailSignup 뮤테이션 - 이메일 회원가입 → 통합 users 테이블 저장 → Supabase users 동기화
+- [x] 서버: auth.refreshToken 뮤테이션 - refreshToken 쿠키 검증 → 새 accessToken 발급
+- [x] 서버: auth.logoutUnified 뮤테이션 - refreshToken 쿠키 삭제 + DB 무효화
+- [x] 서버: 소셜 OAuth 콜백 수정 - 통합 users 테이블에 upsert
+- [x] 서버: Supabase users 테이블 동기화 (회원가입/소셜 로그인 시)
+- [x] 클라이언트: AuthContext 리팩토링 - accessToken localStorage 관리 + 자동 refresh
+- [x] 클라이언트: trpc 클라이언트에 Authorization 헤더 자동 첨부
+- [x] 클라이언트: 로그인/회원가입 페이지 새 API 연동
+- [x] 테스트 작성 (JWT 발급/검증/만료 감지 - 8개 테스트)

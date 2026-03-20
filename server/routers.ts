@@ -6,14 +6,25 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo } from "../drizzle/schema";
+import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, soozipUsers, refreshTokens, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo } from "../drizzle/schema";
 import { storagePut } from "./storage";
 import { eq, or, desc, and } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
 import { sendVerificationEmail } from "./mailer";
+import {
+  createAccessToken,
+  createRefreshToken,
+  refreshAccessToken,
+  revokeRefreshToken,
+  isNicknameTaken as isNicknameTakenUnified,
+  syncToSupabase,
+  getRefreshCookieOptions,
+  hashPassword as hashPasswordUnified,
+  REFRESH_TOKEN_COOKIE,
+} from "./auth";
 
-// JWT 시크릿 (세션용)
+// JWT 시크릿 (임시 토큰 전용)
 const JWT_SECRET = new TextEncoder().encode(ENV.cookieSecret || "soozip-secret-key-2024");
 
 // 임시 토큰 생성 (소셜 신규 회원 - 약관 동의 전)
@@ -30,12 +41,12 @@ async function verifyTempToken(token: string) {
   return payload;
 }
 
-// 비밀번호 해시
+// 비밀번호 해시 (레거시 - emailUsers 호환용)
 function hashPassword(password: string): string {
   return crypto.createHash("sha256").update(password + "soozip_salt_2024").digest("hex");
 }
 
-// 닉네임 중복 확인 (전체 테이블)
+// 닉네임 중복 확인 (레거시 테이블 전체)
 async function isNicknameTaken(nickname: string): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
@@ -54,8 +65,73 @@ export const appRouter = router({
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      // Refresh Token 쿠키도 제거
+      ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { path: "/" });
       return { success: true } as const;
     }),
+
+    /**
+     * Refresh Token으로 Access Token 재발급
+     * Refresh Token은 HttpOnly 쿠키에서 읽음
+     */
+    refreshToken: publicProcedure
+      .mutation(async ({ ctx }) => {
+        const rawRefreshToken = ctx.req.cookies?.[REFRESH_TOKEN_COOKIE];
+        if (!rawRefreshToken) throw new Error("로그인이 필요합니다.");
+
+        const result = await refreshAccessToken(rawRefreshToken);
+        if (!result) {
+          ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { path: "/" });
+          throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        return {
+          accessToken: result.accessToken,
+          user: result.user,
+        };
+      }),
+
+    /**
+     * 로그아웃 (통합 - Refresh Token DB 무효화)
+     */
+    logoutUnified: publicProcedure
+      .mutation(async ({ ctx }) => {
+        const rawRefreshToken = ctx.req.cookies?.[REFRESH_TOKEN_COOKIE];
+        if (rawRefreshToken) {
+          await revokeRefreshToken(rawRefreshToken);
+        }
+        ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { path: "/" });
+        return { success: true };
+      }),
+
+    /**
+     * 통합 사용자 정보 조회 (Access Token 기반)
+     * 클라이언트가 localStorage의 accessToken을 보내면 사용자 정보 반환
+     */
+    meUnified: publicProcedure
+      .input(z.object({ accessToken: z.string() }))
+      .query(async ({ input }) => {
+        const { verifyAccessToken } = await import("./auth");
+        const payload = await verifyAccessToken(input.accessToken);
+        if (!payload) return null;
+
+        const db = await getDb();
+        if (!db) return null;
+
+        const user = await db.select().from(soozipUsers)
+          .where(eq(soozipUsers.id, parseInt(payload.sub)))
+          .limit(1);
+
+        if (!user[0]) return null;
+        return {
+          id: user[0].id,
+          nickname: user[0].nickname,
+          email: user[0].email ?? null,
+          provider: user[0].provider,
+          profileImageUrl: user[0].profileImageUrl ?? null,
+          role: user[0].role,
+        };
+      }),
 
     socialLogin: publicProcedure
       .input(z.object({
@@ -64,7 +140,7 @@ export const appRouter = router({
         redirectUri: z.string(),
         state: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const { code, provider, redirectUri } = input;
         const db = await getDb();
         if (!db) throw new Error("데이터베이스 연결 오류");
@@ -106,16 +182,62 @@ export const appRouter = router({
           const profileImageUrl = userData.kakao_account?.profile?.profile_image_url ?? null;
           const kakaoNickname = userData.kakao_account?.profile?.nickname ?? null;
 
-          const existing = await db.select().from(kakaoUsers).where(eq(kakaoUsers.kakaoId, kakaoId)).limit(1);
-          if (existing.length > 0) {
-            await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
+          // 통합 테이블에서 기존 사용자 조회
+          const existingUnified = await db.select().from(soozipUsers)
+            .where(and(eq(soozipUsers.provider, "kakao"), eq(soozipUsers.providerId, kakaoId)))
+            .limit(1);
+
+          if (existingUnified.length > 0) {
+            const u = existingUnified[0];
+            await db.update(soozipUsers).set({ lastSignedIn: new Date() })
+              .where(eq(soozipUsers.id, u.id));
+            const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+            const rawRefreshToken = await createRefreshToken(u.id);
+            await syncToSupabase(u.id, u.nickname);
+            ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
             return {
               isNewUser: false,
               provider: "kakao" as const,
-              userId: existing[0].id,
-              nickname: existing[0].nickname,
+              userId: u.id,
+              nickname: u.nickname,
+              email: u.email ?? null,
+              profileImageUrl: u.profileImageUrl ?? null,
+              accessToken,
+            };
+          }
+
+          // 레거시 kakaoUsers 테이블에서도 확인 (기존 사용자 마이그레이션)
+          const existing = await db.select().from(kakaoUsers).where(eq(kakaoUsers.kakaoId, kakaoId)).limit(1);
+          if (existing.length > 0) {
+            // 통합 테이블로 마이그레이션
+            await db.insert(soozipUsers).values({
+              provider: "kakao",
+              providerId: kakaoId,
               email: existing[0].email ?? null,
+              nickname: existing[0].nickname,
               profileImageUrl: existing[0].profileImageUrl ?? null,
+              termsAgreed: existing[0].termsAgreed,
+              privacyAgreed: existing[0].privacyAgreed,
+              marketingAgreed: existing[0].marketingAgreed,
+              ageAgreed: existing[0].ageAgreed,
+            });
+            const migrated = await db.select().from(soozipUsers)
+              .where(and(eq(soozipUsers.provider, "kakao"), eq(soozipUsers.providerId, kakaoId)))
+              .limit(1);
+            const u = migrated[0];
+            await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
+            const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+            const rawRefreshToken = await createRefreshToken(u.id);
+            await syncToSupabase(u.id, u.nickname);
+            ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+            return {
+              isNewUser: false,
+              provider: "kakao" as const,
+              userId: u.id,
+              nickname: u.nickname,
+              email: u.email ?? null,
+              profileImageUrl: u.profileImageUrl ?? null,
+              accessToken,
             };
           }
 
@@ -176,16 +298,61 @@ export const appRouter = router({
           const birthday = userData.response.birthday ?? null;
           const age = userData.response.age ?? null;
 
-          const existing = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
-          if (existing.length > 0) {
-            await db.update(naverUsers).set({ lastSignedIn: new Date() }).where(eq(naverUsers.naverId, naverId));
+          // 통합 테이블에서 기존 사용자 조회
+          const existingUnifiedNaver = await db.select().from(soozipUsers)
+            .where(and(eq(soozipUsers.provider, "naver"), eq(soozipUsers.providerId, naverId)))
+            .limit(1);
+
+          if (existingUnifiedNaver.length > 0) {
+            const u = existingUnifiedNaver[0];
+            await db.update(soozipUsers).set({ lastSignedIn: new Date() })
+              .where(eq(soozipUsers.id, u.id));
+            const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+            const rawRefreshToken = await createRefreshToken(u.id);
+            await syncToSupabase(u.id, u.nickname);
+            ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
             return {
               isNewUser: false,
               provider: "naver" as const,
-              userId: existing[0].id,
-              nickname: existing[0].nickname,
+              userId: u.id,
+              nickname: u.nickname,
+              email: u.email ?? null,
+              profileImageUrl: u.profileImageUrl ?? null,
+              accessToken,
+            };
+          }
+
+          // 레거시 naverUsers 테이블에서 확인 (기존 사용자 마이그레이션)
+          const existing = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
+          if (existing.length > 0) {
+            await db.insert(soozipUsers).values({
+              provider: "naver",
+              providerId: naverId,
               email: existing[0].email ?? null,
+              nickname: existing[0].nickname,
               profileImageUrl: existing[0].profileImageUrl ?? null,
+              termsAgreed: existing[0].termsAgreed,
+              privacyAgreed: existing[0].privacyAgreed,
+              marketingAgreed: existing[0].marketingAgreed,
+              ageAgreed: existing[0].ageAgreed,
+            });
+            const migrated = await db.select().from(soozipUsers)
+              .where(and(eq(soozipUsers.provider, "naver"), eq(soozipUsers.providerId, naverId)))
+              .limit(1);
+            const u = migrated[0];
+            await db.update(naverUsers).set({ lastSignedIn: new Date() }).where(eq(naverUsers.naverId, naverId));
+            const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+            const rawRefreshToken = await createRefreshToken(u.id);
+            await syncToSupabase(u.id, u.nickname);
+            ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+            return {
+              isNewUser: false,
+              provider: "naver" as const,
+              userId: u.id,
+              nickname: u.nickname,
+              email: u.email ?? null,
+              profileImageUrl: u.profileImageUrl ?? null,
+              accessToken,
             };
           }
 
@@ -212,7 +379,7 @@ export const appRouter = router({
         marketingAgreed: z.boolean(),
         ageAgreed: z.boolean(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("데이터베이스 연결 오류");
 
@@ -227,49 +394,83 @@ export const appRouter = router({
           throw new Error("인증 세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
-        const taken = await isNicknameTaken(input.nickname);
-        if (taken) throw new Error("이미 사용 중인 닉네임입니다.");
+        // 닉네임 중복 확인 (통합 + 레거시)
+        const takenUnified = await isNicknameTakenUnified(input.nickname);
+        const takenLegacy = await isNicknameTaken(input.nickname);
+        if (takenUnified || takenLegacy) throw new Error("이미 사용 중인 닉네임입니다.");
 
         const provider = payload.provider as string;
-        if (provider === "kakao") {
-          await db.insert(kakaoUsers).values({
-            kakaoId: payload.kakaoId as string,
-            nickname: input.nickname,
-            email: (payload.email as string | null) ?? null,
-            profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
-            termsAgreed: input.termsAgreed,
-            privacyAgreed: input.privacyAgreed,
-            marketingAgreed: input.marketingAgreed,
-            ageAgreed: input.ageAgreed,
-          });
-        } else if (provider === "naver") {
-          await db.insert(naverUsers).values({
-            naverId: payload.naverId as string,
-            nickname: input.nickname,
-            email: (payload.email as string | null) ?? null,
-            profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
-            termsAgreed: input.termsAgreed,
-            privacyAgreed: input.privacyAgreed,
-            marketingAgreed: input.marketingAgreed,
-            ageAgreed: input.ageAgreed,
-          });
-        } else {
+        const providerId = provider === "kakao" ? (payload.kakaoId as string) : (payload.naverId as string);
+
+        if (provider !== "kakao" && provider !== "naver") {
           throw new Error("지원하지 않는 소셜 로그인 방식입니다.");
         }
 
+        // 통합 테이블에 삽입
+        await db.insert(soozipUsers).values({
+          provider: provider as "kakao" | "naver",
+          providerId,
+          email: (payload.email as string | null) ?? null,
+          nickname: input.nickname,
+          profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
+          termsAgreed: input.termsAgreed,
+          privacyAgreed: input.privacyAgreed,
+          marketingAgreed: input.marketingAgreed,
+          ageAgreed: input.ageAgreed,
+        });
+
+        // 레거시 테이블에도 저장 (하위 호환)
+        if (provider === "kakao") {
+          await db.insert(kakaoUsers).values({
+            kakaoId: providerId,
+            nickname: input.nickname,
+            email: (payload.email as string | null) ?? null,
+            profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
+            termsAgreed: input.termsAgreed,
+            privacyAgreed: input.privacyAgreed,
+            marketingAgreed: input.marketingAgreed,
+            ageAgreed: input.ageAgreed,
+          }).onDuplicateKeyUpdate({ set: { nickname: input.nickname } });
+        } else {
+          await db.insert(naverUsers).values({
+            naverId: providerId,
+            nickname: input.nickname,
+            email: (payload.email as string | null) ?? null,
+            profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
+            termsAgreed: input.termsAgreed,
+            privacyAgreed: input.privacyAgreed,
+            marketingAgreed: input.marketingAgreed,
+            ageAgreed: input.ageAgreed,
+          }).onDuplicateKeyUpdate({ set: { nickname: input.nickname } });
+        }
+
+        // 생성된 통합 사용자 조회
+        const newUser = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, provider as "kakao" | "naver"), eq(soozipUsers.providerId, providerId)))
+          .limit(1);
+        const u = newUser[0];
+
+        const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+        const rawRefreshToken = await createRefreshToken(u.id);
+        await syncToSupabase(u.id, u.nickname);
+        ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+
         return {
           success: true,
-          userId: provider === "kakao" ? (payload.kakaoId as string) : (payload.naverId as string),
-          email: (payload.email as string | null) ?? null,
-          profileImageUrl: (payload.profileImageUrl as string | null) ?? null,
+          userId: u.id,
+          nickname: u.nickname,
+          email: u.email ?? null,
+          profileImageUrl: u.profileImageUrl ?? null,
+          accessToken,
         };
       }),
 
     checkNickname: publicProcedure
       .input(z.object({ nickname: z.string().min(2).max(20) }))
       .query(async ({ input }) => {
-        const taken = await isNicknameTaken(input.nickname);
-        return { available: !taken };
+        const takenUnified = await isNicknameTakenUnified(input.nickname);
+        const takenLegacy = await isNicknameTaken(input.nickname);
+        return { available: !(takenUnified || takenLegacy) };
       }),
 
     sendEmailVerification: publicProcedure
@@ -278,8 +479,12 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error("데이터베이스 연결 오류");
 
+        // 통합 테이블 + 레거시 테이블 모두 확인
+        const existingUnifiedEmail = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)))
+          .limit(1);
         const existingUser = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
-        if (existingUser.length > 0) throw new Error("이미 가입된 이메일입니다.");
+        if (existingUnifiedEmail.length > 0 || existingUser.length > 0) throw new Error("이미 가입된 이메일입니다.");
 
         const code = String(Math.floor(100000 + Math.random() * 900000));
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -331,7 +536,7 @@ export const appRouter = router({
         marketingAgreed: z.boolean(),
         ageAgreed: z.boolean(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("데이터베이스 연결 오류");
 
@@ -339,13 +544,34 @@ export const appRouter = router({
           throw new Error("필수 약관에 동의해주세요.");
         }
 
+        // 통합 + 레거시 테이블 모두 확인
+        const existingUnifiedEmail = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)))
+          .limit(1);
         const existingEmail = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
-        if (existingEmail.length > 0) throw new Error("이미 가입된 이메일입니다.");
+        if (existingUnifiedEmail.length > 0 || existingEmail.length > 0) throw new Error("이미 가입된 이메일입니다.");
 
-        const taken = await isNicknameTaken(input.nickname);
-        if (taken) throw new Error("이미 사용 중인 닉네임입니다.");
+        const takenUnified = await isNicknameTakenUnified(input.nickname);
+        const takenLegacy = await isNicknameTaken(input.nickname);
+        if (takenUnified || takenLegacy) throw new Error("이미 사용 중인 닉네임입니다.");
 
-        const passwordHash = hashPassword(input.password);
+        const passwordHash = hashPasswordUnified(input.password);
+
+        // 통합 테이블에 저장
+        await db.insert(soozipUsers).values({
+          provider: "email",
+          providerId: input.email,
+          email: input.email,
+          nickname: input.nickname,
+          passwordHash,
+          emailVerified: false,
+          termsAgreed: input.termsAgreed,
+          privacyAgreed: input.privacyAgreed,
+          marketingAgreed: input.marketingAgreed,
+          ageAgreed: input.ageAgreed,
+        });
+
+        // 레거시 테이블에도 저장 (하위 호환)
         await db.insert(emailUsers).values({
           email: input.email,
           passwordHash,
@@ -355,8 +581,26 @@ export const appRouter = router({
           marketingAgreed: input.marketingAgreed,
           ageAgreed: input.ageAgreed,
         });
-        const newUser = await db.select().from(emailUsers).where(eq(emailUsers.email, input.email)).limit(1);
-        return { success: true, userId: newUser[0]?.id ?? 0 };
+
+        const newUser = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)))
+          .limit(1);
+        const u = newUser[0];
+
+        const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+        const rawRefreshToken = await createRefreshToken(u.id);
+        await syncToSupabase(u.id, u.nickname);
+
+        // Refresh Token을 HttpOnly 쿠키에 저장
+        ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+
+        return {
+          success: true,
+          userId: u.id,
+          nickname: u.nickname,
+          email: u.email ?? null,
+          accessToken,
+        };
       }),
 
     emailLogin: publicProcedure
@@ -364,21 +608,77 @@ export const appRouter = router({
         email: z.string().email(),
         password: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("데이터베이스 연결 오류");
 
-        const passwordHash = hashPassword(input.password);
-        const user = await db.select().from(emailUsers)
+        const passwordHash = hashPasswordUnified(input.password);
+
+        // 통합 테이블에서 먼저 조회
+        const unifiedUser = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)))
+          .limit(1);
+
+        if (unifiedUser.length > 0) {
+          const u = unifiedUser[0];
+          if (u.passwordHash !== passwordHash) {
+            throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+          }
+          await db.update(soozipUsers).set({ lastSignedIn: new Date() }).where(eq(soozipUsers.id, u.id));
+          const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+          const rawRefreshToken = await createRefreshToken(u.id);
+          await syncToSupabase(u.id, u.nickname);
+          ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+          return {
+            success: true,
+            userId: u.id,
+            nickname: u.nickname,
+            email: u.email ?? null,
+            profileImageUrl: u.profileImageUrl ?? null,
+            accessToken,
+          };
+        }
+
+        // 레거시 emailUsers 테이블에서 조회 (마이그레이션)
+        const legacyUser = await db.select().from(emailUsers)
           .where(eq(emailUsers.email, input.email))
           .limit(1);
 
-        if (user.length === 0 || user[0].passwordHash !== passwordHash) {
+        if (legacyUser.length === 0 || legacyUser[0].passwordHash !== passwordHash) {
           throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-         await db.update(emailUsers).set({ lastSignedIn: new Date() }).where(eq(emailUsers.email, input.email));
-        return { success: true, userId: user[0].id, nickname: user[0].nickname };
+        // 통합 테이블로 마이그레이션
+        await db.insert(soozipUsers).values({
+          provider: "email",
+          providerId: input.email,
+          email: input.email,
+          nickname: legacyUser[0].nickname,
+          passwordHash,
+          emailVerified: legacyUser[0].emailVerified,
+          termsAgreed: legacyUser[0].termsAgreed,
+          privacyAgreed: legacyUser[0].privacyAgreed,
+          marketingAgreed: legacyUser[0].marketingAgreed,
+          ageAgreed: legacyUser[0].ageAgreed,
+        });
+        const migrated = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)))
+          .limit(1);
+        const u = migrated[0];
+
+        await db.update(emailUsers).set({ lastSignedIn: new Date() }).where(eq(emailUsers.email, input.email));
+        const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+        const rawRefreshToken = await createRefreshToken(u.id);
+        await syncToSupabase(u.id, u.nickname);
+        ctx.res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+        return {
+          success: true,
+          userId: u.id,
+          nickname: u.nickname,
+          email: u.email ?? null,
+          profileImageUrl: u.profileImageUrl ?? null,
+          accessToken,
+        };
       }),
 
     /**

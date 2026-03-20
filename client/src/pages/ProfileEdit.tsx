@@ -22,7 +22,7 @@ const PROVIDER_LABEL: Record<string, string> = {
 
 export default function ProfileEdit() {
   const [, navigate] = useLocation();
-  const { user, isLoggedIn, login } = useSoozipAuth();
+  const { user, isLoggedIn, login, accessToken } = useSoozipAuth();
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken" | "same">("idle");
@@ -37,12 +37,15 @@ export default function ProfileEdit() {
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: (data) => {
       // AuthContext 업데이트
-      if (user) {
-        login({
-          ...user,
-          nickname: data.nickname ?? user.nickname,
-          profileImageUrl: data.profileImageUrl ?? user.profileImageUrl,
-        });
+      if (user && accessToken) {
+        login(
+          {
+            ...user,
+            nickname: data.nickname ?? user.nickname,
+            profileImageUrl: data.profileImageUrl ?? user.profileImageUrl,
+          },
+          accessToken,
+        );
       }
       toast.success("프로필이 저장되었습니다.");
       navigate("/my");

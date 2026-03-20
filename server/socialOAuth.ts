@@ -12,8 +12,15 @@ import type { Express, Request, Response } from "express";
 import { SignJWT } from "jose";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { kakaoUsers, naverUsers, soozipUsers } from "../drizzle/schema";
+import { eq, and } from "drizzle-orm";
+import {
+  createAccessToken,
+  createRefreshToken,
+  syncToSupabase,
+  getRefreshCookieOptions,
+  REFRESH_TOKEN_COOKIE,
+} from "./auth";
 
 const JWT_SECRET = new TextEncoder().encode(ENV.cookieSecret || "soozip-secret-key-2024");
 
@@ -22,14 +29,6 @@ async function createTempToken(payload: Record<string, unknown>) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("10m")
-    .sign(JWT_SECRET);
-}
-
-// 세션 토큰 생성 (기존 회원 로그인)
-async function createSessionToken(userId: number, provider: string) {
-  return new SignJWT({ userId, provider, type: "session" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("365d")
     .sign(JWT_SECRET);
 }
 
@@ -129,30 +128,54 @@ export function registerSocialOAuthRoutes(app: Express) {
         return;
       }
 
-      const existing = await db.select().from(kakaoUsers).where(eq(kakaoUsers.kakaoId, kakaoId)).limit(1);
+      // 통합 테이블에서 조회
+      const existingUnified = await db.select().from(soozipUsers)
+        .where(and(eq(soozipUsers.provider, "kakao"), eq(soozipUsers.providerId, kakaoId)))
+        .limit(1);
 
-      if (existing.length > 0) {
-        // 기존 회원 - 세션 토큰 발급 후 홈으로
-        await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
-        const sessionToken = await createSessionToken(existing[0].id, "kakao");
+      if (existingUnified.length > 0) {
+        const u = existingUnified[0];
+        await db.update(soozipUsers).set({ lastSignedIn: new Date() }).where(eq(soozipUsers.id, u.id));
+        const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+        const rawRefreshToken = await createRefreshToken(u.id);
+        await syncToSupabase(u.id, u.nickname);
+        res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
         const userPayload = encodeURIComponent(JSON.stringify({
-          id: existing[0].id,
-          nickname: existing[0].nickname,
-          email: existing[0].email ?? null,
-          provider: "kakao",
-          profileImageUrl: existing[0].profileImageUrl ?? null,
+          id: u.id, nickname: u.nickname, email: u.email ?? null,
+          provider: "kakao", profileImageUrl: u.profileImageUrl ?? null, accessToken,
         }));
-        res.redirect(302, `/auth/social-complete?token=${sessionToken}&user=${userPayload}`);
+        res.redirect(302, `/auth/social-complete?user=${userPayload}`);
       } else {
-        // 신규 회원 - 임시 토큰 발급 후 약관 동의 화면으로
-        const tempToken = await createTempToken({
-          provider: "kakao",
-          kakaoId,
-          email,
-          profileImageUrl,
-          suggestedNickname: kakaoNickname,
-        });
-        res.redirect(302, `/auth/social-consent?provider=kakao&tempToken=${tempToken}`);
+        // 레거시 kakaoUsers 테이블에서 확인 (마이그레이션)
+        const existingLegacy = await db.select().from(kakaoUsers).where(eq(kakaoUsers.kakaoId, kakaoId)).limit(1);
+        if (existingLegacy.length > 0) {
+          const leg = existingLegacy[0];
+          await db.insert(soozipUsers).values({
+            provider: "kakao", providerId: kakaoId, email: leg.email ?? null,
+            nickname: leg.nickname, profileImageUrl: leg.profileImageUrl ?? null,
+            termsAgreed: leg.termsAgreed, privacyAgreed: leg.privacyAgreed,
+            marketingAgreed: leg.marketingAgreed, ageAgreed: leg.ageAgreed,
+          });
+          const migrated = await db.select().from(soozipUsers)
+            .where(and(eq(soozipUsers.provider, "kakao"), eq(soozipUsers.providerId, kakaoId))).limit(1);
+          const u = migrated[0];
+          await db.update(kakaoUsers).set({ lastSignedIn: new Date() }).where(eq(kakaoUsers.kakaoId, kakaoId));
+          const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+          const rawRefreshToken = await createRefreshToken(u.id);
+          await syncToSupabase(u.id, u.nickname);
+          res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+          const userPayload = encodeURIComponent(JSON.stringify({
+            id: u.id, nickname: u.nickname, email: u.email ?? null,
+            provider: "kakao", profileImageUrl: u.profileImageUrl ?? null, accessToken,
+          }));
+          res.redirect(302, `/auth/social-complete?user=${userPayload}`);
+        } else {
+          // 신규 회원 - 임시 토큰 발급 후 약관 동의 화면으로
+          const tempToken = await createTempToken({
+            provider: "kakao", kakaoId, email, profileImageUrl, suggestedNickname: kakaoNickname,
+          });
+          res.redirect(302, `/auth/social-consent?provider=kakao&tempToken=${tempToken}`);
+        }
       }
     } catch (error) {
       console.error("[카카오 OAuth] 처리 중 오류:", error);
@@ -254,33 +277,55 @@ export function registerSocialOAuthRoutes(app: Express) {
         return;
       }
 
-      const existing = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
+      // 통합 테이블에서 조회
+      const existingUnifiedNaver = await db.select().from(soozipUsers)
+        .where(and(eq(soozipUsers.provider, "naver"), eq(soozipUsers.providerId, naverId)))
+        .limit(1);
 
-      if (existing.length > 0) {
-        // 기존 회원 - 세션 토큰 발급 후 홈으로
-        await db.update(naverUsers).set({ lastSignedIn: new Date() }).where(eq(naverUsers.naverId, naverId));
-        const sessionToken = await createSessionToken(existing[0].id, "naver");
+      if (existingUnifiedNaver.length > 0) {
+        const u = existingUnifiedNaver[0];
+        await db.update(soozipUsers).set({ lastSignedIn: new Date() }).where(eq(soozipUsers.id, u.id));
+        const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+        const rawRefreshToken = await createRefreshToken(u.id);
+        await syncToSupabase(u.id, u.nickname);
+        res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
         const userPayload = encodeURIComponent(JSON.stringify({
-          id: existing[0].id,
-          nickname: existing[0].nickname,
-          email: existing[0].email ?? null,
-          provider: "naver",
-          profileImageUrl: existing[0].profileImageUrl ?? null,
+          id: u.id, nickname: u.nickname, email: u.email ?? null,
+          provider: "naver", profileImageUrl: u.profileImageUrl ?? null, accessToken,
         }));
-        res.redirect(302, `/auth/social-complete?token=${sessionToken}&user=${userPayload}`);
+        res.redirect(302, `/auth/social-complete?user=${userPayload}`);
       } else {
-        // 신규 회원 - 임시 토큰 발급 후 약관 동의 화면으로
-        const tempToken = await createTempToken({
-          provider: "naver",
-          naverId,
-          email,
-          profileImageUrl,
-          suggestedNickname: naverNickname,
-          gender,
-          birthday,
-          age,
-        });
-        res.redirect(302, `/auth/social-consent?provider=naver&tempToken=${tempToken}`);
+        // 레거시 naverUsers 테이블에서 확인 (마이그레이션)
+        const existingLegacy = await db.select().from(naverUsers).where(eq(naverUsers.naverId, naverId)).limit(1);
+        if (existingLegacy.length > 0) {
+          const leg = existingLegacy[0];
+          await db.insert(soozipUsers).values({
+            provider: "naver", providerId: naverId, email: leg.email ?? null,
+            nickname: leg.nickname, profileImageUrl: leg.profileImageUrl ?? null,
+            termsAgreed: leg.termsAgreed, privacyAgreed: leg.privacyAgreed,
+            marketingAgreed: leg.marketingAgreed, ageAgreed: leg.ageAgreed,
+          });
+          const migrated = await db.select().from(soozipUsers)
+            .where(and(eq(soozipUsers.provider, "naver"), eq(soozipUsers.providerId, naverId))).limit(1);
+          const u = migrated[0];
+          await db.update(naverUsers).set({ lastSignedIn: new Date() }).where(eq(naverUsers.naverId, naverId));
+          const accessToken = await createAccessToken({ id: u.id, nickname: u.nickname, provider: u.provider, role: u.role });
+          const rawRefreshToken = await createRefreshToken(u.id);
+          await syncToSupabase(u.id, u.nickname);
+          res.cookie(REFRESH_TOKEN_COOKIE, rawRefreshToken, getRefreshCookieOptions(ENV.isProduction));
+          const userPayload = encodeURIComponent(JSON.stringify({
+            id: u.id, nickname: u.nickname, email: u.email ?? null,
+            provider: "naver", profileImageUrl: u.profileImageUrl ?? null, accessToken,
+          }));
+          res.redirect(302, `/auth/social-complete?user=${userPayload}`);
+        } else {
+          // 신규 회원 - 임시 토큰 발급 후 약관 동의 화면으로
+          const tempToken = await createTempToken({
+            provider: "naver", naverId, email, profileImageUrl,
+            suggestedNickname: naverNickname, gender, birthday, age,
+          });
+          res.redirect(302, `/auth/social-consent?provider=naver&tempToken=${tempToken}`);
+        }
       }
     } catch (error) {
       console.error("[네이버 OAuth] 처리 중 오류:", error);

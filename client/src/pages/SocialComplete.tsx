@@ -1,15 +1,7 @@
 /**
  * 소셜 로그인 완료 처리 페이지
- *
- * 서버사이드 OAuth 콜백 후 리다이렉트되는 페이지입니다.
- * URL 파라미터에서 사용자 정보를 읽어 AuthContext에 저장하고 홈으로 이동합니다.
- *
- * 사용 흐름:
- * 1. 서버: /auth/callback/kakao 또는 /auth/callback/naver 처리
- * 2. 서버: 기존 회원이면 /auth/social-complete?token=...&user=... 로 리다이렉트
- * 3. 이 페이지: 사용자 정보를 AuthContext에 저장 후 홈으로 이동
+ * URL 파라미터의 user JSON에서 accessToken을 읽어 AuthContext에 저장
  */
-
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useSoozipAuth } from "@/contexts/AuthContext";
@@ -29,29 +21,29 @@ export default function SocialComplete() {
         setError(decodeURIComponent(errorParam));
         return;
       }
-
       if (!userParam) {
         setError("사용자 정보를 찾을 수 없습니다.");
         return;
       }
 
       const userData = JSON.parse(decodeURIComponent(userParam));
-
-      if (!userData || !userData.id || !userData.nickname) {
+      if (!userData?.id || !userData?.nickname || !userData?.accessToken) {
         setError("사용자 정보가 올바르지 않습니다.");
         return;
       }
 
-      // AuthContext에 사용자 정보 저장
-      login({
-        id: userData.id,
-        nickname: userData.nickname,
-        email: userData.email ?? null,
-        provider: userData.provider as "kakao" | "naver",
-        profileImageUrl: userData.profileImageUrl ?? null,
-      });
+      login(
+        {
+          id: userData.id,
+          nickname: userData.nickname,
+          email: userData.email ?? null,
+          provider: userData.provider as "kakao" | "naver",
+          profileImageUrl: userData.profileImageUrl ?? null,
+          role: userData.role ?? "user",
+        },
+        userData.accessToken,
+      );
 
-      // 홈으로 이동
       navigate("/");
     } catch (e) {
       console.error("[SocialComplete] 처리 오류:", e);

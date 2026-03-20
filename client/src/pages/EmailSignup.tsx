@@ -141,13 +141,16 @@ export default function EmailSignup() {
     onSuccess: (data) => {
       toast.success("회원가입이 완료되었습니다!");
       // 로그인 상태 저장
-      login({
-        id: data.userId,
-        nickname,
-        email,
-        provider: "email",
-        profileImageUrl: null,
-      });
+      login(
+        {
+          id: data.userId,
+          nickname,
+          email,
+          provider: "email",
+          profileImageUrl: null,
+        },
+        data.accessToken,
+      );
       navigate("/");
     },
     onError: (err) => {

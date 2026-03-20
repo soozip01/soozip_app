@@ -22,7 +22,57 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
- * 카카오 회원 테이블
+ * 통합 수집 회원 테이블
+ * 카카오/네이버/이메일 로그인 사용자를 단일 테이블로 관리합니다.
+ * - provider: kakao | naver | email
+ * - providerId: 소셜은 소셜 고유 ID, 이메일은 email 값
+ */
+export const soozipUsers = mysqlTable("soozip_users", {
+  id: int("id").autoincrement().primaryKey(),
+  // 로그인 제공자 및 고유 식별자
+  provider: mysqlEnum("provider", ["kakao", "naver", "email"]).notNull(),
+  providerId: varchar("providerId", { length: 128 }).notNull(), // 소셜 ID 또는 이메일
+  // 기본 정보
+  email: varchar("email", { length: 320 }),
+  nickname: varchar("nickname", { length: 50 }).notNull(),
+  profileImageUrl: text("profileImageUrl"),
+  // 이메일 로그인 전용
+  passwordHash: varchar("passwordHash", { length: 256 }),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
+  // 약관 동의
+  termsAgreed: boolean("termsAgreed").default(false).notNull(),
+  privacyAgreed: boolean("privacyAgreed").default(false).notNull(),
+  marketingAgreed: boolean("marketingAgreed").default(false).notNull(),
+  ageAgreed: boolean("ageAgreed").default(false).notNull(),
+  // 역할
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  // 타임스탬프
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+});
+
+export type SoozipUser = typeof soozipUsers.$inferSelect;
+export type InsertSoozipUser = typeof soozipUsers.$inferInsert;
+
+/**
+ * Refresh Token 테이블
+ * JWT Refresh Token을 DB에 저장하여 무효화(로그아웃/탈취 방지)를 지원합니다.
+ */
+export const refreshTokens = mysqlTable("refresh_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // soozipUsers.id 참조
+  tokenHash: varchar("tokenHash", { length: 256 }).notNull().unique(), // SHA-256 해시
+  expiresAt: timestamp("expiresAt").notNull(),
+  revoked: boolean("revoked").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type InsertRefreshToken = typeof refreshTokens.$inferInsert;
+
+/**
+ * 카카오 회원 테이블 (레거시 - 하위 호환 유지)
  * 카카오 OAuth로 가입한 사용자 정보를 저장합니다.
  */
 export const kakaoUsers = mysqlTable("kakao_users", {
@@ -45,7 +95,7 @@ export type KakaoUser = typeof kakaoUsers.$inferSelect;
 export type InsertKakaoUser = typeof kakaoUsers.$inferInsert;
 
 /**
- * 네이버 회원 테이블
+ * 네이버 회원 테이블 (레거시 - 하위 호환 유지)
  * 네이버 OAuth로 가입한 사용자 정보를 저장합니다.
  */
 export const naverUsers = mysqlTable("naver_users", {
@@ -68,7 +118,7 @@ export type NaverUser = typeof naverUsers.$inferSelect;
 export type InsertNaverUser = typeof naverUsers.$inferInsert;
 
 /**
- * 이메일 회원 테이블
+ * 이메일 회원 테이블 (레거시 - 하위 호환 유지)
  * 이메일/비밀번호로 가입한 사용자 정보를 저장합니다.
  */
 export const emailUsers = mysqlTable("email_users", {

@@ -43,6 +43,13 @@
       "when": 1773710217701,
       "tag": "0005_tranquil_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1773985654364,
+      "tag": "0006_rainy_energizer",
+      "breakpoints": true
     }
   ]
 }
