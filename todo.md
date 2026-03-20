@@ -87,3 +87,8 @@
 ## 디버그 기능
 
 - [x] 이메일 인증 코드 화면 표시 (이메일 미연동 디버그용 - 서버 응답에 코드 포함, 화면에 표시)
+
+## user_id 통일 작업
+
+- [x] Supabase survey_submissions의 user_id를 TiDB soozip_users.id 기준으로 업데이트 (기존 데이터 - id=88 수동 업데이트 완료)
+- [x] 신규 설문 신청 시 user_id를 TiDB soozip_users.id로 저장하도록 서버 로직 수정 (이미 올바르게 구현됨 확인)
