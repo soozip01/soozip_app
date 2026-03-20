@@ -28,6 +28,8 @@ export default function EmailSignup() {
   const [verificationCode, setVerificationCode] = useState("");
   const [codeTimer, setCodeTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 디버그용: 이메일 미연동 시 화면에 코드 표시
+  const [debugCode, setDebugCode] = useState<string | null>(null);
 
   // 약관 동의
   const [agreeAll, setAgreeAll] = useState(false);
@@ -76,10 +78,15 @@ export default function EmailSignup() {
 
   // 이메일 인증 코드 발송
   const sendCodeMutation = trpc.auth.sendEmailVerification.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setCodeSent(true);
       startTimer();
-      toast.success("인증 코드가 발송되었습니다. 이메일을 확인해주세요. (10분 유효)");
+      if (data.debugCode) {
+        setDebugCode(data.debugCode);
+        toast.success(`[디버그] 인증 코드: ${data.debugCode}`, { duration: 30000 });
+      } else {
+        toast.success("인증 코드가 발송되었습니다. 이메일을 확인해주세요. (10분 유효)");
+      }
     },
     onError: (err) => {
       toast.error(err.message);
@@ -316,6 +323,22 @@ export default function EmailSignup() {
               </div>
             )}
           </div>
+
+          {/* 디버그: 인증 코드 표시 (dev 환경에서만) */}
+          {debugCode && codeSent && !emailVerified && (
+            <div className="mt-2 px-4 py-3 rounded-xl bg-amber-50 border border-amber-300 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500 shrink-0">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <div>
+                <p className="text-xs font-semibold text-amber-700">디버그 모드 — 인증 코드</p>
+                <p className="text-lg font-bold tracking-[0.3em] text-amber-800">{debugCode}</p>
+                <p className="text-xs text-amber-600">이메일 미연동 상태에서만 표시됩니다</p>
+              </div>
+            </div>
+          )}
 
           {/* 인증 코드 입력 */}
           {codeSent && !emailVerified && (

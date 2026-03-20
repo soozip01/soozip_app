@@ -502,7 +502,12 @@ export const appRouter = router({
           console.warn(`[Email] 이메일 발송 실패 - 코드는 DB에 저장됨: ${input.email}`);
         }
 
-        return { success: true, message: "인증 코드가 발송되었습니다. (10분 유효)" };
+        return {
+          success: true,
+          message: "인증 코드가 발송되었습니다. (10분 유효)",
+          // 디버그용: 이메일 미연동 시 화면에 코드 표시 (프로덕션에서는 undefined)
+          debugCode: !ENV.isProduction ? code : undefined,
+        };
       }),
 
     verifyEmailCode: publicProcedure
