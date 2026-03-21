@@ -325,3 +325,166 @@ export const furnitureInfo = mysqlTable("furniture_info", {
 
 export type FurnitureInfo = typeof furnitureInfo.$inferSelect;
 export type InsertFurnitureInfo = typeof furnitureInfo.$inferInsert;
+
+/**
+ * 찜(위시리스트) 테이블
+ * 로그인 사용자가 상품을 찜해두는 기능
+ */
+export const wishlists = mysqlTable("wishlists", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),           // soozipUsers.id 참조
+  productId: int("productId").notNull(),     // Supabase products.id (정수형)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Wishlist = typeof wishlists.$inferSelect;
+export type InsertWishlist = typeof wishlists.$inferInsert;
+
+/**
+ * 상품 리뷰 테이블
+ * 구매 확정 후 작성 가능한 리뷰 (별점 + 텍스트 + 이미지)
+ */
+export const productReviews = mysqlTable("product_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),           // soozipUsers.id 참조
+  userNickname: varchar("userNickname", { length: 50 }).notNull(),
+  productId: int("productId").notNull(),     // Supabase products.id
+  orderItemId: int("orderItemId"),           // order_items.id 참조 (구매 확인용)
+  rating: int("rating").notNull(),           // 1~5
+  content: text("content").notNull(),
+  imageUrls: text("imageUrls"),              // JSON 배열 문자열
+  isVisible: boolean("isVisible").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductReview = typeof productReviews.$inferSelect;
+export type InsertProductReview = typeof productReviews.$inferInsert;
+
+/**
+ * 상품 문의 테이블
+ * 상품 구매 전/후 판매자에게 문의하는 기능
+ */
+export const productInquiries = mysqlTable("product_inquiries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),           // soozipUsers.id 참조
+  userNickname: varchar("userNickname", { length: 50 }).notNull(),
+  productId: int("productId").notNull(),     // Supabase products.id
+  title: varchar("title", { length: 100 }).notNull(),
+  content: text("content").notNull(),
+  isSecret: boolean("isSecret").default(false).notNull(),  // 비밀글 여부
+  answer: text("answer"),                    // 판매자/관리자 답변
+  answeredAt: timestamp("answeredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductInquiry = typeof productInquiries.$inferSelect;
+export type InsertProductInquiry = typeof productInquiries.$inferInsert;
+
+/**
+ * 주문 테이블
+ * 상품 구매 시 생성되는 주문 정보
+ * 입금대기 → 결제완료 → 배송준비 → 배송중 → 배송완료 → 구매확정
+ */
+export const orders = mysqlTable("orders", {
+  id: int("id").autoincrement().primaryKey(),
+  orderNumber: varchar("orderNumber", { length: 30 }).notNull().unique(), // 주문번호 (예: ORD-20260322-001)
+  userId: int("userId").notNull(),           // soozipUsers.id 참조
+  // 주문 상태
+  status: mysqlEnum("status", [
+    "pending_payment",  // 입금대기
+    "paid",             // 결제완료
+    "preparing",        // 배송준비
+    "shipping",         // 배송중
+    "delivered",        // 배송완료
+    "confirmed",        // 구매확정
+    "cancelled",        // 취소
+  ]).default("paid").notNull(),
+  // 금액
+  totalAmount: int("totalAmount").notNull(),         // 총 상품금액
+  shippingFee: int("shippingFee").default(0).notNull(),
+  discountAmount: int("discountAmount").default(0).notNull(),
+  finalAmount: int("finalAmount").notNull(),         // 실결제금액
+  // 배송지
+  recipientName: varchar("recipientName", { length: 50 }).notNull(),
+  recipientPhone: varchar("recipientPhone", { length: 20 }).notNull(),
+  postalCode: varchar("postalCode", { length: 10 }).notNull(),
+  address: varchar("address", { length: 200 }).notNull(),
+  addressDetail: varchar("addressDetail", { length: 100 }),
+  deliveryMemo: varchar("deliveryMemo", { length: 100 }),
+  // 배송 추적
+  trackingNumber: varchar("trackingNumber", { length: 50 }),
+  courierName: varchar("courierName", { length: 30 }),
+  // 결제 정보 (PG 연동 후 채워짐)
+  paymentMethod: varchar("paymentMethod", { length: 30 }),
+  paymentKey: varchar("paymentKey", { length: 100 }),
+  paidAt: timestamp("paidAt"),
+  // 타임스탬프
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+
+/**
+ * 주문 상품 테이블
+ * 하나의 주문에 포함된 개별 상품 항목
+ */
+export const orderItems = mysqlTable("order_items", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),         // orders.id 참조
+  productId: int("productId").notNull(),     // Supabase products.id
+  productName: varchar("productName", { length: 200 }).notNull(),
+  brandName: varchar("brandName", { length: 100 }),
+  imageUrl: text("imageUrl"),
+  quantity: int("quantity").notNull(),
+  unitPrice: int("unitPrice").notNull(),     // 주문 시점 단가
+  totalPrice: int("totalPrice").notNull(),   // 수량 * 단가
+  // 개별 상품 상태 (교환/반품 처리용)
+  itemStatus: mysqlEnum("itemStatus", [
+    "normal",           // 정상
+    "return_requested", // 반품 신청
+    "exchange_requested", // 교환 신청
+    "returned",         // 반품 완료
+    "exchanged",        // 교환 완료
+  ]).default("normal").notNull(),
+  reviewWritten: boolean("reviewWritten").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+/**
+ * 교환/반품 신청 테이블
+ * 배송 완료 후 교환 또는 반품을 신청하는 기능
+ */
+export const returnRequests = mysqlTable("return_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  orderItemId: int("orderItemId").notNull(),  // order_items.id 참조
+  orderId: int("orderId").notNull(),           // orders.id 참조
+  userId: int("userId").notNull(),             // soozipUsers.id 참조
+  type: mysqlEnum("type", ["return", "exchange"]).notNull(),  // 반품 or 교환
+  reason: mysqlEnum("reason", [
+    "change_of_mind",   // 단순 변심
+    "defective",        // 상품 불량/파손
+    "wrong_item",       // 오배송
+    "size_issue",       // 사이즈 불만족
+    "other",            // 기타
+  ]).notNull(),
+  reasonDetail: text("reasonDetail"),          // 상세 사유
+  status: mysqlEnum("status", [
+    "requested",        // 신청
+    "approved",         // 승인
+    "rejected",         // 거절
+    "completed",        // 완료
+  ]).default("requested").notNull(),
+  adminNote: text("adminNote"),                // 관리자 메모
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReturnRequest = typeof returnRequests.$inferSelect;
+export type InsertReturnRequest = typeof returnRequests.$inferInsert;

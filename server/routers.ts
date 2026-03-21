@@ -6,9 +6,9 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, soozipUsers, refreshTokens, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo } from "../drizzle/schema";
+import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, soozipUsers, refreshTokens, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo, wishlists, productReviews, productInquiries, orders, orderItems, returnRequests } from "../drizzle/schema";
 import { storagePut } from "./storage";
-import { eq, or, desc, and } from "drizzle-orm";
+import { eq, or, desc, and, sql, count } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
 import { sendVerificationEmail } from "./mailer";
@@ -1827,6 +1827,405 @@ export const appRouter = router({
 
         await db.delete(furnitureInfo).where(eq(furnitureInfo.id, input.id));
         return { success: true };
+      }),
+  }),
+
+  /**
+   * 찜(위시리스트) 라우터
+   */
+  wishlist: router({
+    /**
+     * 찜 토글 (추가/해제)
+     */
+    toggle: publicProcedure
+      .input(z.object({ productId: z.number(), userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const existing = await db.select()
+          .from(wishlists)
+          .where(and(eq(wishlists.userId, input.userId), eq(wishlists.productId, input.productId)))
+          .limit(1);
+
+        if (existing.length > 0) {
+          await db.delete(wishlists)
+            .where(and(eq(wishlists.userId, input.userId), eq(wishlists.productId, input.productId)));
+          return { wishlisted: false };
+        } else {
+          await db.insert(wishlists).values({ userId: input.userId, productId: input.productId });
+          return { wishlisted: true };
+        }
+      }),
+
+    /**
+     * 특정 상품 찜 여부 확인
+     */
+    check: publicProcedure
+      .input(z.object({ productId: z.number(), userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { wishlisted: false };
+
+        const existing = await db.select()
+          .from(wishlists)
+          .where(and(eq(wishlists.userId, input.userId), eq(wishlists.productId, input.productId)))
+          .limit(1);
+
+        return { wishlisted: existing.length > 0 };
+      }),
+
+    /**
+     * 찜 목록 조회 (userId 기준)
+     */
+    list: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { items: [] };
+
+        const items = await db.select()
+          .from(wishlists)
+          .where(eq(wishlists.userId, input.userId))
+          .orderBy(desc(wishlists.createdAt));
+
+        return { items };
+      }),
+
+    /**
+     * 찜 해제 (ID 기준)
+     */
+    remove: publicProcedure
+      .input(z.object({ productId: z.number(), userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.delete(wishlists)
+          .where(and(eq(wishlists.userId, input.userId), eq(wishlists.productId, input.productId)));
+        return { success: true };
+      }),
+  }),
+
+  /**
+   * 상품 리뷰 라우터
+   */
+  review: router({
+    /**
+     * 상품 리뷰 목록 + 별점 통계
+     */
+    list: publicProcedure
+      .input(z.object({ productId: z.number(), page: z.number().default(1), limit: z.number().default(10) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { reviews: [], stats: { total: 0, average: 0, distribution: {} } };
+
+        const offset = (input.page - 1) * input.limit;
+        const reviews = await db.select()
+          .from(productReviews)
+          .where(and(eq(productReviews.productId, input.productId), eq(productReviews.isVisible, true)))
+          .orderBy(desc(productReviews.createdAt))
+          .limit(input.limit)
+          .offset(offset);
+
+        // 별점 통계
+        const allReviews = await db.select({ rating: productReviews.rating })
+          .from(productReviews)
+          .where(and(eq(productReviews.productId, input.productId), eq(productReviews.isVisible, true)));
+
+        const total = allReviews.length;
+        const average = total > 0 ? allReviews.reduce((sum, r) => sum + r.rating, 0) / total : 0;
+        const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        allReviews.forEach(r => { distribution[r.rating] = (distribution[r.rating] || 0) + 1; });
+
+        return {
+          reviews: reviews.map(r => ({
+            ...r,
+            imageUrls: r.imageUrls ? JSON.parse(r.imageUrls) as string[] : [],
+          })),
+          stats: { total, average: Math.round(average * 10) / 10, distribution },
+        };
+      }),
+
+    /**
+     * 리뷰 작성
+     */
+    create: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        userNickname: z.string(),
+        productId: z.number(),
+        orderItemId: z.number().optional(),
+        rating: z.number().min(1).max(5),
+        content: z.string().min(10, "리뷰는 10자 이상 작성해주세요"),
+        imageUrls: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.insert(productReviews).values({
+          userId: input.userId,
+          userNickname: input.userNickname,
+          productId: input.productId,
+          orderItemId: input.orderItemId,
+          rating: input.rating,
+          content: input.content,
+          imageUrls: input.imageUrls ? JSON.stringify(input.imageUrls) : null,
+        });
+
+        // 주문 상품에 리뷰 작성 완료 표시
+        if (input.orderItemId) {
+          await db.update(orderItems)
+            .set({ reviewWritten: true })
+            .where(eq(orderItems.id, input.orderItemId));
+        }
+
+        return { success: true };
+      }),
+  }),
+
+  /**
+   * 상품 문의 라우터
+   */
+  inquiry: router({
+    /**
+     * 상품 문의 목록
+     */
+    list: publicProcedure
+      .input(z.object({ productId: z.number(), userId: z.number().optional() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { inquiries: [] };
+
+        const items = await db.select()
+          .from(productInquiries)
+          .where(eq(productInquiries.productId, input.productId))
+          .orderBy(desc(productInquiries.createdAt));
+
+        // 비밀글은 본인 또는 관리자만 내용 볼 수 있음
+        return {
+          inquiries: items.map(item => ({
+            ...item,
+            content: item.isSecret && item.userId !== input.userId ? "비밀글입니다." : item.content,
+            isOwner: item.userId === input.userId,
+          })),
+        };
+      }),
+
+    /**
+     * 문의 작성
+     */
+    create: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        userNickname: z.string(),
+        productId: z.number(),
+        title: z.string().min(2, "제목을 입력해주세요"),
+        content: z.string().min(10, "문의 내용을 10자 이상 입력해주세요"),
+        isSecret: z.boolean().default(false),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.insert(productInquiries).values({
+          userId: input.userId,
+          userNickname: input.userNickname,
+          productId: input.productId,
+          title: input.title,
+          content: input.content,
+          isSecret: input.isSecret,
+        });
+
+        return { success: true };
+      }),
+  }),
+
+  /**
+   * 주문 라우터
+   */
+  order: router({
+    /**
+     * 주문 목록 조회 (마이페이지)
+     */
+    list: publicProcedure
+      .input(z.object({ userId: z.number(), status: z.string().optional() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { orders: [] };
+
+        const orderList = await db.select()
+          .from(orders)
+          .where(eq(orders.userId, input.userId))
+          .orderBy(desc(orders.createdAt));
+
+        // 각 주문의 상품 목록도 함께 조회
+        const result = await Promise.all(
+          orderList.map(async (order) => {
+            const items = await db.select()
+              .from(orderItems)
+              .where(eq(orderItems.orderId, order.id));
+            return { ...order, items };
+          })
+        );
+
+        return { orders: result };
+      }),
+
+    /**
+     * 주문 상세 조회
+     */
+    detail: publicProcedure
+      .input(z.object({ orderId: z.number(), userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const orderList = await db.select()
+          .from(orders)
+          .where(and(eq(orders.id, input.orderId), eq(orders.userId, input.userId)))
+          .limit(1);
+
+        if (orderList.length === 0) throw new Error("주문을 찾을 수 없습니다");
+
+        const items = await db.select()
+          .from(orderItems)
+          .where(eq(orderItems.orderId, input.orderId));
+
+        return { order: orderList[0], items };
+      }),
+
+    /**
+     * 주문 현황 카운트 (마이페이지 요약)
+     */
+    statusCount: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { pending_payment: 0, paid: 0, preparing: 0, shipping: 0, delivered: 0, confirmed: 0 };
+
+        const orderList = await db.select({ status: orders.status })
+          .from(orders)
+          .where(eq(orders.userId, input.userId));
+
+        const counts = { pending_payment: 0, paid: 0, preparing: 0, shipping: 0, delivered: 0, confirmed: 0 };
+        orderList.forEach(o => {
+          if (o.status in counts) counts[o.status as keyof typeof counts]++;
+        });
+        return counts;
+      }),
+
+    /**
+     * 테스트용 더미 주문 생성 (PG 연동 전 UI 테스트)
+     */
+    createDummy: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        productId: z.number(),
+        productName: z.string(),
+        brandName: z.string().optional(),
+        imageUrl: z.string().optional(),
+        quantity: z.number().default(1),
+        unitPrice: z.number(),
+        status: z.enum(["pending_payment", "paid", "preparing", "shipping", "delivered", "confirmed"]).default("paid"),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        const orderNumber = `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+        const totalAmount = input.unitPrice * input.quantity;
+        const shippingFee = totalAmount >= 30000 ? 0 : 3000;
+        const finalAmount = totalAmount + shippingFee;
+
+        const [inserted] = await db.insert(orders).values({
+          orderNumber,
+          userId: input.userId,
+          status: input.status,
+          totalAmount,
+          shippingFee,
+          finalAmount,
+          recipientName: "테스트 수령인",
+          recipientPhone: "010-0000-0000",
+          postalCode: "06000",
+          address: "서울특별시 강남구 테헤란로 123",
+          paymentMethod: "카드",
+          paidAt: new Date(),
+        });
+
+        // order_items 삽입
+        const orderId = (inserted as any).insertId ?? 0;
+        if (orderId) {
+          await db.insert(orderItems).values({
+            orderId,
+            productId: input.productId,
+            productName: input.productName,
+            brandName: input.brandName,
+            imageUrl: input.imageUrl,
+            quantity: input.quantity,
+            unitPrice: input.unitPrice,
+            totalPrice: totalAmount,
+          });
+        }
+
+        return { success: true, orderNumber };
+      }),
+  }),
+
+  /**
+   * 교환/반품 신청 라우터
+   */
+  returnRequest: router({
+    /**
+     * 교환/반품 신청
+     */
+    create: publicProcedure
+      .input(z.object({
+        orderItemId: z.number(),
+        orderId: z.number(),
+        userId: z.number(),
+        type: z.enum(["return", "exchange"]),
+        reason: z.enum(["change_of_mind", "defective", "wrong_item", "size_issue", "other"]),
+        reasonDetail: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        await db.insert(returnRequests).values({
+          orderItemId: input.orderItemId,
+          orderId: input.orderId,
+          userId: input.userId,
+          type: input.type,
+          reason: input.reason,
+          reasonDetail: input.reasonDetail,
+        });
+
+        // 주문 상품 상태 업데이트
+        const newStatus = input.type === "return" ? "return_requested" : "exchange_requested";
+        await db.update(orderItems)
+          .set({ itemStatus: newStatus })
+          .where(eq(orderItems.id, input.orderItemId));
+
+        return { success: true };
+      }),
+
+    /**
+     * 교환/반품 신청 목록 조회
+     */
+    list: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { requests: [] };
+
+        const requests = await db.select()
+          .from(returnRequests)
+          .where(eq(returnRequests.userId, input.userId))
+          .orderBy(desc(returnRequests.createdAt));
+
+        return { requests };
       }),
   }),
 });

@@ -108,3 +108,37 @@
 
 - [x] 서버: auth.checkEmailProvider 엔드포인트 추가 (이메일로 가입 방식 조회)
 - [x] ForgotPassword.tsx: 이메일 입력 후 소셜 계정 감지 시 안내 메시지 표시
+
+## PG사 연동 전 쇼핑몰 기본 기능
+
+### DB 스키마
+- [x] wishlists 테이블 (찜 - userId, productId, createdAt)
+- [x] product_reviews 테이블 (리뷰 - userId, productId, rating, content, images, orderItemId)
+- [x] product_inquiries 테이블 (상품문의 - userId, productId, title, content, answer, isSecret)
+- [x] orders 테이블 (주문 - userId, status, totalAmount, shippingAddress 등)
+- [x] order_items 테이블 (주문 상품 - orderId, productId, quantity, price 등)
+- [x] return_requests 테이블 (교환/반품 - orderItemId, type, reason, status)
+
+### 서버 API
+- [x] wishlist.toggle (찜 추가/해제)
+- [x] wishlist.list (찜 목록 조회)
+- [x] wishlist.check (특정 상품 찜 여부 확인)
+- [x] review.list (상품 리뷰 목록)
+- [x] review.create (리뷰 작성)
+- [x] review.stats (별점 통계)
+- [x] inquiry.list (상품문의 목록)
+- [x] inquiry.create (문의 작성)
+- [x] order.list (주문 목록 조회)
+- [x] order.detail (주문 상세)
+- [x] order.createDummy (테스트용 더미 주문 생성)
+- [x] returnRequest.create (교환/반품 신청)
+
+### 클라이언트 UI
+- [x] ProductDetail.tsx: 하트 버튼 실제 찜 API 연동 (로그인 필요)
+- [x] WishlistPage.tsx: 마이페이지 찜 목록 페이지 생성
+- [x] MyPage.tsx: 찜 목록 메뉴 실제 라우트 연결
+- [x] ProductDetail.tsx: 리뷰 탭 추가 (별점 통계 + 리뷰 목록 + 작성 폼)
+- [x] ProductDetail.tsx: 상품문의 탭 추가 (문의 목록 + 작성 폼)
+- [x] OrderListPage.tsx: 주문/배송 조회 페이지 (입금대기→결제완료→배송준비→배송중→배송완료→리뷰쓰기)
+- [x] MyPage.tsx: 주문 현황 카운트 실제 데이터 연동 + 주문/배송 조회 라우트 연결
+- [x] ReturnRequestModal: 교환/반품 신청 다이얼로그 (OrderListPage 내 구현)

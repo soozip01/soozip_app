@@ -2,7 +2,7 @@
  * Product Detail Page — 오늘의집 레이아웃 참조, Supabase 실제 데이터 연동
  * 구성: 이미지 슬라이더 → 상품 기본정보 → 수량/주문 → 탭(상품정보/배송환불) → 상세이미지
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import {
   ArrowLeft,
@@ -24,10 +24,329 @@ import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 import { useProductDetail } from "@/hooks/useProducts";
+import { trpc } from "@/lib/trpc";
+import { useSoozipAuth } from "@/contexts/AuthContext";
+import { Star, Lock, MessageCircle, ChevronDown } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 const ACCENT = "#E84B1A";
 
-type TabType = "info" | "delivery";
+type TabType = "info" | "delivery" | "review" | "inquiry";
+
+/* ── 별점 컴포넌트 ── */
+function StarRating({ value, onChange, size = 24 }: { value: number; onChange?: (v: number) => void; size?: number }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-0.5">
+      {[1,2,3,4,5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange?.(star)}
+          onMouseEnter={() => onChange && setHover(star)}
+          onMouseLeave={() => onChange && setHover(0)}
+          className={onChange ? "cursor-pointer" : "cursor-default"}
+          disabled={!onChange}
+        >
+          <Star
+            size={size}
+            fill={(hover || value) >= star ? ACCENT : "none"}
+            stroke={(hover || value) >= star ? ACCENT : "#d1d5db"}
+            strokeWidth={1.5}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── 리뷰 탭 ── */
+function ReviewTab({ productId, userId, userNickname, isLoggedIn }: {
+  productId: number;
+  userId?: number;
+  userNickname?: string;
+  isLoggedIn: boolean;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [content, setContent] = useState("");
+  const [page, setPage] = useState(1);
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.review.list.useQuery({ productId, page, limit: 10 }, { enabled: productId > 0 });
+  const createMutation = trpc.review.create.useMutation({
+    onSuccess: () => {
+      utils.review.list.invalidate({ productId });
+      setShowForm(false);
+      setContent("");
+      setRating(5);
+      toast.success("리뷰가 등록되었습니다.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const stats = data?.stats ?? { total: 0, average: 0, distribution: {} };
+  const reviews = data?.reviews ?? [];
+
+  return (
+    <div className="px-4 py-5">
+      {/* 별점 통계 */}
+      <div className="flex items-center gap-5 pb-5 border-b border-border mb-5">
+        <div className="text-center">
+          <p className="text-4xl font-extrabold text-foreground">{stats.average.toFixed(1)}</p>
+          <StarRating value={Math.round(stats.average)} size={16} />
+          <p className="text-xs text-muted-foreground mt-1">{stats.total}에 리뷰</p>
+        </div>
+        <div className="flex-1 space-y-1">
+          {[5,4,3,2,1].map((star) => {
+            const cnt = (stats.distribution as Record<number,number>)[star] ?? 0;
+            const pct = stats.total > 0 ? (cnt / stats.total) * 100 : 0;
+            return (
+              <div key={star} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-3">{star}</span>
+                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: ACCENT }} />
+                </div>
+                <span className="text-xs text-muted-foreground w-4 text-right">{cnt}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 리뷰 작성 버튼 */}
+      {isLoggedIn && !showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full py-3 mb-5 border border-border rounded-xl text-sm font-medium hover:bg-secondary transition-colors flex items-center justify-center gap-2"
+        >
+          <Star size={15} />
+          리뷰 작성하기
+        </button>
+      )}
+
+      {/* 리뷰 작성 폼 */}
+      {showForm && (
+        <div className="mb-5 p-4 border border-border rounded-xl bg-secondary/30">
+          <p className="text-sm font-semibold mb-3">리뷰 작성</p>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-muted-foreground">별점</span>
+            <StarRating value={rating} onChange={setRating} size={22} />
+          </div>
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="상품에 대한 소감을 작성해주세요 (10자 이상)"
+            className="text-sm min-h-[100px] mb-3"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowForm(false)}
+              className="flex-1 py-2.5 border border-border rounded-xl text-sm font-medium hover:bg-secondary transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => {
+                if (!userId || !userNickname) return;
+                createMutation.mutate({ userId, userNickname, productId, rating, content });
+              }}
+              disabled={createMutation.isPending || content.length < 10}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+              style={{ background: ACCENT }}
+            >
+              {createMutation.isPending ? "등록 중..." : "리뷰 등록"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 리뷰 목록 */}
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1,2].map(i => <div key={i} className="h-20 bg-secondary rounded-xl animate-pulse" />)}
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="py-14 text-center">
+          <Star size={40} className="text-muted-foreground mx-auto mb-3" strokeWidth={1} />
+          <p className="text-sm text-muted-foreground">첫 리뷰를 작성해보세요</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review) => (
+            <div key={review.id} className="pb-4 border-b border-border last:border-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground">
+                    {review.userNickname.slice(0,1)}
+                  </div>
+                  <span className="text-xs font-medium text-foreground">{review.userNickname}</span>
+                </div>
+                <span className="text-[11px] text-muted-foreground">{new Date(review.createdAt).toLocaleDateString("ko-KR")}</span>
+              </div>
+              <StarRating value={review.rating} size={14} />
+              <p className="text-sm text-foreground mt-2 leading-relaxed">{review.content}</p>
+              {review.imageUrls && review.imageUrls.length > 0 && (
+                <div className="flex gap-2 mt-2 overflow-x-auto">
+                  {review.imageUrls.map((url, i) => (
+                    <img key={i} src={url} alt="리뷰 이미지" className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 상품문의 탭 ── */
+function InquiryTab({ productId, userId, userNickname, isLoggedIn }: {
+  productId: number;
+  userId?: number;
+  userNickname?: string;
+  isLoggedIn: boolean;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [isSecret, setIsSecret] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.inquiry.list.useQuery(
+    { productId, userId: userId ?? 0 },
+    { enabled: productId > 0 }
+  );
+  const createMutation = trpc.inquiry.create.useMutation({
+    onSuccess: () => {
+      utils.inquiry.list.invalidate({ productId });
+      setShowForm(false);
+      setTitle("");
+      setContent("");
+      toast.success("문의가 등록되었습니다.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const inquiries = data?.inquiries ?? [];
+
+  return (
+    <div className="px-4 py-5">
+      {/* 문의 작성 버튼 */}
+      {isLoggedIn && !showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full py-3 mb-5 border border-border rounded-xl text-sm font-medium hover:bg-secondary transition-colors flex items-center justify-center gap-2"
+        >
+          <MessageCircle size={15} />
+          문의 작성하기
+        </button>
+      )}
+      {!isLoggedIn && (
+        <div className="mb-5 p-4 bg-secondary/50 rounded-xl text-center">
+          <p className="text-sm text-muted-foreground">로그인 후 문의를 작성할 수 있습니다.</p>
+        </div>
+      )}
+
+      {/* 문의 작성 폼 */}
+      {showForm && (
+        <div className="mb-5 p-4 border border-border rounded-xl bg-secondary/30">
+          <p className="text-sm font-semibold mb-3">상품 문의</p>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="문의 제목"
+            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-background mb-2 focus:outline-none focus:ring-1 focus:ring-border"
+          />
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="문의 내용을 입력해주세요 (10자 이상)"
+            className="text-sm min-h-[100px] mb-2"
+          />
+          <label className="flex items-center gap-2 text-xs text-muted-foreground mb-3 cursor-pointer">
+            <input type="checkbox" checked={isSecret} onChange={(e) => setIsSecret(e.target.checked)} className="rounded" />
+            <Lock size={12} />
+            비밀글로 등록
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowForm(false)}
+              className="flex-1 py-2.5 border border-border rounded-xl text-sm font-medium hover:bg-secondary transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => {
+                if (!userId || !userNickname) return;
+                createMutation.mutate({ userId, userNickname, productId, title, content, isSecret });
+              }}
+              disabled={createMutation.isPending || content.length < 10 || title.length < 2}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+              style={{ background: ACCENT }}
+            >
+              {createMutation.isPending ? "등록 중..." : "문의 등록"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 문의 목록 */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1,2].map(i => <div key={i} className="h-16 bg-secondary rounded-xl animate-pulse" />)}
+        </div>
+      ) : inquiries.length === 0 ? (
+        <div className="py-14 text-center">
+          <MessageCircle size={40} className="text-muted-foreground mx-auto mb-3" strokeWidth={1} />
+          <p className="text-sm text-muted-foreground">첫 문의를 남겨보세요</p>
+        </div>
+      ) : (
+        <div className="space-y-0 divide-y divide-border">
+          {inquiries.map((inq) => (
+            <div key={inq.id} className="py-3.5">
+              <button
+                onClick={() => setExpandedId(expandedId === inq.id ? null : inq.id)}
+                className="w-full text-left"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {inq.isSecret && <Lock size={11} className="text-muted-foreground shrink-0" />}
+                    <span className="text-sm font-medium text-foreground truncate">{inq.title}</span>
+                  </div>
+                  <ChevronDown
+                    size={15}
+                    className={`text-muted-foreground shrink-0 transition-transform ${expandedId === inq.id ? "rotate-180" : ""}`}
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">{inq.userNickname}</span>
+                  <span className="text-xs text-muted-foreground">{new Date(inq.createdAt).toLocaleDateString("ko-KR")}</span>
+                  {inq.answer && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${ACCENT}20`, color: ACCENT }}>답변완료</span>
+                  )}
+                </div>
+              </button>
+              {expandedId === inq.id && (
+                <div className="mt-2.5 space-y-2">
+                  <p className="text-sm text-foreground leading-relaxed bg-secondary/50 rounded-xl p-3">{inq.content}</p>
+                  {inq.answer && (
+                    <div className="bg-secondary rounded-xl p-3">
+                      <p className="text-[11px] font-bold mb-1" style={{ color: ACCENT }}>판매자 답변</p>
+                      <p className="text-sm text-foreground leading-relaxed">{inq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── 이미지 로드 실패 처리 컴포넌트 ── */
 function ProductImage({
@@ -77,6 +396,22 @@ export default function ProductDetail() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { addItem } = useCart();
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const { user, isLoggedIn } = useSoozipAuth();
+  const numericProductId = productId ? parseInt(productId, 10) : null;
+
+  // 찜 여부 조회 (로그인 시)
+  const { data: wishlistData } = trpc.wishlist.check.useQuery(
+    { productId: numericProductId!, userId: user?.id ?? 0 },
+    { enabled: isLoggedIn && !!numericProductId && !!user?.id }
+  );
+  const wishlistToggle = trpc.wishlist.toggle.useMutation();
+  const utils = trpc.useUtils();
+
+  useEffect(() => {
+    if (wishlistData !== undefined) {
+      setIsWishlisted(wishlistData.wishlisted);
+    }
+  }, [wishlistData]);
 
   const tabRef = useRef<HTMLDivElement>(null);
 
@@ -223,9 +558,22 @@ export default function ProductDetail() {
               <Share2 size={19} />
             </button>
             <button
-              onClick={() => {
-                setIsWishlisted((v) => !v);
-                if (!isWishlisted) toast.success("찜 목록에 추가되었습니다.");
+              onClick={async () => {
+                if (!isLoggedIn || !user?.id || !numericProductId) {
+                  toast.error("로그인 후 찜하기가 가능합니다.");
+                  return;
+                }
+                const newState = !isWishlisted;
+                setIsWishlisted(newState);
+                try {
+                  await wishlistToggle.mutateAsync({ productId: numericProductId, userId: user.id });
+                  utils.wishlist.list.invalidate({ userId: user.id });
+                  if (newState) toast.success("찜 목록에 추가되었습니다.");
+                  else toast.success("찜 목록에서 제거되었습니다.");
+                } catch {
+                  setIsWishlisted(!newState);
+                  toast.error("잠시 후 다시 시도해주세요.");
+                }
               }}
               className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
               aria-label="찜하기"
@@ -453,10 +801,12 @@ export default function ProductDetail() {
         >
           <div className="flex">
             {(
-              [
-                { key: "info" as TabType, label: "상품정보" },
-                { key: "delivery" as TabType, label: "배송/환불" },
-              ]
+        [
+              { key: "info" as TabType, label: "상품정보" },
+              { key: "delivery" as TabType, label: "배송/환불" },
+              { key: "review" as TabType, label: "리뷰" },
+              { key: "inquiry" as TabType, label: "상품문의" },
+            ]
             ).map(({ key, label }) => (
               <button
                 key={key}
@@ -614,6 +964,26 @@ export default function ProductDetail() {
               </div>
             </section>
           </div>
+        )}
+
+        {/* ── 리뷰 탭 ── */}
+        {activeTab === "review" && (
+          <ReviewTab
+            productId={numericProductId ?? 0}
+            userId={user?.id}
+            userNickname={user?.nickname}
+            isLoggedIn={isLoggedIn}
+          />
+        )}
+
+        {/* ── 상품문의 탭 ── */}
+        {activeTab === "inquiry" && (
+          <InquiryTab
+            productId={numericProductId ?? 0}
+            userId={user?.id}
+            userNickname={user?.nickname}
+            isLoggedIn={isLoggedIn}
+          />
         )}
       </main>
 

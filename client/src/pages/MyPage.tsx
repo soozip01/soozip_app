@@ -31,8 +31,8 @@ const PROVIDER_COLOR: Record<string, string> = {
 };
 
 const MENU_ITEMS = [
-  { icon: ShoppingBag, label: "주문/배송 조회", action: "coming_soon" },
-  { icon: Heart, label: "찜 목록", action: "coming_soon" },
+  { icon: ShoppingBag, label: "주문/배송 조회", action: "orders" },
+  { icon: Heart, label: "찜 목록", action: "wishlist" },
   { icon: Bell, label: "알림 설정", action: "coming_soon" },
   { icon: HelpCircle, label: "고객센터", action: "inquiry" },
 ];
@@ -503,8 +503,12 @@ function ProfileTab({ user }: {
 }
 
 /* ─── 쇼핑 탭 ─── */
-function ShoppingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
+function ShoppingTab({ isLoggedIn, userId }: { isLoggedIn: boolean; userId?: number }) {
   const [, navigate] = useLocation();
+  const { data: statusCount } = trpc.order.statusCount.useQuery(
+    { userId: userId ?? 0 },
+    { enabled: isLoggedIn && !!userId }
+  );
 
   return (
     <>
@@ -534,14 +538,21 @@ function ShoppingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div className="px-4 py-5 border-b border-border">
         <p className="text-xs font-semibold text-foreground mb-4">주문 현황</p>
         <div className="grid grid-cols-4 gap-2 text-center">
-          {["결제완료", "배송준비", "배송중", "배송완료"].map((status) => (
+          {[
+            { key: "paid", label: "결제완료" },
+            { key: "preparing", label: "배송준비" },
+            { key: "shipping", label: "배송중" },
+            { key: "delivered", label: "배송완료" },
+          ].map(({ key, label }) => (
             <button
-              key={status}
-              onClick={() => toast.info(`${status} 기능이 준비 중입니다.`)}
+              key={key}
+              onClick={() => navigate("/orders")}
               className="py-3 bg-secondary rounded-xl hover:bg-secondary/70 transition-colors"
             >
-              <p className="text-lg font-bold text-foreground">0</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{status}</p>
+              <p className="text-lg font-bold text-foreground">
+                {statusCount ? (statusCount as Record<string, number>)[key] ?? 0 : 0}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
             </button>
           ))}
         </div>
@@ -555,6 +566,8 @@ function ShoppingTab({ isLoggedIn }: { isLoggedIn: boolean }) {
             onClick={() => {
               if (action === "coming_soon") toast.info(`${label} 기능이 준비 중입니다.`);
               else if (action === "inquiry") navigate("/inquiry");
+              else if (action === "orders") navigate("/orders");
+              else if (action === "wishlist") navigate("/wishlist");
             }}
             className="w-full flex items-center justify-between py-4 border-b border-border last:border-0 hover:bg-secondary/50 transition-colors rounded-lg px-2"
           >
@@ -660,7 +673,7 @@ export default function MyPage() {
 
       <main>
         {activeTab === "profile" && <ProfileTab user={isLoggedIn ? user : null} />}
-        {activeTab === "shopping" && <ShoppingTab isLoggedIn={isLoggedIn} />}
+        {activeTab === "shopping" && <ShoppingTab isLoggedIn={isLoggedIn} userId={user?.id} />}
         {activeTab === "styling" && (
           <StylingTab
             userId={user ? String(user.id) : ""}

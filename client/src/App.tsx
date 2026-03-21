@@ -53,6 +53,8 @@ import StylingStep6 from "./pages/StylingStep6";
 import StylingStep7 from "./pages/StylingStep7";
 import FinalStylingDelivery from "./pages/FinalStylingDelivery";
 import ProfileEdit from "./pages/ProfileEdit";
+import WishlistPage from "./pages/WishlistPage";
+import OrderListPage from "./pages/OrderListPage";
 
 function Router() {
   return (
@@ -107,6 +109,8 @@ function Router() {
       <Route path="/styling/step7" component={StylingStep7} />
       <Route path="/styling/final-delivery" component={FinalStylingDelivery} />
       <Route path="/profile/edit" component={ProfileEdit} />
+      <Route path="/wishlist" component={WishlistPage} />
+      <Route path="/orders" component={OrderListPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
