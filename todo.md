@@ -97,3 +97,9 @@
 
 - [x] sendEmailVerification 500 에러 원인 파악 및 수정 (RESEND_API_KEY 환경변수 업데이트)
 - [x] 발신 도메인을 soozip.org로 변경 (RESEND_FROM_EMAIL=noreply@soozip.org)
+
+## UX 개선 및 비밀번호 찾기
+
+- [x] 디버그 인증 코드 배너 제거 (EmailSignup.tsx)
+- [x] 회원가입 완료 즉시 자동 로그인 처리
+- [x] 비밀번호 찾기 기능 구현 (이메일 입력 → 코드 발송 → 새 비밀번호 설정)

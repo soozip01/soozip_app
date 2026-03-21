@@ -505,8 +505,6 @@ export const appRouter = router({
         return {
           success: true,
           message: "인증 코드가 발송되었습니다. (10분 유효)",
-          // 디버그용: 이메일 미연동 시 화면에 코드 표시 (프로덕션에서는 undefined)
-          debugCode: !ENV.isProduction ? code : undefined,
         };
       }),
 
@@ -529,6 +527,93 @@ export const appRouter = router({
 
         await db.update(emailVerificationCodes).set({ used: true }).where(eq(emailVerificationCodes.id, latest.id));
         return { success: true, verified: true };
+      }),
+
+    /**
+     * 비밀번호 재설정 코드 발송
+     * - 이메일 회원 여부 확인 후 인증 코드 발송
+     * - 기존 email_verification_codes 테이블 재사용
+     */
+    sendPasswordReset: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        // 이메일 회원 존재 여부 확인 (통합 테이블 + 레거시)
+        const unifiedUser = await db.select().from(soozipUsers)
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)))
+          .limit(1);
+        const legacyUser = await db.select().from(emailUsers)
+          .where(eq(emailUsers.email, input.email))
+          .limit(1);
+
+        // 보안상 존재 여부 노출 없이 성공 응답 (이메일이 없어도 동일 응답)
+        if (unifiedUser.length === 0 && legacyUser.length === 0) {
+          return { success: true, message: "이메일이 존재하는 경우 인증 코드가 발송됩니다." };
+        }
+
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        await db.delete(emailVerificationCodes).where(eq(emailVerificationCodes.email, input.email));
+        await db.insert(emailVerificationCodes).values({ email: input.email, code, expiresAt });
+
+        const emailSent = await sendVerificationEmail(input.email, code);
+
+        if (!ENV.isProduction) {
+          console.log(`[Dev] 비밀번호 재설정 코드 (${input.email}): ${code}`);
+        }
+
+        if (!emailSent) {
+          console.warn(`[Email] 비밀번호 재설정 이메일 발송 실패 - 코드는 DB에 저장됨: ${input.email}`);
+        }
+
+        return { success: true, message: "이메일이 존재하는 경우 인증 코드가 발송됩니다." };
+      }),
+
+    /**
+     * 비밀번호 재설정 (코드 검증 + 새 비밀번호 저장)
+     */
+    resetPassword: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        code: z.string().length(6),
+        newPassword: z.string().min(8),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        // 인증 코드 검증
+        const record = await db.select().from(emailVerificationCodes)
+          .where(eq(emailVerificationCodes.email, input.email))
+          .orderBy(desc(emailVerificationCodes.createdAt))
+          .limit(1);
+
+        if (record.length === 0) throw new Error("인증 코드를 먼저 요청해주세요.");
+        const latest = record[0];
+        if (latest.used) throw new Error("이미 사용된 인증 코드입니다.");
+        if (new Date() > latest.expiresAt) throw new Error("인증 코드가 만료되었습니다. 다시 요청해주세요.");
+        if (latest.code !== input.code) throw new Error("인증 코드가 올바르지 않습니다.");
+
+        // 코드 사용 처리
+        await db.update(emailVerificationCodes).set({ used: true }).where(eq(emailVerificationCodes.id, latest.id));
+
+        // 새 비밀번호 해시
+        const newPasswordHash = hashPasswordUnified(input.newPassword);
+
+        // 통합 테이블 업데이트
+        await db.update(soozipUsers)
+          .set({ passwordHash: newPasswordHash })
+          .where(and(eq(soozipUsers.provider, "email"), eq(soozipUsers.providerId, input.email)));
+
+        // 레거시 테이블도 업데이트 (하위 호환)
+        await db.update(emailUsers)
+          .set({ passwordHash: newPasswordHash })
+          .where(eq(emailUsers.email, input.email));
+
+        return { success: true, message: "비밀번호가 성공적으로 변경되었습니다." };
       }),
 
     emailSignup: publicProcedure

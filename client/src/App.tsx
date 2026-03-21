@@ -33,6 +33,7 @@ import SocialConsent from "./pages/SocialConsent";
 import SocialProfile from "./pages/SocialProfile";
 import EmailSignup from "./pages/EmailSignup";
 import EmailLogin from "./pages/EmailLogin";
+import ForgotPassword from "./pages/ForgotPassword";
 import SettingsPage from "./pages/SettingsPage";
 import DesignerList from "./pages/DesignerList";
 import DesignerProfile from "./pages/DesignerProfile";
@@ -85,6 +86,7 @@ function Router() {
       <Route path="/auth/social-profile" component={SocialProfile} />
       <Route path="/auth/email-signup" component={EmailSignup} />
       <Route path="/auth/email-login" component={EmailLogin} />
+      <Route path="/auth/forgot-password" component={ForgotPassword} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/designers" component={DesignerList} />
       <Route path="/designers/apply" component={DesignerApply} />

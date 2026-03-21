@@ -104,6 +104,17 @@ export default function EmailLogin() {
           </div>
         </div>
 
+        {/* 비밀번호 찾기 링크 */}
+        <div className="flex justify-end -mt-2">
+          <button
+            type="button"
+            onClick={() => navigate("/auth/forgot-password")}
+            className="text-xs text-gray-400 hover:text-gray-700 transition-colors underline underline-offset-2"
+          >
+            비밀번호를 잊으셨나요?
+          </button>
+        </div>
+
         {/* 로그인 버튼 */}
         <button
           type="submit"
