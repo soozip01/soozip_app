@@ -7,6 +7,7 @@ import { ArrowLeft, Search, SlidersHorizontal, Package } from "lucide-react";
 import { useLocation } from "wouter";
 import BottomNav from "@/components/BottomNav";
 import { useProductsByCategory } from "@/hooks/useProducts";
+import ProductCard from "@/components/ProductCard";
 
 const TERRACOTTA = "#E84B1A";
 
@@ -104,51 +105,18 @@ export default function ProductList() {
             <p className="text-xs text-muted-foreground mb-4">총 {filtered.length}개 상품</p>
             <div className="grid grid-cols-2 gap-4">
               {filtered.map((product) => (
-                <div
+                <ProductCard
                   key={product.id}
-                  className="cursor-pointer group"
+                  id={product.id}
+                  productName={product.product_name}
+                  brandName={product.brand_name}
+                  category={product.main_category ?? undefined}
+                  salePrice={product.sale_price}
+                  originalPrice={product.original_price}
+                  discountRate={product.discount_rate}
+                  imageUrl={product.main_image_url}
                   onClick={() => navigate(`/products/${product.id}`)}
-                >
-                  {/* 상품 이미지 */}
-                  <div className="aspect-square bg-secondary rounded-xl flex items-center justify-center mb-2 overflow-hidden group-hover:opacity-90 transition-opacity">
-                    {product.main_image_url ? (
-                      <img
-                        src={product.main_image_url}
-                        alt={product.product_name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <Package size={40} className="text-muted-foreground" strokeWidth={1} />
-                    )}
-                  </div>
-                  {/* 상품 정보 */}
-                  <p className="text-[11px] text-muted-foreground">
-                    {product.brand_name}
-                    {product.main_category ? ` · ${product.main_category}` : ""}
-                  </p>
-                  <p className="text-sm font-medium text-foreground leading-tight mt-0.5 line-clamp-2">
-                    {product.product_name}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {product.discount_rate > 0 && (
-                      <span
-                        className="text-[11px] font-semibold"
-                        style={{ color: TERRACOTTA }}
-                      >
-                        {product.discount_rate}%
-                      </span>
-                    )}
-                    <span className="text-sm font-bold text-foreground">
-                      {product.sale_price.toLocaleString()}원
-                    </span>
-                  </div>
-                  {product.discount_rate > 0 && (
-                    <p className="text-[11px] text-muted-foreground line-through">
-                      {product.original_price.toLocaleString()}원
-                    </p>
-                  )}
-                </div>
+                />
               ))}
             </div>
           </>

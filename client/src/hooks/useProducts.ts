@@ -118,6 +118,31 @@ export function useProductsByIds(productIds: number[]) {
   return { products, loading };
 }
 
+/** 상품 옵션 조회 훅 (product_options 테이블) */
+export function useProductOptions(productId: string | null) {
+  const [options, setOptions] = useState<{ id: string; option_name: string; option_values: string[] }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!productId) return;
+    let cancelled = false;
+    setLoading(true);
+    supabase
+      .from("product_options")
+      .select("id, option_name, option_values, sort_order")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data) setOptions(data);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [productId]);
+
+  return { options, loading };
+}
+
 /** 단일 상품 상세 훅 */
 export function useProductDetail(productId: string | null) {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchProductDetail>> | null>(null);

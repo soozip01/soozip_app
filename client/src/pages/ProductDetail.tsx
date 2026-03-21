@@ -23,7 +23,7 @@ import {
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
-import { useProductDetail } from "@/hooks/useProducts";
+import { useProductDetail, useProductOptions } from "@/hooks/useProducts";
 import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
 import { Star, Lock, MessageCircle, ChevronDown } from "lucide-react";
@@ -399,6 +399,13 @@ export default function ProductDetail() {
   const { user, isLoggedIn } = useSoozipAuth();
   const numericProductId = productId ? parseInt(productId, 10) : null;
 
+  // 상품 옵션
+  const { options: productOptions } = useProductOptions(productId);
+  // 옵션 선택 상태: { [option_name]: selected_value }
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  // 추가상품 선택 상태
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+
   // 찜 여부 조회 (로그인 시)
   const { data: wishlistData } = trpc.wishlist.check.useQuery(
     { productId: numericProductId!, userId: user?.id ?? 0 },
@@ -531,7 +538,19 @@ export default function ProductDetail() {
     (img) => !img.image_url.startsWith("blob:")
   );
 
-  const totalPrice = product.sale_price * quantity;
+  // 일반 옵션 (추가상품 제외)
+  const regularOptions = productOptions.filter(o => o.option_name !== "추가상품");
+  // 추가상품 옵션
+  const addonOption = productOptions.find(o => o.option_name === "추가상품");
+
+  // 추가상품 가격 파싱 ("(uc0c1품명) (14,900원)" 형식)
+  const parseAddonPrice = (val: string): number => {
+    const m = val.match(/\((\d[\d,]+)원\)/);
+    return m ? parseInt(m[1].replace(/,/g, ""), 10) : 0;
+  };
+
+  const addonTotal = selectedAddons.reduce((sum, v) => sum + parseAddonPrice(v), 0);
+  const totalPrice = product.sale_price * quantity + addonTotal;
   const hasDiscount = product.discount_rate > 0;
 
   return (
@@ -755,6 +774,91 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+
+        {/* ── 상품 옵션 ── */}
+        {productOptions.length > 0 && (
+          <div className="px-4 py-4 border-b border-border space-y-3">
+            {/* 일반 옵션 (콜러, 사이즈 등) */}
+            {regularOptions.map((opt) => (
+              <div key={opt.id}>
+                <p className="text-xs font-medium text-foreground mb-2">{opt.option_name}</p>
+                <div className="flex flex-wrap gap-2">
+                  {opt.option_values.map((val) => {
+                    const isSelected = selectedOptions[opt.option_name] === val;
+                    return (
+                      <button
+                        key={val}
+                        onClick={() =>
+                          setSelectedOptions((prev) => ({
+                            ...prev,
+                            [opt.option_name]: isSelected ? "" : val,
+                          }))
+                        }
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
+                        style={{
+                          borderColor: isSelected ? ACCENT : "var(--border)",
+                          color: isSelected ? ACCENT : "var(--foreground)",
+                          background: isSelected ? `${ACCENT}10` : "transparent",
+                        }}
+                      >
+                        {val}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* 추가상품 옵션 */}
+            {addonOption && (
+              <div>
+                <p className="text-xs font-medium text-foreground mb-2">추가상품 <span className="text-muted-foreground font-normal">(선택)</span></p>
+                <div className="space-y-1.5">
+                  {addonOption.option_values.map((val) => {
+                    const isSelected = selectedAddons.includes(val);
+                    const price = parseAddonPrice(val);
+                    const label = val.replace(/\s*\(\d[\d,]+원\)$/, "");
+                    return (
+                      <button
+                        key={val}
+                        onClick={() =>
+                          setSelectedAddons((prev) =>
+                            isSelected ? prev.filter((v) => v !== val) : [...prev, val]
+                          )
+                        }
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-all text-left"
+                        style={{
+                          borderColor: isSelected ? ACCENT : "var(--border)",
+                          background: isSelected ? `${ACCENT}08` : "transparent",
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 transition-all"
+                            style={{
+                              borderColor: isSelected ? ACCENT : "var(--border)",
+                              background: isSelected ? ACCENT : "transparent",
+                            }}
+                          >
+                            {isSelected && (
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={isSelected ? "font-medium" : ""} style={{ color: isSelected ? ACCENT : "var(--foreground)" }}>{label}</span>
+                        </div>
+                        {price > 0 && (
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">+{price.toLocaleString()}원</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── 수량 선택 ── */}
         <div className="px-4 py-4 border-b border-border">
@@ -992,6 +1096,21 @@ export default function ProductDetail() {
         <div className="px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border flex gap-2.5">
           <button
             onClick={() => {
+              // 필수 옵션 선택 여부 확인
+              const unselected = regularOptions.filter(
+                (o) => !selectedOptions[o.option_name]
+              );
+              if (unselected.length > 0) {
+                toast.error(`${unselected[0].option_name}을(를) 선택해주세요.`);
+                return;
+              }
+              // 옵션 메모 문자열 생성
+              const optionMemo = [
+                ...Object.entries(selectedOptions)
+                  .filter(([, v]) => v)
+                  .map(([k, v]) => `${k}: ${v}`),
+                ...selectedAddons.map((v) => `추가: ${v.replace(/\s*\(\d[\d,]+원\)$/, "")}`),
+              ].join(" / ");
               addItem({
                 id: product.id,
                 productId: product.id,
@@ -999,10 +1118,10 @@ export default function ProductDetail() {
                 brandName: product.brand_name,
                 mainCategory: product.main_category ?? null,
                 subCategory: product.sub_category ?? null,
-                salePrice: product.sale_price,
+                salePrice: product.sale_price + addonTotal,
                 originalPrice: product.original_price,
                 imageUrl: validImages[0]?.image_url ?? null,
-                memo: null,
+                memo: optionMemo || null,
                 source: "product",
                 quantity,
               });

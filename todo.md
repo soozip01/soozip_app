@@ -142,3 +142,10 @@
 - [x] OrderListPage.tsx: 주문/배송 조회 페이지 (입금대기→결제완료→배송준비→배송중→배송완료→리뷰쓰기)
 - [x] MyPage.tsx: 주문 현황 카운트 실제 데이터 연동 + 주문/배송 조회 라우트 연결
 - [x] ReturnRequestModal: 교환/반품 신청 다이얼로그 (OrderListPage 내 구현)
+
+## 상품 카드 찜 버튼 + 상품 옵션 UI
+
+- [x] 상품 목록 카드에 하트(찜) 버튼 추가 (ProductCard 컴포넌트 신규, Home/ProductList 적용)
+- [x] product_options 테이블 구조 파악 및 useProductOptions 훅 추가
+- [x] 상품 상세페이지 옵션 선택 UI 구현 (옵션 태그 + 추가상품 체크박스)
+- [x] 옵션 선택 후 장바구니 담기 연동 (옵션 메모 + 추가상품 가격 합산)

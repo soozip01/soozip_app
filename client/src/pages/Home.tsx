@@ -15,6 +15,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 import { useApprovedProducts } from "@/hooks/useProducts";
+import ProductCard from "@/components/ProductCard";
 import { useSoozipAuth } from "@/contexts/AuthContext";
 import SurveyOverlay from "@/components/SurveyOverlay";
 
@@ -535,45 +536,20 @@ export default function Home() {
               </div>
             ) : (
               approvedProducts.map((product) => (
-                <div
+                <ProductCard
                   key={product.id}
-                  className="bg-background cursor-pointer hover:bg-secondary transition-colors"
-                  style={{ width: "130px" }}
+                  id={product.id}
+                  productName={product.product_name}
+                  brandName={product.brand_name}
+                  salePrice={product.sale_price}
+                  originalPrice={product.original_price}
+                  discountRate={product.discount_rate}
+                  imageUrl={product.main_image_url}
+                  fixedWidth={130}
+                  fixedImageSize={130}
+                  compact
                   onClick={() => navigate(`/products/${product.id}`)}
-                >
-                  {/* 상품 대표 이미지 */}
-                  <div
-                    className="bg-secondary flex items-center justify-center overflow-hidden"
-                    style={{ width: "130px", height: "130px" }}
-                  >
-                    {product.main_image_url ? (
-                      <img
-                        src={product.main_image_url}
-                        alt={product.product_name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-muted-foreground">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                      </svg>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    <p className="text-[10px] text-muted-foreground leading-none">{product.brand_name}</p>
-                    <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">{product.product_name}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      {product.discount_rate > 0 && (
-                        <span className="text-[10px] font-semibold" style={{ color: TERRACOTTA }}>
-                          {product.discount_rate}%
-                        </span>
-                      )}
-                      <span className="text-xs font-bold text-foreground">
-                        {product.sale_price.toLocaleString()}원
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                />
               ))
             )}
             {/* 오른쪽 여백 */}
