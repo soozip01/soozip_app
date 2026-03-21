@@ -3,14 +3,9 @@ import {
   fetchApprovedProducts,
   fetchProductDetail,
   fetchProductsByCategory,
+  supabase,
   type ProductWithImage,
 } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL as string,
-  import.meta.env.VITE_SUPABASE_ANON_KEY as string
-);
 
 /** 승인된 전체 상품 목록 훅 */
 export function useApprovedProducts() {

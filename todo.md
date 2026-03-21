@@ -149,3 +149,8 @@
 - [x] product_options 테이블 구조 파악 및 useProductOptions 훅 추가
 - [x] 상품 상세페이지 옵션 선택 UI 구현 (옵션 태그 + 추가상품 체크박스)
 - [x] 옵션 선택 후 장바구니 담기 연동 (옵션 메모 + 추가상품 가격 합산)
+
+## product_options Supabase 연동 수정
+
+- [x] useProducts.ts: 별도 createClient 대신 supabase.ts 통합 클라이언트 사용 (올바른 Survey Supabase URL 적용)
+- [x] product_options 데이터 실제 조회 및 UI 표시 검증
