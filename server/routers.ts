@@ -530,6 +530,58 @@ export const appRouter = router({
       }),
 
     /**
+     * 이메일로 가입 방식 조회
+     * - 해당 이메일의 가입 provider를 반환 (email | kakao | naver | none)
+     * - 비밀번호 찾기 전 소셜 계정 여부 확인용
+     */
+    checkEmailProvider: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("데이터베이스 연결 오류");
+
+        // 통합 테이블에서 조회 (email / kakao / naver)
+        const unifiedUser = await db.select({ provider: soozipUsers.provider })
+          .from(soozipUsers)
+          .where(eq(soozipUsers.providerId, input.email))
+          .limit(1);
+
+        if (unifiedUser.length > 0) {
+          return { provider: unifiedUser[0].provider as "email" | "kakao" | "naver" };
+        }
+
+        // 레거시 emailUsers 테이블 확인
+        const legacyUser = await db.select({ id: emailUsers.id })
+          .from(emailUsers)
+          .where(eq(emailUsers.email, input.email))
+          .limit(1);
+
+        if (legacyUser.length > 0) {
+          return { provider: "email" as const };
+        }
+
+        // 카카오/네이버는 providerId가 소셜 ID이므로 email 콼럼로도 조회
+        const socialByEmail = await db.select({ provider: soozipUsers.provider })
+          .from(soozipUsers)
+          .where(
+            and(
+              eq(soozipUsers.email, input.email),
+              or(
+                eq(soozipUsers.provider, "kakao"),
+                eq(soozipUsers.provider, "naver")
+              )
+            )
+          )
+          .limit(1);
+
+        if (socialByEmail.length > 0) {
+          return { provider: socialByEmail[0].provider as "kakao" | "naver" };
+        }
+
+        return { provider: "none" as const };
+      }),
+
+    /**
      * 비밀번호 재설정 코드 발송
      * - 이메일 회원 여부 확인 후 인증 코드 발송
      * - 기존 email_verification_codes 테이블 재사용

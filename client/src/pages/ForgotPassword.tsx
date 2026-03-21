@@ -1,6 +1,7 @@
 /**
  * SOOZIP 비밀번호 찾기 페이지
  * 3단계 흐름: 이메일 입력 → 인증 코드 확인 → 새 비밀번호 설정
+ * 소셜 계정(카카오/네이버) 감지 시 안내 메시지 표시
  */
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -8,6 +9,33 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
 type Step = "email" | "code" | "password";
+type Provider = "email" | "kakao" | "naver" | "none" | null;
+
+// 소셜 프로바이더 정보
+const SOCIAL_INFO: Record<"kakao" | "naver", { name: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
+  kakao: {
+    name: "카카오",
+    color: "text-yellow-800",
+    bg: "bg-yellow-50",
+    border: "border-yellow-300",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-600">
+        <path d="M12 3C6.477 3 2 6.477 2 11c0 2.89 1.617 5.43 4.062 6.938L5 21l4.188-2.188C10.062 19.27 11.016 19.5 12 19.5c5.523 0 10-3.477 10-8.5S17.523 3 12 3z" />
+      </svg>
+    ),
+  },
+  naver: {
+    name: "네이버",
+    color: "text-green-800",
+    bg: "bg-green-50",
+    border: "border-green-300",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-green-600">
+        <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" />
+      </svg>
+    ),
+  },
+};
 
 export default function ForgotPassword() {
   const [, navigate] = useLocation();
@@ -15,6 +43,8 @@ export default function ForgotPassword() {
 
   // 이메일 단계
   const [email, setEmail] = useState("");
+  const [detectedProvider, setDetectedProvider] = useState<Provider>(null);
+  const [isCheckingProvider, setIsCheckingProvider] = useState(false);
 
   // 코드 단계
   const [code, setCode] = useState("");
@@ -28,6 +58,12 @@ export default function ForgotPassword() {
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
+
+  // 이메일 변경 시 provider 감지 초기화
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    setDetectedProvider(null);
+  };
 
   const startTimer = () => {
     setCodeTimer(600);
@@ -44,6 +80,27 @@ export default function ForgotPassword() {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  // 가입 방식 조회 (이메일 입력 후 포커스 아웃 시)
+  const checkProviderQuery = trpc.auth.checkEmailProvider.useQuery(
+    { email },
+    { enabled: false }
+  );
+
+  const handleEmailBlur = async () => {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    setIsCheckingProvider(true);
+    try {
+      const result = await checkProviderQuery.refetch();
+      if (result.data) {
+        setDetectedProvider(result.data.provider);
+      }
+    } catch {
+      // 조회 실패는 무시 (UX 차단 없음)
+    } finally {
+      setIsCheckingProvider(false);
+    }
   };
 
   // 1단계: 비밀번호 재설정 코드 발송
@@ -74,7 +131,7 @@ export default function ForgotPassword() {
   const resetPasswordMutation = trpc.auth.resetPassword.useMutation({
     onSuccess: () => {
       toast.success("비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해주세요.");
-      navigate("/login");
+      navigate("/auth/email-login");
     },
     onError: (err) => {
       toast.error(err.message);
@@ -87,6 +144,8 @@ export default function ForgotPassword() {
       toast.error("올바른 이메일 주소를 입력해주세요.");
       return;
     }
+    // 소셜 계정이 감지된 경우 코드 발송 차단
+    if (detectedProvider === "kakao" || detectedProvider === "naver") return;
     sendResetMutation.mutate({ email });
   };
 
@@ -116,6 +175,10 @@ export default function ForgotPassword() {
     sendResetMutation.mutate({ email });
   };
 
+  // 소셜 계정 안내 배너 (카카오 또는 네이버)
+  const isSocialAccount = detectedProvider === "kakao" || detectedProvider === "naver";
+  const socialInfo = isSocialAccount ? SOCIAL_INFO[detectedProvider as "kakao" | "naver"] : null;
+
   // 단계 인디케이터
   const steps = [
     { key: "email", label: "이메일 입력" },
@@ -130,7 +193,7 @@ export default function ForgotPassword() {
       <header className="flex items-center px-4 py-3">
         <button
           onClick={() => {
-            if (step === "email") navigate("/login");
+            if (step === "email") navigate("/auth/email-login");
             else if (step === "code") setStep("email");
             else setStep("code");
           }}
@@ -184,20 +247,85 @@ export default function ForgotPassword() {
 
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">이메일</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="이메일 주소 입력"
-                autoComplete="email"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-gray-800 transition-colors placeholder:text-gray-400"
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  onBlur={handleEmailBlur}
+                  placeholder="이메일 주소 입력"
+                  autoComplete="email"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-gray-800 transition-colors placeholder:text-gray-400"
+                />
+                {isCheckingProvider && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* ─── 소셜 계정 안내 배너 ─── */}
+            {isSocialAccount && socialInfo && (
+              <div className={`rounded-xl border p-4 mb-4 ${socialInfo.bg} ${socialInfo.border}`}>
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 mt-0.5">{socialInfo.icon}</div>
+                  <div>
+                    <p className={`text-sm font-bold mb-1 ${socialInfo.color}`}>
+                      {socialInfo.name} 계정으로 가입하셨습니다
+                    </p>
+                    <p className={`text-xs leading-relaxed ${socialInfo.color} opacity-80`}>
+                      이 이메일은 {socialInfo.name} 소셜 로그인으로 가입된 계정입니다.
+                      비밀번호 없이 {socialInfo.name} 버튼으로 로그인해주세요.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/login")}
+                      className={`mt-2.5 text-xs font-bold underline underline-offset-2 ${socialInfo.color}`}
+                    >
+                      {socialInfo.name}로 로그인하러 가기 →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 이메일 미가입 안내 */}
+            {detectedProvider === "none" && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 shrink-0 mt-0.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-1">가입된 계정을 찾을 수 없습니다</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      입력하신 이메일로 가입된 계정이 없습니다. 이메일 주소를 다시 확인하거나 회원가입을 진행해주세요.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/auth/email-signup")}
+                      className="mt-2 text-xs font-bold text-gray-700 underline underline-offset-2"
+                    >
+                      이메일로 회원가입 →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-auto pt-6">
               <button
                 type="submit"
-                disabled={sendResetMutation.isPending || !email.trim()}
+                disabled={
+                  sendResetMutation.isPending ||
+                  !email.trim() ||
+                  isSocialAccount ||
+                  detectedProvider === "none" ||
+                  isCheckingProvider
+                }
                 className="w-full py-3.5 rounded-xl bg-gray-900 text-white font-bold text-sm transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {sendResetMutation.isPending ? (

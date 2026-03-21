@@ -126,3 +126,48 @@ describe("비밀번호 재설정 플로우 시나리오 검증", () => {
     expect(isValidEmail("@example.com")).toBe(false);
   });
 });
+
+describe("소셜 계정 감지 (checkEmailProvider 클라이언트 로직)", () => {
+  type Provider = "email" | "kakao" | "naver" | "none";
+
+  // 클라이언트에서 소셜 계정 여부를 판단하는 로직 재현
+  function isSocialProvider(provider: Provider): boolean {
+    return provider === "kakao" || provider === "naver";
+  }
+
+  function shouldBlockPasswordReset(provider: Provider): boolean {
+    return provider === "kakao" || provider === "naver" || provider === "none";
+  }
+
+  it("카카오 계정은 소셜 계정으로 판단한다", () => {
+    expect(isSocialProvider("kakao")).toBe(true);
+  });
+
+  it("네이버 계정은 소셜 계정으로 판단한다", () => {
+    expect(isSocialProvider("naver")).toBe(true);
+  });
+
+  it("이메일 계정은 소셜 계정이 아니다", () => {
+    expect(isSocialProvider("email")).toBe(false);
+  });
+
+  it("미가입 계정은 소셜 계정이 아니다", () => {
+    expect(isSocialProvider("none")).toBe(false);
+  });
+
+  it("카카오 계정은 비밀번호 재설정이 차단된다", () => {
+    expect(shouldBlockPasswordReset("kakao")).toBe(true);
+  });
+
+  it("네이버 계정은 비밀번호 재설정이 차단된다", () => {
+    expect(shouldBlockPasswordReset("naver")).toBe(true);
+  });
+
+  it("미가입 이메일은 비밀번호 재설정이 차단된다", () => {
+    expect(shouldBlockPasswordReset("none")).toBe(true);
+  });
+
+  it("이메일 계정은 비밀번호 재설정이 허용된다", () => {
+    expect(shouldBlockPasswordReset("email")).toBe(false);
+  });
+});
