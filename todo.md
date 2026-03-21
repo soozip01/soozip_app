@@ -92,3 +92,8 @@
 
 - [x] Supabase survey_submissions의 user_id를 TiDB soozip_users.id 기준으로 업데이트 (기존 데이터 - id=88 수동 업데이트 완료)
 - [x] 신규 설문 신청 시 user_id를 TiDB soozip_users.id로 저장하도록 서버 로직 수정 (이미 올바르게 구현됨 확인)
+
+## 이메일 발송 수정
+
+- [x] sendEmailVerification 500 에러 원인 파악 및 수정 (RESEND_API_KEY 환경변수 업데이트)
+- [x] 발신 도메인을 soozip.org로 변경 (RESEND_FROM_EMAIL=noreply@soozip.org)
