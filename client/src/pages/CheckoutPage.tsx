@@ -54,22 +54,41 @@ export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const { user } = useSoozipAuth();
 
-  // URL state로 전달된 주문 아이템
+  // URL 파라미터 또는 sessionStorage에서 주문 아이템 로드
   const [items, setItems] = useState<CheckoutItem[]>([]);
 
   useEffect(() => {
+    // 1) URL 쿼리 파라미터 ?items=... 우선 확인
+    const params = new URLSearchParams(window.location.search);
+    const itemsParam = params.get("items");
+    if (itemsParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(itemsParam));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setItems(parsed);
+          return;
+        }
+      } catch {
+        // 파싱 실패 시 sessionStorage로 폴백
+      }
+    }
+    // 2) sessionStorage 폴백
     const stored = sessionStorage.getItem("checkout_items");
     if (stored) {
       try {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setItems(parsed);
+          return;
+        }
       } catch {
         toast.error("주문 정보를 불러오지 못했습니다.");
         navigate("/");
+        return;
       }
-    } else {
-      toast.error("주문할 상품이 없습니다.");
-      navigate("/");
     }
+    toast.error("주문할 상품이 없습니다.");
+    navigate("/");
   }, []);
 
   // 배송지

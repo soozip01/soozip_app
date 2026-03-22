@@ -200,3 +200,7 @@
 - [x] App.tsx: /checkout 라우트 등록
 - [x] ProductDetail.tsx: 바텀 시트 '바로구매' → /checkout 연결
 - [ ] Cart.tsx: 장바구니 '주문하기' → /checkout 연결 (PG사 연동 시 완료)
+
+## BUG: CheckoutPage 주문 상품 없음 오류
+
+- [x] CheckoutPage.tsx: URL 파라미터(items) 파싱 로직 수정 - "주문할 상품이 없습니다" 오류 해결
