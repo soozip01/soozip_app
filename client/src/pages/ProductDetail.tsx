@@ -401,10 +401,11 @@ export default function ProductDetail() {
 
   // 상품 옵션
   const { options: productOptions } = useProductOptions(productId);
-  // 옵션 선택 상태: { [option_name]: selected_value }
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  // 추가상품 선택 상태
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  // 드롭다운 현재 선택 중인 값 (각 옵션명 → 임시 선택값)
+  const [pendingSelections, setPendingSelections] = useState<Record<string, string>>({});
+  // 선택 완료된 옵션 카드 목록
+  type SelectedCard = { id: string; label: string; quantity: number; unitPrice: number };
+  const [selectedCards, setSelectedCards] = useState<SelectedCard[]>([]);
 
   // 찜 여부 조회 (로그인 시)
   const { data: wishlistData } = trpc.wishlist.check.useQuery(
@@ -543,14 +544,62 @@ export default function ProductDetail() {
   // 추가상품 옵션
   const addonOption = productOptions.find(o => o.option_name === "추가상품");
 
-  // 추가상품 가격 파싱 ("(uc0c1품명) (14,900원)" 형식)
+  // 모든 옵션 선택 완료 여부 (regularOptions 모두 pendingSelections에 값 있음)
+  const allOptionsSelected = regularOptions.every(o => !!pendingSelections[o.option_name]);
+
+  // 옵션 선택 시 카드 추가 함수
+  const addOptionCard = (selections: Record<string, string>) => {
+    const label = regularOptions
+      .map(o => `${o.option_name}: ${selections[o.option_name]}`)
+      .join(" / ");
+    const cardId = `${label}-${Date.now()}`;
+    setSelectedCards(prev => [
+      ...prev,
+      { id: cardId, label, quantity: 1, unitPrice: product.sale_price },
+    ]);
+    setPendingSelections({});
+  };
+
+  // 드롭다운 변경 핸들러
+  const handleDropdownChange = (optionName: string, value: string) => {
+    const newSelections = { ...pendingSelections, [optionName]: value };
+    setPendingSelections(newSelections);
+    // 옵션이 1개이고 선택되면 자동 카드 추가
+    if (regularOptions.length === 1 && value) {
+      addOptionCard(newSelections);
+    }
+    // 여러 옵션이면 모두 선택된 시점에 카드 추가
+    if (regularOptions.length > 1) {
+      const allSelected = regularOptions.every(o =>
+        o.option_name === optionName ? !!value : !!newSelections[o.option_name]
+      );
+      if (allSelected) addOptionCard(newSelections);
+    }
+  };
+
+  // 카드 수량 변경
+  const updateCardQty = (id: string, delta: number) => {
+    setSelectedCards(prev =>
+      prev.map(c => c.id === id ? { ...c, quantity: Math.max(1, c.quantity + delta) } : c)
+    );
+  };
+
+  // 카드 삭제
+  const removeCard = (id: string) => {
+    setSelectedCards(prev => prev.filter(c => c.id !== id));
+  };
+
+  // 추가상품 가격 파싱
   const parseAddonPrice = (val: string): number => {
     const m = val.match(/\((\d[\d,]+)원\)/);
     return m ? parseInt(m[1].replace(/,/g, ""), 10) : 0;
   };
 
-  const addonTotal = selectedAddons.reduce((sum, v) => sum + parseAddonPrice(v), 0);
-  const totalPrice = product.sale_price * quantity + addonTotal;
+  // 선택 카드 총 가격 (addonOption 없으면 카드 합산, 있으면 기본 수량 기준)
+  const cardTotal = selectedCards.reduce((sum, c) => sum + c.unitPrice * c.quantity, 0);
+  const totalPrice = productOptions.length === 0
+    ? product.sale_price * quantity
+    : cardTotal;
   const hasDiscount = product.discount_rate > 0;
 
   return (
@@ -775,92 +824,88 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* ── 상품 옵션 ── */}
+        {/* ── 상품 옵션 (드롭다운 + 선택 카드) ── */}
         {productOptions.length > 0 && (
-          <div className="px-4 py-4 border-b border-border space-y-3">
-            {/* 일반 옵션 (콜러, 사이즈 등) */}
-            {regularOptions.map((opt) => (
-              <div key={opt.id}>
-                <p className="text-xs font-medium text-foreground mb-2">{opt.option_name}</p>
-                <div className="flex flex-wrap gap-2">
-                  {opt.option_values.map((val) => {
-                    const isSelected = selectedOptions[opt.option_name] === val;
-                    return (
-                      <button
-                        key={val}
-                        onClick={() =>
-                          setSelectedOptions((prev) => ({
-                            ...prev,
-                            [opt.option_name]: isSelected ? "" : val,
-                          }))
-                        }
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
-                        style={{
-                          borderColor: isSelected ? ACCENT : "var(--border)",
-                          color: isSelected ? ACCENT : "var(--foreground)",
-                          background: isSelected ? `${ACCENT}10` : "transparent",
-                        }}
-                      >
-                        {val}
-                      </button>
-                    );
-                  })}
+          <div className="px-4 pt-4 border-b border-border">
+            {/* 드롭다운 옵션 선택 */}
+            <div className="space-y-2 mb-3">
+              {regularOptions.map((opt) => (
+                <div key={opt.id} className="relative">
+                  <select
+                    value={pendingSelections[opt.option_name] ?? ""}
+                    onChange={(e) => handleDropdownChange(opt.option_name, e.target.value)}
+                    className="w-full appearance-none border border-border rounded-xl px-4 py-3 text-sm bg-background text-foreground pr-10 focus:outline-none focus:ring-1 cursor-pointer"
+                    style={{ focusRingColor: ACCENT } as React.CSSProperties}
+                  >
+                    <option value="">{opt.option_name} 선택</option>
+                    {opt.option_values.map((val) => (
+                      <option key={val} value={val}>{val}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
-            {/* 추가상품 옵션 */}
-            {addonOption && (
-              <div>
-                <p className="text-xs font-medium text-foreground mb-2">추가상품 <span className="text-muted-foreground font-normal">(선택)</span></p>
-                <div className="space-y-1.5">
-                  {addonOption.option_values.map((val) => {
-                    const isSelected = selectedAddons.includes(val);
-                    const price = parseAddonPrice(val);
-                    const label = val.replace(/\s*\(\d[\d,]+원\)$/, "");
-                    return (
+            {/* 선택된 옵션 카드 목록 */}
+            {selectedCards.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {selectedCards.map((card) => (
+                  <div
+                    key={card.id}
+                    className="rounded-xl border border-border bg-secondary/30 px-3 py-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-xs text-foreground leading-relaxed flex-1">{card.label}</p>
                       <button
-                        key={val}
-                        onClick={() =>
-                          setSelectedAddons((prev) =>
-                            isSelected ? prev.filter((v) => v !== val) : [...prev, val]
-                          )
-                        }
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-all text-left"
-                        style={{
-                          borderColor: isSelected ? ACCENT : "var(--border)",
-                          background: isSelected ? `${ACCENT}08` : "transparent",
-                        }}
+                        onClick={() => removeCard(card.id)}
+                        className="shrink-0 p-0.5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                        aria-label="선택 삭제"
                       >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 transition-all"
-                            style={{
-                              borderColor: isSelected ? ACCENT : "var(--border)",
-                              background: isSelected ? ACCENT : "transparent",
-                            }}
-                          >
-                            {isSelected && (
-                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className={isSelected ? "font-medium" : ""} style={{ color: isSelected ? ACCENT : "var(--foreground)" }}>{label}</span>
-                        </div>
-                        {price > 0 && (
-                          <span className="text-xs text-muted-foreground shrink-0 ml-2">+{price.toLocaleString()}원</span>
-                        )}
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
                       </button>
-                    );
-                  })}
-                </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center border border-border rounded-lg overflow-hidden bg-background">
+                        <button
+                          onClick={() => updateCardQty(card.id, -1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="w-9 text-center text-sm font-semibold tabular-nums">{card.quantity}</span>
+                        <button
+                          onClick={() => updateCardQty(card.id, 1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                      <span className="text-sm font-bold tabular-nums" style={{ color: ACCENT }}>
+                        {(card.unitPrice * card.quantity).toLocaleString()}원
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 주문금액 합계 */}
+            {selectedCards.length > 0 && (
+              <div className="flex items-center justify-between py-3 border-t border-border">
+                <span className="text-sm text-muted-foreground">주문금액</span>
+                <span className="text-lg font-extrabold tabular-nums" style={{ color: ACCENT }}>
+                  {totalPrice.toLocaleString()}원
+                </span>
               </div>
             )}
           </div>
         )}
 
-        {/* ── 수량 선택 ── */}
+        {/* ── 옵션 없는 상품 수량 선택 ── */}
+        {productOptions.length === 0 && (
         <div className="px-4 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <div>
@@ -886,7 +931,7 @@ export default function ProductDetail() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground mb-1">총 주문금액</p>
+              <p className="text-xs text-muted-foreground mb-1">열 주문금액</p>
               <p
                 className="text-xl font-extrabold tracking-tight"
                 style={{ color: ACCENT }}
@@ -897,6 +942,7 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+        )}
 
         {/* ── 탭 네비게이션 ── */}
         <div
@@ -1096,36 +1142,50 @@ export default function ProductDetail() {
         <div className="px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border flex gap-2.5">
           <button
             onClick={() => {
-              // 필수 옵션 선택 여부 확인
-              const unselected = regularOptions.filter(
-                (o) => !selectedOptions[o.option_name]
-              );
-              if (unselected.length > 0) {
-                toast.error(`${unselected[0].option_name}을(를) 선택해주세요.`);
+              // 옵션이 있는데 선택된 카드가 없으면 경고
+              if (productOptions.length > 0 && selectedCards.length === 0) {
+                toast.error(`${regularOptions[0]?.option_name ?? '옵션'}을(를) 선택해주세요.`);
                 return;
               }
-              // 옵션 메모 문자열 생성
-              const optionMemo = [
-                ...Object.entries(selectedOptions)
-                  .filter(([, v]) => v)
-                  .map(([k, v]) => `${k}: ${v}`),
-                ...selectedAddons.map((v) => `추가: ${v.replace(/\s*\(\d[\d,]+원\)$/, "")}`),
-              ].join(" / ");
-              addItem({
-                id: product.id,
-                productId: product.id,
-                productName: product.product_name,
-                brandName: product.brand_name,
-                mainCategory: product.main_category ?? null,
-                subCategory: product.sub_category ?? null,
-                salePrice: product.sale_price + addonTotal,
-                originalPrice: product.original_price,
-                imageUrl: validImages[0]?.image_url ?? null,
-                memo: optionMemo || null,
-                source: "product",
-                quantity,
+              // 옵션이 없는 상품: 기본 수량으로 담기
+              if (productOptions.length === 0) {
+                addItem({
+                  id: product.id,
+                  productId: product.id,
+                  productName: product.product_name,
+                  brandName: product.brand_name,
+                  mainCategory: product.main_category ?? null,
+                  subCategory: product.sub_category ?? null,
+                  salePrice: product.sale_price,
+                  originalPrice: product.original_price,
+                  imageUrl: validImages[0]?.image_url ?? null,
+                  memo: null,
+                  source: "product",
+                  quantity,
+                });
+                toast.success(`장바구니에 담겼습니다. (${quantity}개)`);
+                return;
+              }
+              // 옵션 선택 카드별로 각각 담기
+              selectedCards.forEach(card => {
+                addItem({
+                  id: `${product.id}-${card.id}`,
+                  productId: product.id,
+                  productName: product.product_name,
+                  brandName: product.brand_name,
+                  mainCategory: product.main_category ?? null,
+                  subCategory: product.sub_category ?? null,
+                  salePrice: card.unitPrice,
+                  originalPrice: product.original_price,
+                  imageUrl: validImages[0]?.image_url ?? null,
+                  memo: card.label,
+                  source: "product",
+                  quantity: card.quantity,
+                });
               });
-              toast.success(`장바구니에 담겼습니다. (${quantity}개)`);
+              const totalQty = selectedCards.reduce((s, c) => s + c.quantity, 0);
+              toast.success(`장바구니에 담겼습니다. (${totalQty}개)`);
+              setSelectedCards([]);
             }}
             className="flex items-center justify-center gap-1.5 flex-1 border border-border text-foreground py-3.5 rounded-xl font-semibold hover:bg-secondary transition-colors text-sm"
           >
