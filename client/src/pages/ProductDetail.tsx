@@ -406,6 +406,8 @@ export default function ProductDetail() {
   // 선택 완료된 옵션 카드 목록
   type SelectedCard = { id: string; label: string; quantity: number; unitPrice: number };
   const [selectedCards, setSelectedCards] = useState<SelectedCard[]>([]);
+  // 바텀 시트 열림 상태 ('cart' | 'buy' | null)
+  const [sheetMode, setSheetMode] = useState<'cart' | 'buy' | null>(null);
 
   // 찜 여부 조회 (로그인 시)
   const { data: wishlistData } = trpc.wishlist.check.useQuery(
@@ -824,125 +826,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* ── 상품 옵션 (드롭다운 + 선택 카드) ── */}
-        {productOptions.length > 0 && (
-          <div className="px-4 pt-4 border-b border-border">
-            {/* 드롭다운 옵션 선택 */}
-            <div className="space-y-2 mb-3">
-              {regularOptions.map((opt) => (
-                <div key={opt.id} className="relative">
-                  <select
-                    value={pendingSelections[opt.option_name] ?? ""}
-                    onChange={(e) => handleDropdownChange(opt.option_name, e.target.value)}
-                    className="w-full appearance-none border border-border rounded-xl px-4 py-3 text-sm bg-background text-foreground pr-10 focus:outline-none focus:ring-1 cursor-pointer"
-                    style={{ focusRingColor: ACCENT } as React.CSSProperties}
-                  >
-                    <option value="">{opt.option_name} 선택</option>
-                    {opt.option_values.map((val) => (
-                      <option key={val} value={val}>{val}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                </div>
-              ))}
-            </div>
-
-            {/* 선택된 옵션 카드 목록 */}
-            {selectedCards.length > 0 && (
-              <div className="space-y-2 mb-3">
-                {selectedCards.map((card) => (
-                  <div
-                    key={card.id}
-                    className="rounded-xl border border-border bg-secondary/30 px-3 py-2.5"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="text-xs text-foreground leading-relaxed flex-1">{card.label}</p>
-                      <button
-                        onClick={() => removeCard(card.id)}
-                        className="shrink-0 p-0.5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-                        aria-label="선택 삭제"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center border border-border rounded-lg overflow-hidden bg-background">
-                        <button
-                          onClick={() => updateCardQty(card.id, -1)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="w-9 text-center text-sm font-semibold tabular-nums">{card.quantity}</span>
-                        <button
-                          onClick={() => updateCardQty(card.id, 1)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                      <span className="text-sm font-bold tabular-nums" style={{ color: ACCENT }}>
-                        {(card.unitPrice * card.quantity).toLocaleString()}원
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* 주문금액 합계 */}
-            {selectedCards.length > 0 && (
-              <div className="flex items-center justify-between py-3 border-t border-border">
-                <span className="text-sm text-muted-foreground">주문금액</span>
-                <span className="text-lg font-extrabold tabular-nums" style={{ color: ACCENT }}>
-                  {totalPrice.toLocaleString()}원
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── 옵션 없는 상품 수량 선택 ── */}
-        {productOptions.length === 0 && (
-        <div className="px-4 py-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">수량 선택</p>
-              <div className="flex items-center border border-border rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-secondary transition-colors"
-                  aria-label="수량 감소"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="w-11 text-center text-sm font-bold tabular-nums">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-secondary transition-colors"
-                  aria-label="수량 증가"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground mb-1">열 주문금액</p>
-              <p
-                className="text-xl font-extrabold tracking-tight"
-                style={{ color: ACCENT }}
-              >
-                {totalPrice.toLocaleString()}
-                <span className="text-sm font-semibold text-foreground ml-0.5">원</span>
-              </p>
-            </div>
-          </div>
-        </div>
-        )}
+        {/* 옵션/수량은 바텀 시트로 이동 — 본문에는 없음 */}
 
         {/* ── 탭 네비게이션 ── */}
         <div
@@ -1137,70 +1021,201 @@ export default function ProductDetail() {
         )}
       </main>
 
-      {/* ── 하단 고정 구매 버튼 ── */}
+      {/* ── 하단 고정 바 ── */}
       <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto z-30">
         <div className="px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border flex gap-2.5">
           <button
-            onClick={() => {
-              // 옵션이 있는데 선택된 카드가 없으면 경고
-              if (productOptions.length > 0 && selectedCards.length === 0) {
-                toast.error(`${regularOptions[0]?.option_name ?? '옵션'}을(를) 선택해주세요.`);
-                return;
-              }
-              // 옵션이 없는 상품: 기본 수량으로 담기
-              if (productOptions.length === 0) {
-                addItem({
-                  id: product.id,
-                  productId: product.id,
-                  productName: product.product_name,
-                  brandName: product.brand_name,
-                  mainCategory: product.main_category ?? null,
-                  subCategory: product.sub_category ?? null,
-                  salePrice: product.sale_price,
-                  originalPrice: product.original_price,
-                  imageUrl: validImages[0]?.image_url ?? null,
-                  memo: null,
-                  source: "product",
-                  quantity,
-                });
-                toast.success(`장바구니에 담겼습니다. (${quantity}개)`);
-                return;
-              }
-              // 옵션 선택 카드별로 각각 담기
-              selectedCards.forEach(card => {
-                addItem({
-                  id: `${product.id}-${card.id}`,
-                  productId: product.id,
-                  productName: product.product_name,
-                  brandName: product.brand_name,
-                  mainCategory: product.main_category ?? null,
-                  subCategory: product.sub_category ?? null,
-                  salePrice: card.unitPrice,
-                  originalPrice: product.original_price,
-                  imageUrl: validImages[0]?.image_url ?? null,
-                  memo: card.label,
-                  source: "product",
-                  quantity: card.quantity,
-                });
-              });
-              const totalQty = selectedCards.reduce((s, c) => s + c.quantity, 0);
-              toast.success(`장바구니에 담겼습니다. (${totalQty}개)`);
-              setSelectedCards([]);
-            }}
+            onClick={() => { setSelectedCards([]); setPendingSelections({}); setSheetMode('cart'); }}
             className="flex items-center justify-center gap-1.5 flex-1 border border-border text-foreground py-3.5 rounded-xl font-semibold hover:bg-secondary transition-colors text-sm"
           >
             <ShoppingCart size={16} />
             장바구니
           </button>
           <button
-            onClick={() => toast.success("구매 기능이 준비 중입니다.")}
+            onClick={() => { setSelectedCards([]); setPendingSelections({}); setSheetMode('buy'); }}
             className="flex-[1.5] text-white py-3.5 rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all text-sm shadow-sm"
             style={{ background: ACCENT }}
           >
-            바로 구매
+            구매하기
           </button>
         </div>
       </div>
+
+      {/* ── 옵션 바텀 시트 ── */}
+      {sheetMode && (
+        <>
+          {/* 딥력 오버레이 */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => setSheetMode(null)}
+          />
+          {/* 시트 본체 */}
+          <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-background rounded-t-2xl shadow-2xl">
+            {/* 핸들 바 */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-border" />
+            </div>
+
+            {/* 스크롤 가능 콘텐츠 */}
+            <div className="overflow-y-auto max-h-[70vh] px-4 pb-2">
+              {/* 드롭다운 옵션 */}
+              {regularOptions.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  {regularOptions.map((opt) => (
+                    <div key={opt.id} className="relative">
+                      <select
+                        value={pendingSelections[opt.option_name] ?? ""}
+                        onChange={(e) => handleDropdownChange(opt.option_name, e.target.value)}
+                        className="w-full appearance-none border border-border rounded-xl px-4 py-3.5 text-sm bg-background text-foreground pr-10 focus:outline-none cursor-pointer"
+                      >
+                        <option value="">{opt.option_name} 선택</option>
+                        {opt.option_values.map((val) => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 추가상품 드롭다운 */}
+              {addonOption && (
+                <div className="relative mt-2">
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) return;
+                      const price = parseAddonPrice(val);
+                      const label = `추가: ${val.replace(/\s*\(\d[\d,]+원\)$/, "")}`;
+                      const cardId = `addon-${val}-${Date.now()}`;
+                      setSelectedCards(prev => [...prev, { id: cardId, label, quantity: 1, unitPrice: price }]);
+                      e.target.value = "";
+                    }}
+                    className="w-full appearance-none border border-border rounded-xl px-4 py-3.5 text-sm bg-background text-foreground pr-10 focus:outline-none cursor-pointer"
+                  >
+                    <option value="">추가상품 (선택)</option>
+                    {addonOption.option_values.map((val) => {
+                      const price = parseAddonPrice(val);
+                      const label = val.replace(/\s*\(\d[\d,]+원\)$/, "");
+                      return (
+                        <option key={val} value={val}>
+                          {label}{price > 0 ? ` (+${price.toLocaleString()}원)` : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
+              )}
+
+              {/* 옵션 없는 상품: 수량 선택 */}
+              {productOptions.length === 0 && (
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">수량</span>
+                  <div className="flex items-center border border-border rounded-xl overflow-hidden">
+                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-secondary transition-colors">
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-11 text-center text-sm font-bold tabular-nums">{quantity}</span>
+                    <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-10 flex items-center justify-center hover:bg-secondary transition-colors">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 선택된 옵션 카드 */}
+              {selectedCards.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {selectedCards.map((card) => (
+                    <div key={card.id} className="rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-xs text-foreground leading-relaxed flex-1">{card.label}</p>
+                        <button
+                          onClick={() => removeCard(card.id)}
+                          className="shrink-0 p-0.5 rounded hover:bg-secondary transition-colors text-muted-foreground"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center border border-border rounded-lg overflow-hidden bg-background">
+                          <button onClick={() => updateCardQty(card.id, -1)} className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors">
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-9 text-center text-sm font-semibold tabular-nums">{card.quantity}</span>
+                          <button onClick={() => updateCardQty(card.id, 1)} className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors">
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                        <span className="text-sm font-bold tabular-nums" style={{ color: ACCENT }}>
+                          {(card.unitPrice * card.quantity).toLocaleString()}원
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 주문금액 + 시트 하단 버튼 */}
+            <div className="px-4 pt-3 pb-6 border-t border-border">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-muted-foreground">주문 금액</span>
+                <span className="text-lg font-extrabold tabular-nums" style={{ color: ACCENT }}>
+                  {totalPrice.toLocaleString()}원
+                </span>
+              </div>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => {
+                    // 옵션 있는데 카드 없으면 경고
+                    if (productOptions.length > 0 && selectedCards.length === 0) {
+                      toast.error(`${regularOptions[0]?.option_name ?? '옵션'}을(를) 선택해주세요.`);
+                      return;
+                    }
+                    if (productOptions.length === 0) {
+                      addItem({ id: product.id, productId: product.id, productName: product.product_name, brandName: product.brand_name, mainCategory: product.main_category ?? null, subCategory: product.sub_category ?? null, salePrice: product.sale_price, originalPrice: product.original_price, imageUrl: validImages[0]?.image_url ?? null, memo: null, source: "product", quantity });
+                      toast.success(`장바구니에 담겼습니다. (${quantity}개)`);
+                      setSheetMode(null);
+                      return;
+                    }
+                    selectedCards.forEach(card => {
+                      addItem({ id: `${product.id}-${card.id}`, productId: product.id, productName: product.product_name, brandName: product.brand_name, mainCategory: product.main_category ?? null, subCategory: product.sub_category ?? null, salePrice: card.unitPrice, originalPrice: product.original_price, imageUrl: validImages[0]?.image_url ?? null, memo: card.label, source: "product", quantity: card.quantity });
+                    });
+                    const totalQty = selectedCards.reduce((s, c) => s + c.quantity, 0);
+                    toast.success(`장바구니에 담겼습니다. (${totalQty}개)`);
+                    setSelectedCards([]);
+                    setSheetMode(null);
+                  }}
+                  className="flex items-center justify-center gap-1.5 flex-1 border border-border text-foreground py-3.5 rounded-xl font-semibold hover:bg-secondary transition-colors text-sm"
+                >
+                  <ShoppingCart size={16} />
+                  장바구니
+                </button>
+                <button
+                  onClick={() => {
+                    if (productOptions.length > 0 && selectedCards.length === 0) {
+                      toast.error(`${regularOptions[0]?.option_name ?? '옵션'}을(를) 선택해주세요.`);
+                      return;
+                    }
+                    toast.success("구매 기능이 준비 중입니다. (PG사 연동 후 활성화)");
+                    setSheetMode(null);
+                  }}
+                  className="flex-[1.5] text-white py-3.5 rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all text-sm shadow-sm"
+                  style={{ background: ACCENT }}
+                >
+                  바로구매
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       <BottomNav />
     </div>
