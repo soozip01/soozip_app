@@ -55,6 +55,7 @@ import FinalStylingDelivery from "./pages/FinalStylingDelivery";
 import ProfileEdit from "./pages/ProfileEdit";
 import WishlistPage from "./pages/WishlistPage";
 import OrderListPage from "./pages/OrderListPage";
+import CheckoutPage from "./pages/CheckoutPage";
 
 function Router() {
   return (
@@ -111,6 +112,7 @@ function Router() {
       <Route path="/profile/edit" component={ProfileEdit} />
       <Route path="/wishlist" component={WishlistPage} />
       <Route path="/orders" component={OrderListPage} />
+      <Route path="/checkout" component={CheckoutPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

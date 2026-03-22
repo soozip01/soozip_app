@@ -6,7 +6,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
-import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, soozipUsers, refreshTokens, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo, wishlists, productReviews, productInquiries, orders, orderItems, returnRequests } from "../drizzle/schema";
+import { kakaoUsers, naverUsers, emailUsers, emailVerificationCodes, soozipUsers, refreshTokens, designers, designerReviews, stylingRequests, stylingBookings, stylingProgress, furnitureInfo, wishlists, productReviews, productInquiries, orders, orderItems, returnRequests, shippingAddresses, coupons, userCoupons, pointLedger } from "../drizzle/schema";
 import { storagePut } from "./storage";
 import { eq, or, desc, and, sql, count } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
@@ -2122,7 +2122,7 @@ export const appRouter = router({
     createDummy: publicProcedure
       .input(z.object({
         userId: z.number(),
-        productId: z.number(),
+        productId: z.union([z.number(), z.string()]),
         productName: z.string(),
         brandName: z.string().optional(),
         imageUrl: z.string().optional(),
@@ -2159,10 +2159,10 @@ export const appRouter = router({
         if (orderId) {
           await db.insert(orderItems).values({
             orderId,
-            productId: input.productId,
+            productId: String(input.productId),
             productName: input.productName,
-            brandName: input.brandName,
-            imageUrl: input.imageUrl,
+            brandName: input.brandName ?? null,
+            imageUrl: input.imageUrl ?? null,
             quantity: input.quantity,
             unitPrice: input.unitPrice,
             totalPrice: totalAmount,
@@ -2226,6 +2226,342 @@ export const appRouter = router({
           .orderBy(desc(returnRequests.createdAt));
 
         return { requests };
+      }),
+  }),
+
+  /**
+   * 배송지 관리
+   */
+  shippingAddress: router({
+    /** 내 배송지 목록 */
+    list: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { addresses: [] };
+        const addresses = await db.select()
+          .from(shippingAddresses)
+          .where(eq(shippingAddresses.userId, input.userId))
+          .orderBy(desc(shippingAddresses.isDefault), desc(shippingAddresses.createdAt));
+        return { addresses };
+      }),
+
+    /** 배송지 추가 */
+    create: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        label: z.string().optional(),
+        recipientName: z.string(),
+        phone: z.string(),
+        zipCode: z.string(),
+        address: z.string(),
+        addressDetail: z.string().optional(),
+        isDefault: z.boolean().default(false),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("DB 오류");
+        // 기본 배송지 설정 시 기존 기본 해제
+        if (input.isDefault) {
+          await db.update(shippingAddresses)
+            .set({ isDefault: false })
+            .where(eq(shippingAddresses.userId, input.userId));
+        }
+        const [result] = await db.insert(shippingAddresses).values({
+          userId: input.userId,
+          label: input.label ?? null,
+          recipientName: input.recipientName,
+          phone: input.phone,
+          zipCode: input.zipCode,
+          address: input.address,
+          addressDetail: input.addressDetail ?? null,
+          isDefault: input.isDefault,
+        });
+        return { id: result.insertId };
+      }),
+
+    /** 배송지 수정 */
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        userId: z.number(),
+        label: z.string().optional(),
+        recipientName: z.string(),
+        phone: z.string(),
+        zipCode: z.string(),
+        address: z.string(),
+        addressDetail: z.string().optional(),
+        isDefault: z.boolean().default(false),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("DB 오류");
+        if (input.isDefault) {
+          await db.update(shippingAddresses)
+            .set({ isDefault: false })
+            .where(eq(shippingAddresses.userId, input.userId));
+        }
+        await db.update(shippingAddresses)
+          .set({
+            label: input.label ?? null,
+            recipientName: input.recipientName,
+            phone: input.phone,
+            zipCode: input.zipCode,
+            address: input.address,
+            addressDetail: input.addressDetail ?? null,
+            isDefault: input.isDefault,
+          })
+          .where(and(eq(shippingAddresses.id, input.id), eq(shippingAddresses.userId, input.userId)));
+        return { success: true };
+      }),
+
+    /** 배송지 삭제 */
+    delete: publicProcedure
+      .input(z.object({ id: z.number(), userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("DB 오류");
+        await db.delete(shippingAddresses)
+          .where(and(eq(shippingAddresses.id, input.id), eq(shippingAddresses.userId, input.userId)));
+        return { success: true };
+      }),
+
+    /** 기본 배송지 설정 */
+    setDefault: publicProcedure
+      .input(z.object({ id: z.number(), userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("DB 오류");
+        await db.update(shippingAddresses)
+          .set({ isDefault: false })
+          .where(eq(shippingAddresses.userId, input.userId));
+        await db.update(shippingAddresses)
+          .set({ isDefault: true })
+          .where(and(eq(shippingAddresses.id, input.id), eq(shippingAddresses.userId, input.userId)));
+        return { success: true };
+      }),
+  }),
+
+  /**
+   * 쿠폰 관리
+   */
+  coupon: router({
+    /** 사용 가능한 쿠폰 목록 (주문 금액 기준 필터) */
+    listAvailable: publicProcedure
+      .input(z.object({ userId: z.number(), orderAmount: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { coupons: [] };
+        const now = new Date();
+        const userCouponList = await db.select({
+          userCouponId: userCoupons.id,
+          couponId: coupons.id,
+          code: coupons.code,
+          name: coupons.name,
+          discountType: coupons.discountType,
+          discountValue: coupons.discountValue,
+          minOrderAmount: coupons.minOrderAmount,
+          maxDiscountAmount: coupons.maxDiscountAmount,
+          expiresAt: userCoupons.expiresAt,
+        })
+          .from(userCoupons)
+          .innerJoin(coupons, eq(userCoupons.couponId, coupons.id))
+          .where(and(
+            eq(userCoupons.userId, input.userId),
+            eq(userCoupons.isUsed, false),
+            eq(coupons.isActive, true),
+          ));
+        // 최소 주문 금액 필터 및 만료 필터
+        const available = userCouponList.filter(c => {
+          if (c.minOrderAmount > input.orderAmount) return false;
+          if (c.expiresAt && c.expiresAt < now) return false;
+          return true;
+        });
+        return { coupons: available };
+      }),
+
+    /** 쿠폰 할인 금액 계산 */
+    calcDiscount: publicProcedure
+      .input(z.object({ userCouponId: z.number(), orderAmount: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { discount: 0 };
+        const [uc] = await db.select({
+          discountType: coupons.discountType,
+          discountValue: coupons.discountValue,
+          maxDiscountAmount: coupons.maxDiscountAmount,
+          minOrderAmount: coupons.minOrderAmount,
+        })
+          .from(userCoupons)
+          .innerJoin(coupons, eq(userCoupons.couponId, coupons.id))
+          .where(eq(userCoupons.id, input.userCouponId))
+          .limit(1);
+        if (!uc) return { discount: 0 };
+        if (uc.minOrderAmount > input.orderAmount) return { discount: 0 };
+        let discount = uc.discountType === "fixed"
+          ? uc.discountValue
+          : Math.floor(input.orderAmount * uc.discountValue / 100);
+        if (uc.maxDiscountAmount) discount = Math.min(discount, uc.maxDiscountAmount);
+        return { discount };
+      }),
+  }),
+
+  /**
+   * 포인트 관리
+   */
+  point: router({
+    /** 포인트 잔액 조회 */
+    getBalance: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { balance: 0 };
+        const rows = await db.select({ amount: pointLedger.amount })
+          .from(pointLedger)
+          .where(eq(pointLedger.userId, input.userId));
+        const balance = rows.reduce((sum, r) => sum + r.amount, 0);
+        return { balance: Math.max(0, balance) };
+      }),
+
+    /** 포인트 내역 조회 */
+    getHistory: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { history: [] };
+        const history = await db.select()
+          .from(pointLedger)
+          .where(eq(pointLedger.userId, input.userId))
+          .orderBy(desc(pointLedger.createdAt))
+          .limit(50);
+        return { history };
+      }),
+  }),
+
+  /**
+   * 주문서(Checkout) - 주문 생성
+   */
+  checkout: router({
+    /** 주문 생성 (PG 연동 전 - 주문 데이터 저장 후 결제 대기) */
+    createOrder: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        items: z.array(z.object({
+          productId: z.string(),
+          productName: z.string(),
+          productImage: z.string().optional(),
+          brandName: z.string().optional(),
+          price: z.number(),
+          quantity: z.number(),
+          optionLabel: z.string().optional(),
+          additionalPrice: z.number().default(0),
+        })),
+        shippingAddress: z.object({
+          recipientName: z.string(),
+          phone: z.string(),
+          zipCode: z.string(),
+          address: z.string(),
+          addressDetail: z.string().optional(),
+        }),
+        ordererName: z.string(),
+        ordererPhone: z.string(),
+        ordererEmail: z.string().optional(),
+        deliveryMemo: z.string().optional(),
+        userCouponId: z.number().optional(),
+        pointUsed: z.number().default(0),
+        paymentMethod: z.enum(["card", "kakao_pay", "naver_pay", "toss_pay", "bank_transfer"]),
+        shippingFee: z.number().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("DB 오류");
+
+        // 1. 쿠폰 할인 계산
+        let couponDiscount = 0;
+        if (input.userCouponId) {
+          const [uc] = await db.select({
+            discountType: coupons.discountType,
+            discountValue: coupons.discountValue,
+            maxDiscountAmount: coupons.maxDiscountAmount,
+            minOrderAmount: coupons.minOrderAmount,
+            isUsed: userCoupons.isUsed,
+          })
+            .from(userCoupons)
+            .innerJoin(coupons, eq(userCoupons.couponId, coupons.id))
+            .where(and(eq(userCoupons.id, input.userCouponId), eq(userCoupons.userId, input.userId)))
+            .limit(1);
+          if (uc && !uc.isUsed) {
+            const subtotal = input.items.reduce((s, i) => s + (i.price + i.additionalPrice) * i.quantity, 0);
+            couponDiscount = uc.discountType === "fixed"
+              ? uc.discountValue
+              : Math.floor(subtotal * uc.discountValue / 100);
+            if (uc.maxDiscountAmount) couponDiscount = Math.min(couponDiscount, uc.maxDiscountAmount);
+          }
+        }
+
+        // 2. 총 결제 금액 계산
+        const subtotal = input.items.reduce((s, i) => s + (i.price + i.additionalPrice) * i.quantity, 0);
+        const totalAmount = Math.max(0, subtotal + input.shippingFee - couponDiscount - input.pointUsed);
+
+        // 3. 주문 생성
+        const orderNumber = `SZ${Date.now()}`;
+        const [orderResult] = await db.insert(orders).values({
+          userId: input.userId,
+          orderNumber,
+          status: "pending_payment",
+          totalAmount: subtotal,
+          shippingFee: input.shippingFee,
+          discountAmount: couponDiscount + input.pointUsed,
+          finalAmount: totalAmount,
+          couponDiscount,
+          pointUsed: input.pointUsed,
+          paymentMethod: input.paymentMethod,
+          recipientName: input.shippingAddress.recipientName,
+          recipientPhone: input.shippingAddress.phone,
+          postalCode: input.shippingAddress.zipCode,
+          address: input.shippingAddress.address,
+          addressDetail: input.shippingAddress.addressDetail ?? null,
+          deliveryMemo: input.deliveryMemo ?? null,
+          ordererName: input.ordererName,
+          ordererPhone: input.ordererPhone,
+          ordererEmail: input.ordererEmail ?? null,
+        });
+        const orderId = orderResult.insertId;
+
+        // 4. 주문 상품 생성
+        for (const item of input.items) {
+          await db.insert(orderItems).values({
+            orderId,
+            productId: item.productId,
+            productName: item.productName,
+            imageUrl: item.productImage ?? null,
+            brandName: item.brandName ?? null,
+            unitPrice: item.price + item.additionalPrice,
+            quantity: item.quantity,
+            optionLabel: item.optionLabel ?? null,
+            totalPrice: (item.price + item.additionalPrice) * item.quantity,
+          });
+        }
+
+        // 5. 쿠폰 사용 처리
+        if (input.userCouponId && couponDiscount > 0) {
+          await db.update(userCoupons)
+            .set({ isUsed: true, usedAt: new Date(), usedOrderId: orderId })
+            .where(eq(userCoupons.id, input.userCouponId));
+        }
+
+        // 6. 포인트 차감
+        if (input.pointUsed > 0) {
+          await db.insert(pointLedger).values({
+            userId: input.userId,
+            amount: -input.pointUsed,
+            type: "use",
+            description: `주문 ${orderNumber} 포인트 사용`,
+            orderId,
+          });
+        }
+
+        return { orderId, orderNumber, totalAmount };
       }),
   }),
 });

@@ -1216,8 +1216,31 @@ export default function ProductDetail() {
                       toast.error(`${regularOptions[0]?.option_name ?? '옵션'}을(를) 선택해주세요.`);
                       return;
                     }
-                    toast.success("구매 기능이 준비 중입니다. (PG사 연동 후 활성화)");
+                    // 선택된 옵션 카드 또는 기본 수량으로 주문서 이동
+                    const checkoutItems = selectedCards.length > 0
+                      ? selectedCards.map(card => ({
+                          productId: String(product.id),
+                          productName: product.product_name,
+                          brandName: product.brand_name ?? "",
+                          productImage: validImages[0]?.image_url ?? "",
+                          price: product.sale_price ?? product.original_price ?? 0,
+                          additionalPrice: 0, // unitPrice에 이미 포함됨
+                          quantity: card.quantity,
+                          optionLabel: card.label,
+                        }))
+                      : [{
+                          productId: String(product.id),
+                          productName: product.product_name,
+                          brandName: product.brand_name ?? "",
+                          productImage: validImages[0]?.image_url ?? "",
+                          price: product.sale_price ?? product.original_price ?? 0,
+                          additionalPrice: 0,
+                          quantity,
+                          optionLabel: "",
+                        }];
+                    const encoded = encodeURIComponent(JSON.stringify(checkoutItems));
                     setSheetMode(null);
+                    navigate(`/checkout?items=${encoded}`);
                   }}
                   className="flex-[1.5] text-white py-3.5 rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all text-sm shadow-sm"
                   style={{ background: ACCENT }}

@@ -420,6 +420,12 @@ export const orders = mysqlTable("orders", {
   paymentMethod: varchar("paymentMethod", { length: 30 }),
   paymentKey: varchar("paymentKey", { length: 100 }),
   paidAt: timestamp("paidAt"),
+  // 주문서 추가 필드
+  couponDiscount: int("couponDiscount").default(0).notNull(),
+  pointUsed: int("pointUsed").default(0).notNull(),
+  ordererName: varchar("ordererName", { length: 50 }),
+  ordererPhone: varchar("ordererPhone", { length: 20 }),
+  ordererEmail: varchar("ordererEmail", { length: 320 }),
   // 타임스탬프
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -435,10 +441,11 @@ export type InsertOrder = typeof orders.$inferInsert;
 export const orderItems = mysqlTable("order_items", {
   id: int("id").autoincrement().primaryKey(),
   orderId: int("orderId").notNull(),         // orders.id 참조
-  productId: int("productId").notNull(),     // Supabase products.id
+  productId: varchar("productId", { length: 100 }).notNull(),  // Supabase products.id (string)
   productName: varchar("productName", { length: 200 }).notNull(),
   brandName: varchar("brandName", { length: 100 }),
   imageUrl: text("imageUrl"),
+  optionLabel: varchar("optionLabel", { length: 200 }),  // 선택된 옵션 표시
   quantity: int("quantity").notNull(),
   unitPrice: int("unitPrice").notNull(),     // 주문 시점 단가
   totalPrice: int("totalPrice").notNull(),   // 수량 * 단가
@@ -488,3 +495,75 @@ export const returnRequests = mysqlTable("return_requests", {
 
 export type ReturnRequest = typeof returnRequests.$inferSelect;
 export type InsertReturnRequest = typeof returnRequests.$inferInsert;
+
+/**
+ * 배송지 테이블
+ * 사용자가 저장한 배송지 목록
+ */
+export const shippingAddresses = mysqlTable("shipping_addresses", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 50 }),          // 배송지 별칭 (집, 회사 등)
+  recipientName: varchar("recipientName", { length: 50 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  zipCode: varchar("zipCode", { length: 10 }).notNull(),
+  address: text("address").notNull(),               // 도로명 주소
+  addressDetail: text("addressDetail"),             // 상세 주소
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ShippingAddress = typeof shippingAddresses.$inferSelect;
+export type InsertShippingAddress = typeof shippingAddresses.$inferInsert;
+
+/**
+ * 쿠폰 정의 테이블
+ * 관리자가 생성하는 쿠폰 종류
+ */
+export const coupons = mysqlTable("coupons", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
+  discountType: mysqlEnum("discountType", ["fixed", "percent"]).notNull(), // 정액 or 정률
+  discountValue: int("discountValue").notNull(),    // 할인 금액 or 퍼센트
+  minOrderAmount: int("minOrderAmount").default(0).notNull(), // 최소 주문 금액
+  maxDiscountAmount: int("maxDiscountAmount"),       // 최대 할인 금액 (정률 쿠폰)
+  expiresAt: timestamp("expiresAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Coupon = typeof coupons.$inferSelect;
+export type InsertCoupon = typeof coupons.$inferInsert;
+
+/**
+ * 사용자 쿠폰 발급 테이블
+ * 특정 사용자에게 발급된 쿠폰
+ */
+export const userCoupons = mysqlTable("user_coupons", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  couponId: int("couponId").notNull(),
+  isUsed: boolean("isUsed").default(false).notNull(),
+  usedAt: timestamp("usedAt"),
+  usedOrderId: int("usedOrderId"),
+  issuedAt: timestamp("issuedAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt"),
+});
+export type UserCoupon = typeof userCoupons.$inferSelect;
+export type InsertUserCoupon = typeof userCoupons.$inferInsert;
+
+/**
+ * 포인트 내역 테이블
+ * 적립/사용 내역을 기록하고 잔액은 SUM으로 계산
+ */
+export const pointLedger = mysqlTable("point_ledger", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  amount: int("amount").notNull(),                  // 양수: 적립, 음수: 사용
+  type: mysqlEnum("type", ["earn", "use", "expire", "refund"]).notNull(),
+  description: varchar("description", { length: 200 }),
+  orderId: int("orderId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PointLedger = typeof pointLedger.$inferSelect;
+export type InsertPointLedger = typeof pointLedger.$inferInsert;

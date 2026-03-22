@@ -284,10 +284,11 @@ function OrderCard({
     createdAt: Date | string;
     items: Array<{
       id: number;
-      productId: number;
+      productId: string | number;
       productName: string;
       brandName?: string | null;
       imageUrl?: string | null;
+      optionLabel?: string | null;
       quantity: number;
       unitPrice: number;
       totalPrice: number;

@@ -57,6 +57,20 @@
       "when": 1774106687431,
       "tag": "0007_little_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1774147790244,
+      "tag": "0008_chubby_ser_duncan",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1774148066899,
+      "tag": "0009_low_carnage",
+      "breakpoints": true
     }
   ]
 }

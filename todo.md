@@ -179,3 +179,24 @@
 ## 바텀 시트 쿠폰 배너
 
 - [x] 주문금액 아래 "받지 않은 쿠폰이 더 있어요 / 쿠폰 받기" 배너 추가
+
+## 주문서(Checkout) 페이지 구현
+
+- [x] DB: shipping_addresses 테이블 (배송지 저장)
+- [x] DB: coupons 테이블 (쿠폰 발급/적용)
+- [x] DB: user_points 테이블 (포인트 잔액/내역)
+- [x] DB: orders 테이블 확장 (couponId, pointUsed, paymentMethod, shippingAddressSnapshot)
+- [x] API: shippingAddress.list / create / update / delete / setDefault
+- [x] API: coupon.listAvailable / apply (주문 금액 기준 적용 가능 쿠폰 조회)
+- [x] API: point.getBalance
+- [x] API: checkout.createOrder (주문 생성 - 쿠폰/포인트 차감 포함)
+- [x] CheckoutPage.tsx: 배송지 섹션 (기본 배송지 표시, 변경/추가 모달)
+- [x] CheckoutPage.tsx: 주문자 정보 섹션 (이름, 연락처)
+- [x] CheckoutPage.tsx: 주문 상품 목록 섹션
+- [x] CheckoutPage.tsx: 쿠폰 적용 섹션 (보유 쿠폰 선택)
+- [x] CheckoutPage.tsx: 포인트 사용 섹션 (잔액 표시, 사용 금액 입력)
+- [x] CheckoutPage.tsx: 결제수단 선택 (신용카드, 카카오페이, 네이버페이, 무통장입금)
+- [x] CheckoutPage.tsx: 최종 결제금액 요약 (상품금액, 배송비, 쿠폰 할인, 포인트 차감)
+- [x] App.tsx: /checkout 라우트 등록
+- [x] ProductDetail.tsx: 바텀 시트 '바로구매' → /checkout 연결
+- [ ] Cart.tsx: 장바구니 '주문하기' → /checkout 연결 (PG사 연동 시 완료)
