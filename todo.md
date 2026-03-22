@@ -204,3 +204,7 @@
 ## BUG: CheckoutPage 주문 상품 없음 오류
 
 - [x] CheckoutPage.tsx: URL 파라미터(items) 파싱 로직 수정 - "주문할 상품이 없습니다" 오류 해결
+
+## CheckoutPage 하단 바 숨김
+
+- [x] CheckoutPage.tsx: BottomNav 제거 (주문서 집중 UX)

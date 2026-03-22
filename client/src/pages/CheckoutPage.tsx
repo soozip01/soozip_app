@@ -4,7 +4,6 @@ import { trpc } from "@/lib/trpc";
 import { useSoozipAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ChevronRight, ChevronDown, ChevronUp, MapPin, Package, Tag, Coins, CreditCard, Check, X, Plus, Edit2 } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
 
 const ACCENT = "#E8562A";
 
@@ -716,7 +715,6 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      <BottomNav />
     </div>
   );
 }
