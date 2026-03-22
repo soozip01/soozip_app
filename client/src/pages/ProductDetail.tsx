@@ -1021,8 +1021,8 @@ export default function ProductDetail() {
         )}
       </main>
 
-      {/* ── 하단 고정 바 ── */}
-      <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto z-30">
+      {/* ── 하단 고정 바 (시트 열릴 때 숨김) ── */}
+      <div className={`fixed bottom-14 left-0 right-0 max-w-lg mx-auto z-30 transition-all duration-200 ${sheetMode ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
         <div className="px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border flex gap-2.5">
           <button
             onClick={() => { setSelectedCards([]); setPendingSelections({}); setSheetMode('cart'); }}
@@ -1217,7 +1217,7 @@ export default function ProductDetail() {
         </>
       )}
 
-      <BottomNav />
+      {!sheetMode && <BottomNav />}
     </div>
   );
 }
