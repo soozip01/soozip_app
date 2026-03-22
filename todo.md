@@ -208,3 +208,7 @@
 ## CheckoutPage 하단 바 숨김
 
 - [x] CheckoutPage.tsx: BottomNav 제거 (주문서 집중 UX)
+
+## 장바구니 → 주문서 연결
+
+- [x] Cart.tsx: 구매하기 버튼 클릭 시 선택된 상품을 CheckoutPage로 전달

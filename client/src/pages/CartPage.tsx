@@ -122,9 +122,19 @@ export default function CartPage() {
       toast.error("구매할 상품을 선택해주세요");
       return;
     }
-    toast.info("결제 기능은 준비 중입니다", {
-      description: "곧 이용하실 수 있습니다",
-    });
+    // 선택된 장바구니 아이템을 CheckoutItem 형식으로 변환
+    const checkoutItems = selectedItems.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      productImage: item.imageUrl ?? "",
+      brandName: item.brandName,
+      price: item.salePrice,
+      quantity: item.quantity,
+      optionLabel: item.memo ?? "",
+      additionalPrice: 0,
+    }));
+    const encoded = encodeURIComponent(JSON.stringify(checkoutItems));
+    navigate(`/checkout?items=${encoded}`);
   };
 
   // ── 빈 장바구니 ──
