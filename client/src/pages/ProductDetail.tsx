@@ -1170,6 +1170,19 @@ export default function ProductDetail() {
                   {totalPrice.toLocaleString()}원
                 </span>
               </div>
+              {/* 쿠폰 배너 */}
+              <button
+                onClick={() => toast.info("쿠폰 기능이 준비 중입니다.")}
+                className="w-full flex items-center justify-between px-4 py-3 mb-3 rounded-xl border border-border bg-background hover:bg-secondary/50 transition-colors"
+              >
+                <span className="text-sm text-foreground">받지 않은 쿠폰이 더 있어요</span>
+                <span className="text-sm font-semibold flex items-center gap-1" style={{ color: ACCENT }}>
+                  쿠폰 받기
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 2L7 12M7 12L3 8M7 12L11 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              </button>
               <div className="flex gap-2.5">
                 <button
                   onClick={() => {
