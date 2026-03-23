@@ -242,7 +242,7 @@
 - [x] 코드에서 SURVEY_SUPABASE_* 환경변수를 SUPABASE_*로 통합 (env.ts getter 패턴 사용)
 - [x] Secrets 업데이트 (SURVEY_SUPABASE_* 환경변수가 이미 lrozg를 가리킴 - 변경 불필요)
 - [x] 테스트 수정 및 통과 확인 (104개 전체 통과)
-- [ ] 체크포인트 저장 및 GitHub Push
+- [x] 체크포인트 저장 및 GitHub Push (2413f921)
 
 ## Secrets 업데이트 (lrozg 단일 DB)
 
@@ -270,5 +270,23 @@
 - [x] drizzle.config.ts: dialect mysql → postgresql로 변경
 - [x] server/_core/env.ts: SUPABASE_DB_URL 환경변수 추가
 - [x] Supabase SQL Editor로 모든 테이블 생성 완료 (35개 테이블 확인)
+- [x] 테스트 통과 확인 (104개 전체 통과, TypeScript 오류 0개)
+- [x] 체크포인트 저장 및 GitHub Push (2413f921)
+
+## users 테이블 스키마 수정 및 TiDB → Supabase 데이터 마이그레이션
+
+- [ ] Supabase users 테이블 현재 컬럼 파악 (id, created_at, user_id, user_login)
+- [ ] TiDB users 데이터 조회 (openId, name, email, loginMethod, role, createdAt, lastSignedIn)
+- [ ] Supabase users 테이블 ALTER: TiDB 스키마에 맞게 컬럼 추가/수정
+- [ ] TiDB users 데이터를 Supabase users 테이블로 마이그레이션
+- [ ] drizzle/schema.ts users 테이블 정의 업데이트 (PostgreSQL 컬럼명 일치)
+- [ ] 체크포인트 저장 및 GitHub Push
+
+## TiDB 완전 제거 및 Supabase 단독 사용
+
+- [x] server/db.ts: DATABASE_URL 폴백 제거, SUPABASE_DB_URL만 사용
+- [x] server/_core/env.ts: databaseUrl에서 DATABASE_URL 폴백 제거
+- [x] Supabase users 테이블 ALTER: openId, name, email, loginMethod, role, lastSignedIn 컬럼 추가
+- [x] drizzle/schema.ts users 테이블 정의 확인 및 컬럼명 일치 (이미 올바른 스키마)
 - [x] 테스트 통과 확인 (104개 전체 통과, TypeScript 오류 0개)
 - [ ] 체크포인트 저장 및 GitHub Push

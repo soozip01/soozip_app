@@ -9,7 +9,7 @@ let _db: ReturnType<typeof drizzle> | null = null;
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db) {
-    const url = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+    const url = process.env.SUPABASE_DB_URL;
     if (url) {
       try {
         const client = postgres(url, { ssl: "require", max: 10 });
