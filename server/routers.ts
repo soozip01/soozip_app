@@ -1460,6 +1460,7 @@ export const appRouter = router({
         activities: z.array(z.string()).optional(),
         existingFurniture: z.array(z.string()).optional(),
         buyFurniture: z.array(z.string()).optional(),
+        phoneNumber: z.string().regex(/^\d{11}$/).optional(), // 숫자 11자리만 (dash 제외)
       }))
       .mutation(async ({ input }) => {
         // Service Role Key로 클라이언트 생성 (RLS 우회)
@@ -1493,6 +1494,7 @@ export const appRouter = router({
             activities: input.activities ?? [],
             existing_furniture: input.existingFurniture ?? [],
             buy_furniture: input.buyFurniture ?? [],
+            phone_number: input.phoneNumber ?? null, // 숫자만 저장 (dash 없음)
             styling_state: 1,
           });
 

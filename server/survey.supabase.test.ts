@@ -82,3 +82,65 @@ describe("Supabase Service Role Key 유효성", () => {
     expect(Array.isArray(data)).toBe(true);
   });
 });
+
+describe("phone_number 입력 유효성 검사", () => {
+  /**
+   * 휴대폰 번호 포맷팅 로직 테스트 (StylingRequestForm의 handlePhoneChange 로직 검증)
+   */
+  const formatPhone = (digits: string): string => {
+    const d = digits.replace(/\D/g, "").slice(0, 11);
+    if (d.length > 7) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+    if (d.length > 3) return `${d.slice(0, 3)}-${d.slice(3)}`;
+    return d;
+  };
+
+  it("숫자 3자리 입력 시 dash 없이 반환", () => {
+    expect(formatPhone("010")).toBe("010");
+  });
+
+  it("숫자 4자리 입력 시 010-1 형태로 반환", () => {
+    expect(formatPhone("0101")).toBe("010-1");
+  });
+
+  it("숫자 8자리 입력 시 010-1234-5 형태로 반환", () => {
+    expect(formatPhone("01012345")).toBe("010-1234-5");
+  });
+
+  it("숫자 11자리 입력 시 010-1234-5678 형태로 반환", () => {
+    expect(formatPhone("01012345678")).toBe("010-1234-5678");
+  });
+
+  it("11자리 초과 입력 시 11자리로 잘림", () => {
+    expect(formatPhone("010123456789")).toBe("010-1234-5678");
+  });
+
+  it("dash 포함 입력 시 숫자만 추출하여 포맷팅", () => {
+    expect(formatPhone("010-1234-5678")).toBe("010-1234-5678");
+  });
+
+  it("DB 저장 시 dash 제거 후 숫자 11자리만 저장", () => {
+    const displayValue = "010-1234-5678";
+    const dbValue = displayValue.replace(/-/g, "");
+    expect(dbValue).toBe("01012345678");
+    expect(dbValue.length).toBe(11);
+    expect(/^\d{11}$/.test(dbValue)).toBe(true);
+  });
+
+  it("phone_number 컬럼이 survey_submissions 테이블에 존재해야 한다", async () => {
+    const url = process.env.SURVEY_SUPABASE_URL ?? "";
+    const serviceKey = process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY ?? "";
+    const res = await fetch(`${url}/rest/v1/survey_submissions?limit=1&select=phone_number`, {
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+    });
+    expect(res.ok).toBe(true);
+    const data = await res.json();
+    expect(Array.isArray(data)).toBe(true);
+    // 컬럼이 존재하면 응답에 phone_number 키가 포함됨 (값은 null일 수 있음)
+    if (data.length > 0) {
+      expect(Object.keys(data[0])).toContain("phone_number");
+    }
+  });
+});

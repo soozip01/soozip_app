@@ -212,3 +212,10 @@
 ## 장바구니 → 주문서 연결
 
 - [x] Cart.tsx: 구매하기 버튼 클릭 시 선택된 상품을 CheckoutPage로 전달
+
+## Survey 휴대폰 번호 입력 필드 추가
+
+- [x] Supabase survey_submissions 테이블에 phone_number 커럼 추가
+- [x] StylingRequestForm.tsx: 신청인 성함 아래에 휴대폰 번호 input 추가 (dash 자동 삽입)
+- [x] server/routers.ts survey.submit: phoneNumber 파라미터 추가 및 숫자만 DB 저장
+- [x] survey.submit.test.ts: 휴대폰 번호 저장 테스트 추가

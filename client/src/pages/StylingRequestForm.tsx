@@ -40,6 +40,19 @@ export default function StylingRequestForm() {
     existingFurniture: [] as string[],
     buyFurniture: [] as string[],
   });
+  const [phoneNumber, setPhoneNumber] = useState(""); // 표시용 (dash 포함)
+
+  // 전화번호 입력 핸들러: 숫자만 허용, 자동 dash 삽입
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    let formatted = digits;
+    if (digits.length > 7) {
+      formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    } else if (digits.length > 3) {
+      formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    }
+    setPhoneNumber(formatted);
+  };
 
   // 로그인 사용자 닉네임 자동 입력
   const userName = user?.nickname ?? "";
@@ -59,6 +72,11 @@ export default function StylingRequestForm() {
       toast.error("스타일링 타입을 선택해주세요");
       return;
     }
+    const phoneDigits = phoneNumber.replace(/-/g, "");
+    if (phoneNumber && phoneDigits.length !== 11) {
+      toast.error("휴대폰 번호는 11자리 숫자로 입력해주세요 (예: 010-1234-5678)");
+      return;
+    }
     submitSurvey.mutate({
       userId,
       name: userName,
@@ -73,6 +91,7 @@ export default function StylingRequestForm() {
       activities: form.activities.length > 0 ? form.activities : undefined,
       existingFurniture: form.existingFurniture.length > 0 ? form.existingFurniture : undefined,
       buyFurniture: form.buyFurniture.length > 0 ? form.buyFurniture : undefined,
+      phoneNumber: phoneNumber ? phoneNumber.replace(/-/g, "") : undefined,
     });
   };
 
@@ -234,6 +253,40 @@ export default function StylingRequestForm() {
               <p className="text-[11px] text-gray-400 leading-relaxed">
                 닉네임을 변경하려면 우측 상단의 '닉네임 변경하기'를 눌러주세요
               </p>
+            </div>
+
+            {/* 휴대폰 번호 입력 */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">
+                휴대폰 번호 <span className="text-[11px] font-normal text-gray-400">(선택)</span>
+              </label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                placeholder="010-1234-5678"
+                value={phoneNumber}
+                onChange={handlePhoneChange}
+                maxLength={13}
+                className="w-full border rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                style={{
+                  borderColor: phoneNumber
+                    ? (phoneNumber.replace(/-/g, "").length === 11 ? "oklch(0.55 0.22 32)" : "#f87171")
+                    : "#e5e5e5",
+                  background: phoneNumber && phoneNumber.replace(/-/g, "").length === 11
+                    ? "oklch(0.97 0.02 32)"
+                    : "white",
+                }}
+              />
+              {phoneNumber && phoneNumber.replace(/-/g, "").length > 0 && phoneNumber.replace(/-/g, "").length < 11 && (
+                <p className="text-[11px] text-red-400">
+                  {11 - phoneNumber.replace(/-/g, "").length}자리 더 입력해주세요
+                </p>
+              )}
+              {phoneNumber && phoneNumber.replace(/-/g, "").length === 11 && (
+                <p className="text-[11px]" style={{ color: "oklch(0.55 0.22 32)" }}>
+                  ✓ 올바른 형식입니다
+                </p>
+              )}
             </div>
 
             <div className="space-y-3">
