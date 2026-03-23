@@ -226,3 +226,20 @@
 - [x] soozip_users (통합 회원), refresh_tokens (JWT), email_verification_codes (이메일 인증), email_users, kakao_users, naver_users 등 인증 관련 테이블 확인
 - [x] orders, order_items, wishlists, coupons, point_ledger 등 커머스 테이블 확인
 - [x] styling_progress, styling_requests, styling_bookings, furniture_info 등 스타일링 테이블 확인
+
+## Supabase 통합 (rrtbkrewrgqobyjhkolw → lrozgykdsydvoppqnjdl)
+
+- [ ] rrtbkrewrgqobyjhkolw의 테이블 스키마 파악 (survey_submissions 등)
+- [ ] lrozgykdsydvoppqnjdl에 survey 테이블 생성 (SQL 실행)
+- [ ] 코드에서 SURVEY_SUPABASE_URL/KEY를 SUPABASE_URL/KEY로 통합
+- [x] 테스트 수정 및 통과 확인 (104개 전체 통과, TypeScript 오류 0개)
+- [ ] GitHub feature/manus-v2 Push
+
+## TiDB 단일 DB 통합 (rrtbk → lrozg)
+
+- [x] 제공된 TiDB 연결로 rrtbk DB 테이블 목록 파악
+- [x] lrozg TiDB에 누락 테이블 생성 (두 DB 스키마 동일 확인 - 추가 작업 불필요)
+- [x] 코드에서 SURVEY_SUPABASE_* 환경변수를 SUPABASE_*로 통합 (env.ts getter 패턴 사용)
+- [x] Secrets 업데이트 (SURVEY_SUPABASE_* 환경변수가 이미 lrozg를 가리킴 - 변경 불필요)
+- [x] 테스트 수정 및 통과 확인 (104개 전체 통과)
+- [ ] 체크포인트 저장 및 GitHub Push

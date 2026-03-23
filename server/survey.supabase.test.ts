@@ -1,17 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 /**
- * survey Supabase 연동 테스트
- * - SURVEY_SUPABASE_URL / SURVEY_SUPABASE_ANON_KEY 환경변수 사용 확인
- * - userId 기반 저장 및 조회 흐름 검증
+ * Supabase 연동 테스트 (단일 프로젝트: lrozgykdsydvoppqnjdl)
+ * - SURVEY_SUPABASE_URL / SURVEY_SUPABASE_SERVICE_ROLE_KEY 환경변수 사용 확인
+ * - survey_submissions 테이블 접근 검증
  */
 
-describe("survey Supabase 연동", () => {
-  it("SURVEY_SUPABASE_URL 환경변수가 설정되어 있어야 한다", () => {
-    // 환경변수가 주입되어 있는지 확인
+describe("Supabase 단일 프로젝트 연동", () => {
+  it("SURVEY_SUPABASE_URL 환경변수가 lrozgykdsydvoppqnjdl을 가리켜야 한다", () => {
     const url = process.env.SURVEY_SUPABASE_URL;
     expect(url).toBeDefined();
     expect(url).toContain("supabase.co");
+    expect(url).toContain("lrozgykdsydvoppqnjdl");
   });
 
   it("SURVEY_SUPABASE_ANON_KEY 환경변수가 설정되어 있어야 한다", () => {
@@ -20,11 +20,10 @@ describe("survey Supabase 연동", () => {
     expect(key!.length).toBeGreaterThan(50);
   });
 
-  it("설문조사 Supabase URL이 유효한 supabase.co URL이어야 한다", () => {
-    const surveyUrl = process.env.SURVEY_SUPABASE_URL;
-    // DB 통합 후 soozip 단일 프로젝트 사용 가능
-    expect(surveyUrl).toBeDefined();
-    expect(surveyUrl).toContain("supabase.co");
+  it("SURVEY_SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되어 있어야 한다", () => {
+    const key = process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY;
+    expect(key).toBeDefined();
+    expect(key!.length).toBeGreaterThan(50);
   });
 
   it("styling_type 매핑 - 배치솔루션은 5단계를 반환해야 한다", () => {
@@ -58,14 +57,6 @@ describe("survey Supabase 연동", () => {
     expect(STEP_MAP["배치솔루션(가구 재배치 위주)"].length).toBe(5);
     expect(STEP_MAP["풀 스타일링(온라인)"].length).toBe(6);
     expect(STEP_MAP["풀 스타일링(오프라인)"].length).toBe(7);
-  });
-});
-
-describe("Supabase Service Role Key 유효성", () => {
-  it("SURVEY_SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되어 있어야 한다", () => {
-    const key = process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY;
-    expect(key).toBeDefined();
-    expect(key!.length).toBeGreaterThan(50);
   });
 
   it("Service Role Key로 survey_submissions 조회 가능해야 함", async () => {

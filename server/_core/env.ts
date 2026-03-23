@@ -12,12 +12,13 @@ export const ENV = {
   kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET ?? "",
   naverClientId: process.env.NAVER_CLIENT_ID ?? "",
   naverClientSecret: process.env.NAVER_CLIENT_SECRET ?? "",
-  // Supabase (메인 프로젝트)
-  supabaseUrl: process.env.SUPABASE_URL ?? "",
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
-  // Supabase (설문조사 전용 프로젝트)
-  surveySupabaseUrl: process.env.SURVEY_SUPABASE_URL ?? "",
-  surveySupabaseAnonKey: process.env.SURVEY_SUPABASE_ANON_KEY ?? "",
+  // Supabase - 단일 프로젝트 (lrozgykdsydvoppqnjdl) 통합
+  // SURVEY_SUPABASE_* 를 우선 사용하고, 없으면 SUPABASE_* 폴백
+  supabaseUrl: process.env.SURVEY_SUPABASE_URL || process.env.SUPABASE_URL || "",
+  supabaseAnonKey: process.env.SURVEY_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "",
+  // surveySupabase* 는 하위 호환을 위해 동일 값으로 유지
+  get surveySupabaseUrl() { return this.supabaseUrl; },
+  get surveySupabaseAnonKey() { return this.supabaseAnonKey; },
   surveySupabaseServiceRoleKey: process.env.SURVEY_SUPABASE_SERVICE_ROLE_KEY ?? "",
   // SMTP (이메일 발송)
   smtpHost: process.env.SMTP_HOST ?? "",

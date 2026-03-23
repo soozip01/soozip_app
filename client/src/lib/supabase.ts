@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-// soozip 단일 프로젝트로 통합 - Survey Supabase 사용 (2026-03-19)
-// 기존 일반 Supabase(rrtbkrewrgqobyjhkolw)는 삭제됨 → VITE_SURVEY_SUPABASE_URL 우선 사용
+// 단일 Supabase 프로젝트 (lrozgykdsydvoppqnjdl) 사용
+// rrtbkrewrgqobyjhkolw는 삭제됨 → VITE_SURVEY_SUPABASE_URL이 lrozg를 가리킴
 const SUPABASE_URL =
   import.meta.env.VITE_SURVEY_SUPABASE_URL ||
   import.meta.env.VITE_SUPABASE_URL ||
