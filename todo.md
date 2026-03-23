@@ -233,7 +233,7 @@
 - [ ] lrozgykdsydvoppqnjdl에 survey 테이블 생성 (SQL 실행)
 - [ ] 코드에서 SURVEY_SUPABASE_URL/KEY를 SUPABASE_URL/KEY로 통합
 - [x] 테스트 수정 및 통과 확인 (104개 전체 통과, TypeScript 오류 0개)
-- [ ] GitHub feature/manus-v2 Push
+- [x] GitHub feature/manus-v2 Push (aa894008)
 
 ## TiDB 단일 DB 통합 (rrtbk → lrozg)
 
@@ -242,4 +242,33 @@
 - [x] 코드에서 SURVEY_SUPABASE_* 환경변수를 SUPABASE_*로 통합 (env.ts getter 패턴 사용)
 - [x] Secrets 업데이트 (SURVEY_SUPABASE_* 환경변수가 이미 lrozg를 가리킴 - 변경 불필요)
 - [x] 테스트 수정 및 통과 확인 (104개 전체 통과)
+- [ ] 체크포인트 저장 및 GitHub Push
+
+## Secrets 업데이트 (lrozg 단일 DB)
+
+- [x] SUPABASE_URL을 lrozgykdsydvoppqnjdl 값으로 업데이트
+- [x] SUPABASE_ANON_KEY를 lrozgykdsydvoppqnjdl 값으로 업데이트
+- [x] VITE_SUPABASE_URL을 lrozgykdsydvoppqnjdl 값으로 업데이트
+- [x] VITE_SUPABASE_ANON_KEY를 lrozgykdsydvoppqnjdl 값으로 업데이트
+
+## Supabase 완전 통합 (TiDB → Supabase PostgreSQL)
+
+- [ ] TiDB 스키마를 PostgreSQL용 CREATE TABLE SQL로 변환
+- [ ] Supabase SQL Editor에서 테이블 생성 SQL 실행
+- [ ] DATABASE_URL Secret을 Supabase PostgreSQL 연결 문자열로 교체
+- [ ] drizzle/schema.ts 및 drizzle.config.ts를 PostgreSQL 드라이버로 변경
+- [ ] pnpm db:push로 마이그레이션 검증
+- [ ] 테스트 통과 확인 및 체크포인트 저장
+- [ ] GitHub Push
+
+## TiDB 제거 및 Supabase PostgreSQL 완전 전환
+
+- [x] SUPABASE_DB_URL Secret 추가 (Pooler URL: aws-1-ap-northeast-1)
+- [x] drizzle-orm/pg-core, postgres 패키지 설치
+- [x] drizzle/schema.ts: mysqlTable/mysqlEnum → pgTable/pgEnum으로 전환
+- [x] server/db.ts: MySQL 드라이버 → PostgreSQL 드라이버로 교체
+- [x] drizzle.config.ts: dialect mysql → postgresql로 변경
+- [x] server/_core/env.ts: SUPABASE_DB_URL 환경변수 추가
+- [x] Supabase SQL Editor로 모든 테이블 생성 완료 (35개 테이블 확인)
+- [x] 테스트 통과 확인 (104개 전체 통과, TypeScript 오류 0개)
 - [ ] 체크포인트 저장 및 GitHub Push

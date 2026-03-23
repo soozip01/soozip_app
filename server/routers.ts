@@ -430,7 +430,7 @@ export const appRouter = router({
             privacyAgreed: input.privacyAgreed,
             marketingAgreed: input.marketingAgreed,
             ageAgreed: input.ageAgreed,
-          }).onDuplicateKeyUpdate({ set: { nickname: input.nickname } });
+          }).onConflictDoUpdate({ target: kakaoUsers.kakaoId, set: { nickname: input.nickname } });
         } else {
           await db.insert(naverUsers).values({
             naverId: providerId,
@@ -441,7 +441,7 @@ export const appRouter = router({
             privacyAgreed: input.privacyAgreed,
             marketingAgreed: input.marketingAgreed,
             ageAgreed: input.ageAgreed,
-          }).onDuplicateKeyUpdate({ set: { nickname: input.nickname } });
+          }).onConflictDoUpdate({ target: naverUsers.naverId, set: { nickname: input.nickname } });
         }
 
         // 생성된 통합 사용자 조회
@@ -1095,7 +1095,6 @@ export const appRouter = router({
           preferredTime: input.preferredTime ?? null,
           roomSize: input.roomSize ?? null,
           description: input.description ?? null,
-          surveyCompleted: false,
           status: "pending",
         });
 
@@ -1125,7 +1124,7 @@ export const appRouter = router({
         if (!db) throw new Error("데이터베이스 연결 오류");
 
         await db.update(stylingBookings)
-          .set({ surveyCompleted: true, status: "confirmed" })
+          .set({ status: "confirmed" })
           .where(eq(stylingBookings.id, input.bookingId));
 
         return { success: true, message: "예약이 최종 확정되었습니다!" };
@@ -2157,7 +2156,12 @@ export const appRouter = router({
         });
 
         // order_items 삽입
-        const orderId = (inserted as any).insertId ?? 0;
+        // PostgreSQL: drizzle returns inserted row with .returning() or re-query
+        const insertedOrderRow = await db.select({ id: orders.id })
+          .from(orders)
+          .where(eq(orders.orderNumber, orderNumber))
+          .limit(1);
+        const orderId = insertedOrderRow[0]?.id ?? 0;
         if (orderId) {
           await db.insert(orderItems).values({
             orderId,
@@ -2269,7 +2273,7 @@ export const appRouter = router({
             .set({ isDefault: false })
             .where(eq(shippingAddresses.userId, input.userId));
         }
-        const [result] = await db.insert(shippingAddresses).values({
+        await db.insert(shippingAddresses).values({
           userId: input.userId,
           label: input.label ?? null,
           recipientName: input.recipientName,
@@ -2279,7 +2283,12 @@ export const appRouter = router({
           addressDetail: input.addressDetail ?? null,
           isDefault: input.isDefault,
         });
-        return { id: result.insertId };
+        const inserted = await db.select({ id: shippingAddresses.id })
+          .from(shippingAddresses)
+          .where(eq(shippingAddresses.userId, input.userId))
+          .orderBy(desc(shippingAddresses.createdAt))
+          .limit(1);
+        return { id: inserted[0]?.id ?? 0 };
       }),
 
     /** 배송지 수정 */
@@ -2507,7 +2516,7 @@ export const appRouter = router({
 
         // 3. 주문 생성
         const orderNumber = `SZ${Date.now()}`;
-        const [orderResult] = await db.insert(orders).values({
+        await db.insert(orders).values({
           userId: input.userId,
           orderNumber,
           status: "pending_payment",
@@ -2528,7 +2537,12 @@ export const appRouter = router({
           ordererPhone: input.ordererPhone,
           ordererEmail: input.ordererEmail ?? null,
         });
-        const orderId = orderResult.insertId;
+        // PostgreSQL: re-query to get inserted order id
+        const insertedOrder = await db.select({ id: orders.id })
+          .from(orders)
+          .where(eq(orders.orderNumber, orderNumber))
+          .limit(1);
+        const orderId = insertedOrder[0]?.id ?? 0;
 
         // 4. 주문 상품 생성
         for (const item of input.items) {
