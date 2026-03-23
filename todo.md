@@ -219,3 +219,10 @@
 - [x] StylingRequestForm.tsx: 신청인 성함 아래에 휴대폰 번호 input 추가 (dash 자동 삽입)
 - [x] server/routers.ts survey.submit: phoneNumber 파라미터 추가 및 숫자만 DB 저장
 - [x] survey.submit.test.ts: 휴대폰 번호 저장 테스트 추가
+
+## DB 마이그레이션
+
+- [x] pnpm db:push로 drizzle/schema.ts의 23개 테이블 전체 실제 DB에 마이그레이션 완료
+- [x] soozip_users (통합 회원), refresh_tokens (JWT), email_verification_codes (이메일 인증), email_users, kakao_users, naver_users 등 인증 관련 테이블 확인
+- [x] orders, order_items, wishlists, coupons, point_ledger 등 커머스 테이블 확인
+- [x] styling_progress, styling_requests, styling_bookings, furniture_info 등 스타일링 테이블 확인
